@@ -1,0 +1,51 @@
+plugins {
+	id("java")
+	id("org.springframework.boot") version "3.3.2"
+	id("io.spring.dependency-management") version "1.1.6"
+}
+
+group = "com.mpsp"
+version = "0.0.1-SNAPSHOT"
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation("org.springframework.boot:spring-boot-starter-web")
+	compileOnly("org.projectlombok:lombok")
+	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+	runtimeOnly("com.mysql:mysql-connector-j")
+	annotationProcessor("org.projectlombok:lombok")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.springframework.security:spring-security-test")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// JJWT for JWT Generation
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
+	// Jpa
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	implementation 'javax.xml.bind:jaxb-api:2.3.1'
+	implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
+	implementation 'com.google.auth:google-auth-library-credentials:1.23.0'
+	implementation 'com.amazonaws:aws-java-sdk-ses:1.12.301'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+}
+test {
+	jvmArgs '--add-opens=java.base/java.io=ALL-UNNAMED'
+}
