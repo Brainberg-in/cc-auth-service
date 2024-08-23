@@ -5,7 +5,7 @@ RUN gradle clean build -x test --no-daemon
 
 
 # Use the official OpenJDK image from the Docker Hub
-FROM amazoncorretto:17-alpine3.18
+FROM eclipse-temurin:17.0.12_7-jre-alpine
 
 # Set the working directory inside the container
 WORKDIR /home/gradle/src
