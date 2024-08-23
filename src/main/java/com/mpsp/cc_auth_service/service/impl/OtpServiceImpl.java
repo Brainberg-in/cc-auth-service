@@ -43,7 +43,7 @@ public class OtpServiceImpl implements OtpService {
 //        // Generate a 4-digit OTP
 //        int otp = gAuth.getTotpPassword(secret);
 
-        awsService.sendEmail(email, "OTP", "Your OTP is: " + otp);
+        awsService.sendEmail("",email, "OTP", "Your OTP is: " + otp);
         if(otpGen == null){
             otpGen = new OtpGen();
             otpGen.setUserId(user.getUserId());

@@ -27,7 +27,7 @@ repositories {
 ext {
     openapiVersion = '2.1.0'
     nimubs = '9.37.2'
-	set('sdkVersion',"1.12.720")
+	set('sdkVersion',"2.27.10")
 }
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -45,9 +45,7 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openapiVersion}"
 
 
-
-
-	implementation 'com.amazonaws:aws-java-sdk-ses'
+	implementation 'software.amazon.awssdk:sesv2'
 
 	compileOnly("org.projectlombok:lombok")
 
@@ -62,7 +60,7 @@ dependencies {
 dependencyManagement {
 	imports {
 //		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-		mavenBom "com.amazonaws:aws-java-sdk-bom:${sdkVersion}"
+		mavenBom "software.amazon.awssdk:bom:${sdkVersion}"
 	}
 }
 
