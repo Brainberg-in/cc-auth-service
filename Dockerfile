@@ -1,3 +1,9 @@
+FROM gradle:8. AS build
+COPY --chown=gradle:gradle . /home/gradle/src
+WORKDIR /home/gradle/src
+RUN gradle clean build -x test --no-daemon
+
+
 # Use the official OpenJDK image from the Docker Hub
 FROM openjdk:17-jdk-slim
 

@@ -1,6 +1,6 @@
 plugins {
 	id("java")
-	id("org.springframework.boot") version "3.3.2"
+	id("org.springframework.boot") version "3.3.3"
 	id("io.spring.dependency-management") version "1.1.6"
 }
 
@@ -17,36 +17,59 @@ configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
+	all*.exclude group:'org.springframework.boot', module:'spring-boot-starter-logging'
 }
 
 repositories {
 	mavenCentral()
 }
 
+ext {
+    openapiVersion = '2.1.0'
+    nimubs = '9.31'
+	set('sdkVersion',"1.12.720")
+}
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	implementation "com.nimbusds:nimbus-jose-jwt:${nimubs}"
+	// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-common
+	implementation "org.springdoc:springdoc-openapi-starter-common:${openapiVersion}"
+	// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openapiVersion}"
+
+
+	implementation 'javax.xml.bind:jaxb-api:2.3.1'
+	implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
+	implementation 'com.google.auth:google-auth-library-credentials:1.23.0'
+	implementation 'com.amazonaws:aws-java-sdk-ses'
+
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
-	testImplementation 'org.junit.jupiter:j'
+
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	// JJWT for JWT Generation
-	implementation 'io.jsonwebtoken:jjwt:0.9.1'
-	// Jpa
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	implementation 'javax.xml.bind:jaxb-api:2.3.1'
-	implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
-	implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
-	implementation 'com.google.auth:google-auth-library-credentials:1.23.0'
-	implementation 'com.amazonaws:aws-java-sdk-ses:1.12.301'
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+
 }
+
+dependencyManagement {
+	imports {
+//		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+		mavenBom "com.amazonaws:aws-java-sdk-bom:${sdkVersion}"
+	}
+}
+
 test {
 	useJUnitPlatform()
 	testLogging {
