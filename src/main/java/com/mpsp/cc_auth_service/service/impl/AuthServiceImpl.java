@@ -13,6 +13,7 @@ import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.service.UserService;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -20,121 +21,107 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-
 @Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private UserService userService;
+  @Autowired private UserService userService;
 
+  @Autowired private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+  @Autowired private JwtTokenProvider jwtTokenProvider;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+  @Autowired private LoginHistoryRepo loginHistoryRepository;
 
-    @Autowired
-    private LoginHistoryRepo loginHistoryRepository;
+  @Autowired private PasswordHistoryRepo passwordHistoryRepository;
 
-    @Autowired
-    private PasswordHistoryRepo passwordHistoryRepository;
+  @Autowired private RefreshTokenRepo refreshTokenRepository;
 
-    @Autowired
-    private RefreshTokenRepo refreshTokenRepository;
+  @Autowired private OtpService otpService;
 
-    @Autowired
-    private OtpService otpService;
+  @Override
+  public LoginResponse login(final LoginRequest loginRequest) {
+    final String email = loginRequest.getEmail();
+    final String password = loginRequest.getPassword();
 
-    @Override
-    public LoginResponse login(final LoginRequest loginRequest) {
-        final String email = loginRequest.getEmail();
-        final String password = loginRequest.getPassword();
-
-        // Validate user and password
-        final User user = userService.findByEmail(email);
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found");
-        }
-
-        System.out.println(user.getUserId());
-
-        PasswordHistory pw = passwordHistoryRepository.findByUserId(user.getUserId());
-        System.out.println(pw.getCurrentPassword());
-
-        if (!passwordEncoder.matches(password,
-                pw.getCurrentPassword())) {
-            throw new BadCredentialsException("Invalid password");
-        }
-
-
-        // Generate tokens
-        final String jwtToken = jwtTokenProvider.generateToken(user, false);
-        final String refreshToken = jwtTokenProvider.generateToken(user, true);
-        saveRefreshToken(user.getUserId(), refreshToken);
-
-        System.out.println("Login successful"+jwtToken);
-
-        // Create records in the history tables
-        loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
-
-
-        String otp = null;
-        if (user.isMfaEnabled()) {
-            otpService.sendOtp(email);// Send OTP via AWS SES/SNS
-        }
-
-        return new LoginResponse(jwtToken, refreshToken);
+    // Validate user and password
+    final User user = userService.findByEmail(email);
+    if (user == null) {
+      throw new UsernameNotFoundException("User not found");
     }
 
-    @Override
-    public void logout(final Integer userId) {
-        refreshTokenRepository.deleteRefreshToken(userId);
-        LoginHistory loginHistory = loginHistoryRepository.findByUserId(userId);
-        loginHistory.setLogoutTime(LocalDateTime.now());
-        loginHistoryRepository.saveAndFlush(loginHistory);
+    System.out.println(user.getUserId());
+
+    PasswordHistory pw = passwordHistoryRepository.findByUserId(user.getUserId());
+    System.out.println(pw.getCurrentPassword());
+
+    if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
+      throw new BadCredentialsException("Invalid password");
     }
 
-    public LoginResponse refreshToken(final String refreshToken) {
-        // Validate refresh token
-        RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken);
-        if (storedToken == null) {
-            throw new RuntimeException("Invalid refresh token");
-        }
+    // Generate tokens
+    final String jwtToken = jwtTokenProvider.generateToken(user, false);
+    final String refreshToken = jwtTokenProvider.generateToken(user, true);
+    saveRefreshToken(user.getUserId(), refreshToken);
 
-        if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Refresh token expired");
-        }
+    System.out.println("Login successful" + jwtToken);
 
-        // Generate new JWT token
-        User user = userService.findById(storedToken.getUserId());
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found");
-        }
+    // Create records in the history tables
+    loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
 
-        String newJwtToken = jwtTokenProvider.generateToken(user, false);
-        String newRefreshToken = jwtTokenProvider.generateToken(user, true);
-
-        // Update the refresh token in the repository
-        updateRefreshToken(user.getUserId(), newRefreshToken);
-
-        return new LoginResponse(newJwtToken, newRefreshToken);
+    String otp = null;
+    if (user.isMfaEnabled()) {
+      otpService.sendOtp(email); // Send OTP via AWS SES/SNS
     }
 
-    private void saveRefreshToken(Integer userId, String refreshToken) {
-        RefreshToken token = new RefreshToken();
-        token.setUserId(userId);
-        token.setToken(refreshToken);
-        token.setExpiresAt(LocalDateTime.now().plusDays(1));
+    return new LoginResponse(jwtToken, refreshToken);
+  }
 
-        refreshTokenRepository.save(token);
+  @Override
+  public void logout(final Integer userId) {
+    refreshTokenRepository.deleteRefreshToken(userId);
+    LoginHistory loginHistory = loginHistoryRepository.findByUserId(userId);
+    loginHistory.setLogoutTime(LocalDateTime.now());
+    loginHistoryRepository.saveAndFlush(loginHistory);
+  }
+
+  public LoginResponse refreshToken(final String refreshToken) {
+    // Validate refresh token
+    RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken);
+    if (storedToken == null) {
+      throw new RuntimeException("Invalid refresh token");
     }
 
-    private void updateRefreshToken(Integer userId, String newRefreshToken) {
-        refreshTokenRepository.deleteByUserId(userId);
-        saveRefreshToken(userId, newRefreshToken);
+    if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+      throw new RuntimeException("Refresh token expired");
     }
 
+    // Generate new JWT token
+    User user = userService.findById(storedToken.getUserId());
+    if (user == null) {
+      throw new UsernameNotFoundException("User not found");
+    }
+
+    String newJwtToken = jwtTokenProvider.generateToken(user, false);
+    String newRefreshToken = jwtTokenProvider.generateToken(user, true);
+
+    // Update the refresh token in the repository
+    updateRefreshToken(user.getUserId(), newRefreshToken);
+
+    return new LoginResponse(newJwtToken, newRefreshToken);
+  }
+
+  private void saveRefreshToken(Integer userId, String refreshToken) {
+    RefreshToken token = new RefreshToken();
+    token.setUserId(userId);
+    token.setToken(refreshToken);
+    token.setExpiresAt(LocalDateTime.now().plusDays(1));
+
+    refreshTokenRepository.save(token);
+  }
+
+  private void updateRefreshToken(Integer userId, String newRefreshToken) {
+    refreshTokenRepository.deleteByUserId(userId);
+    saveRefreshToken(userId, newRefreshToken);
+  }
 }

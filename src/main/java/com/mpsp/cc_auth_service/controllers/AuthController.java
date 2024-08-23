@@ -1,6 +1,5 @@
 package com.mpsp.cc_auth_service.controllers;
 
-
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.service.AuthService;
@@ -15,24 +14,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+  @Autowired private AuthService authService;
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody final LoginRequest loginRequest) {
-        LoginResponse loginResponse = authService.login(loginRequest);
-        return ResponseEntity.ok(loginResponse);
-    }
+  @PostMapping("/login")
+  public ResponseEntity<LoginResponse> login(@RequestBody final LoginRequest loginRequest) {
+    LoginResponse loginResponse = authService.login(loginRequest);
+    return ResponseEntity.ok(loginResponse);
+  }
 
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody Integer userId) {
-        authService.logout(userId);
-        return ResponseEntity.ok("Logout successful");
-    }
+  @PostMapping("/logout")
+  public ResponseEntity<String> logout(@RequestBody Integer userId) {
+    authService.logout(userId);
+    return ResponseEntity.ok("Logout successful");
+  }
 
-    @PostMapping("/refresh-token")
-    public ResponseEntity<LoginResponse> refreshToken(@RequestBody String refreshToken) {
-        LoginResponse loginResponse = authService.refreshToken(refreshToken);
-        return ResponseEntity.ok(loginResponse);
-    }
+  @PostMapping("/refresh-token")
+  public ResponseEntity<LoginResponse> refreshToken(@RequestBody String refreshToken) {
+    LoginResponse loginResponse = authService.refreshToken(refreshToken);
+    return ResponseEntity.ok(loginResponse);
+  }
 }

@@ -7,61 +7,61 @@ import java.time.LocalDateTime;
 @Table(name = "otp_gen")
 public class OtpGen {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
 
-    @Column(name = "user_id", nullable = false)
-    private Integer userId;
+  @Column(name = "user_id", nullable = false)
+  private Integer userId;
 
-    @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime createdAt;
+  @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+  private LocalDateTime createdAt;
 
-    @Column(name = "modified_at")
-    private LocalDateTime modifiedAt;
+  @Column(name = "modified_at")
+  private LocalDateTime modifiedAt;
 
-    @Column(name = "otp")
-    private String otp;
+  @Column(name = "otp")
+  private String otp;
 
-    // Getters and Setters
+  // Getters and Setters
 
-    public Integer getId() {
-        return id;
-    }
+  public Integer getId() {
+    return id;
+  }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+  public void setId(Integer id) {
+    this.id = id;
+  }
 
-    public Integer getUserId() {
-        return userId;
-    }
+  public Integer getUserId() {
+    return userId;
+  }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
+  public void setUserId(Integer userId) {
+    this.userId = userId;
+  }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
 
-    public LocalDateTime getModifiedAt() {
-        return modifiedAt;
-    }
+  public LocalDateTime getModifiedAt() {
+    return modifiedAt;
+  }
 
-    public void setModifiedAt(LocalDateTime modifiedAt) {
-        this.modifiedAt = modifiedAt;
-    }
+  public void setModifiedAt(LocalDateTime modifiedAt) {
+    this.modifiedAt = modifiedAt;
+  }
 
-    public String getOtp() {
-        return otp;
-    }
+  public String getOtp() {
+    return otp;
+  }
 
-    public void setOtp(String otp) {
-        this.otp = otp;
-    }
+  public void setOtp(String otp) {
+    this.otp = otp;
+  }
 }

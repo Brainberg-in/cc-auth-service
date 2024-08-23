@@ -11,18 +11,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth/otp")
 public class OtpController {
 
-    @Autowired
-    private OtpService otpService;
+  @Autowired private OtpService otpService;
 
+  @PostMapping("/validateOtp")
+  public ResponseEntity<Boolean> verifyOtp(String email, String otp) {
+    return ResponseEntity.ok(otpService.verifyOtp(email, otp));
+  }
 
-    @PostMapping("/validateOtp")
-    public ResponseEntity<Boolean> verifyOtp(String email, String otp) {
-        return ResponseEntity.ok(otpService.verifyOtp(email, otp));
-    }
-
-    @PostMapping("/resend")
-    public ResponseEntity<String> resendOtp(String email) {
-        otpService.resendOtp(email);
-        return ResponseEntity.ok("OTP resent successfully");
-    }
+  @PostMapping("/resend")
+  public ResponseEntity<String> resendOtp(String email) {
+    otpService.resendOtp(email);
+    return ResponseEntity.ok("OTP resent successfully");
+  }
 }

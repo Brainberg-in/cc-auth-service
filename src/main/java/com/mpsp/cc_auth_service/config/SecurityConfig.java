@@ -13,22 +13,25 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF protection
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                .requestMatchers("/api/v1/auth/login","/api/v1/auth/refresh-token","/actuator/**").permitAll()
-                                .requestMatchers("/api/v1/auth/**").permitAll()
-                                .anyRequest().authenticated()
-                );
+  @Bean
+  public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+    http.csrf(AbstractHttpConfigurer::disable) // Disable CSRF protection
+        .authorizeHttpRequests(
+            authorizeRequests ->
+                authorizeRequests
+                    .requestMatchers(
+                        "/api/v1/auth/login", "/api/v1/auth/refresh-token", "/actuator/**")
+                    .permitAll()
+                    .requestMatchers("/api/v1/auth/**")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated());
 
-        return http.build();
-    }
+    return http.build();
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 }

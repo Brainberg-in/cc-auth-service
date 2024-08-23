@@ -1,7 +1,9 @@
 plugins {
+	id ("jacoco")
 	id("java")
 	id("org.springframework.boot") version "3.3.3"
 	id("io.spring.dependency-management") version "1.1.6"
+	id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = "com.mpsp"
@@ -68,5 +70,13 @@ test {
 	useJUnitPlatform()
 	testLogging {
 		events "passed", "skipped", "failed"
+	}
+}
+
+spotless {
+	java {
+		googleJavaFormat('1.17.0') // Specify the google-java-format version
+		removeUnusedImports()
+		formatAnnotations()
 	}
 }

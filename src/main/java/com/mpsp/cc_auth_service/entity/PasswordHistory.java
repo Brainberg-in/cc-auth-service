@@ -1,11 +1,10 @@
 package com.mpsp.cc_auth_service.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "password_history")
@@ -13,47 +12,47 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 public class PasswordHistory {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Integer userId;
+  @Column(name = "user_id", nullable = false)
+  private Integer userId;
 
-    @Column(name = "current_password", length = 255)
-    private String currentPassword;
+  @Column(name = "current_password", length = 255)
+  private String currentPassword;
 
-    @Column(name = "logout_time")
-    private LocalDateTime logoutTime;
+  @Column(name = "logout_time")
+  private LocalDateTime logoutTime;
 
-    @Column(name = "ip_address", length = 255)
-    private String ipAddress;
+  @Column(name = "ip_address", length = 255)
+  private String ipAddress;
 
-    public String getCurrentPassword() {
-        return currentPassword;
-    }
+  public String getCurrentPassword() {
+    return currentPassword;
+  }
 
-    public PasswordHistory() {
-    }
-    public PasswordHistory(Integer userId, String currentPassword) {
-        this.userId = userId;
-        this.currentPassword = currentPassword;
-        //this.ipAddress = o.toString();
-    }
+  public PasswordHistory() {}
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
+  public PasswordHistory(Integer userId, String currentPassword) {
+    this.userId = userId;
+    this.currentPassword = currentPassword;
+    // this.ipAddress = o.toString();
+  }
 
-    public Integer getUserId() {
-        return userId;
-    }
+  public void setUserId(Integer userId) {
+    this.userId = userId;
+  }
 
-    public void setCurrentPassword(String currentPassword) {
-        this.currentPassword = currentPassword;
-    }
+  public Integer getUserId() {
+    return userId;
+  }
 
-    public void setLogoutTime(LocalDateTime logoutTime) {
-        this.logoutTime = logoutTime;
-    }
+  public void setCurrentPassword(String currentPassword) {
+    this.currentPassword = currentPassword;
+  }
+
+  public void setLogoutTime(LocalDateTime logoutTime) {
+    this.logoutTime = logoutTime;
+  }
 }
