@@ -1,4 +1,4 @@
-
+package com.mpsp.cc_auth_service.serviceTests;
 
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
@@ -82,8 +82,8 @@ class AuthServiceImplTest {
         when(userService.findByEmail(anyString())).thenReturn(user);
         when(passwordHistoryRepository.findByUserId(anyInt())).thenReturn(passwordHistory);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        when(jwtTokenProvider.generateToken(any(User.class))).thenReturn("jwtToken");
-        when(jwtTokenProvider.generateRefreshToken(any(User.class))).thenReturn("refreshToken");
+        when(jwtTokenProvider.generateToken(any(User.class),anyBoolean())).thenReturn("jwtToken");
+        when(jwtTokenProvider.generateToken(any(User.class),anyBoolean())).thenReturn("refreshToken");
 
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail("test@example.com");
@@ -137,8 +137,9 @@ class AuthServiceImplTest {
     void testRefreshTokenSuccess() {
         when(refreshTokenRepository.findByToken(anyString())).thenReturn(refreshToken);
         when(userService.findById(anyInt())).thenReturn(user);
-        when(jwtTokenProvider.generateToken(any(User.class))).thenReturn("newJwtToken");
-        when(jwtTokenProvider.generateRefreshToken(any(User.class))).thenReturn("newRefreshToken");
+        when(jwtTokenProvider.generateToken(any(User.class),anyBoolean())).thenReturn("newJwtToken");
+        when(jwtTokenProvider.generateToken(any(User.class),anyBoolean())).thenReturn("newRefreshToken");
+
 
         LoginResponse response = authService.refreshToken("refreshToken");
 
