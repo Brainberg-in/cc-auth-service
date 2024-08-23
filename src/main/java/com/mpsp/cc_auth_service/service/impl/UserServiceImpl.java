@@ -19,10 +19,11 @@ public class UserServiceImpl implements UserService {
 
     @Value("${user.service.url}")
     private String userServiceUrl;
+
     @Override
     public User findByEmail(String email){
         try {
-            URL url = new URL(String.format("%s?emailId=%s", userServiceUrl, email));
+            final URL url = new URL(String.format("%s?emailId=%s", userServiceUrl, email));
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             // Set up the connection

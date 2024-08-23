@@ -13,6 +13,7 @@ import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.service.UserService;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
 
@@ -47,12 +49,12 @@ public class AuthServiceImpl implements AuthService {
     private OtpService otpService;
 
     @Override
-    public LoginResponse login(LoginRequest loginRequest) {
-        String email = loginRequest.getEmail();
-        String password = loginRequest.getPassword();
+    public LoginResponse login(final LoginRequest loginRequest) {
+        final String email = loginRequest.getEmail();
+        final String password = loginRequest.getPassword();
 
         // Validate user and password
-        User user = userService.findByEmail(email);
+        final User user = userService.findByEmail(email);
         if (user == null) {
             throw new UsernameNotFoundException("User not found");
         }
@@ -69,8 +71,8 @@ public class AuthServiceImpl implements AuthService {
 
 
         // Generate tokens
-        String jwtToken = jwtTokenProvider.generateToken(user);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user);
+        final String jwtToken = jwtTokenProvider.generateToken(user, false);
+        final String refreshToken = jwtTokenProvider.generateToken(user, true);
         saveRefreshToken(user.getUserId(), refreshToken);
 
         System.out.println("Login successful"+jwtToken);
@@ -88,14 +90,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(Integer userId) {
+    public void logout(final Integer userId) {
         refreshTokenRepository.deleteRefreshToken(userId);
         LoginHistory loginHistory = loginHistoryRepository.findByUserId(userId);
         loginHistory.setLogoutTime(LocalDateTime.now());
         loginHistoryRepository.saveAndFlush(loginHistory);
     }
 
-    public LoginResponse refreshToken(String refreshToken) {
+    public LoginResponse refreshToken(final String refreshToken) {
         // Validate refresh token
         RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken);
         if (storedToken == null) {
@@ -112,8 +114,8 @@ public class AuthServiceImpl implements AuthService {
             throw new UsernameNotFoundException("User not found");
         }
 
-        String newJwtToken = jwtTokenProvider.generateToken(user);
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(user);
+        String newJwtToken = jwtTokenProvider.generateToken(user, false);
+        String newRefreshToken = jwtTokenProvider.generateToken(user, true);
 
         // Update the refresh token in the repository
         updateRefreshToken(user.getUserId(), newRefreshToken);
