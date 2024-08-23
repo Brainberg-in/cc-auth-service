@@ -3,6 +3,7 @@ package com.mpsp.cc_auth_service.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -10,7 +11,8 @@ import lombok.ToString;
 @Table(name = "password_history")
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"currentPassword", "ipAddress"})
+@NoArgsConstructor
 public class PasswordHistory {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,40 +21,17 @@ public class PasswordHistory {
   @Column(name = "user_id", nullable = false)
   private Integer userId;
 
-  @Column(name = "current_password", length = 255)
+  @Column(name = "current_password")
   private String currentPassword;
 
   @Column(name = "logout_time")
   private LocalDateTime logoutTime;
 
-  @Column(name = "ip_address", length = 255)
+  @Column(name = "ip_address")
   private String ipAddress;
 
-  public String getCurrentPassword() {
-    return currentPassword;
-  }
-
-  public PasswordHistory() {}
-
-  public PasswordHistory(Integer userId, String currentPassword) {
+  public PasswordHistory(final Integer userId, final String currentPassword) {
     this.userId = userId;
     this.currentPassword = currentPassword;
-    // this.ipAddress = o.toString();
-  }
-
-  public void setUserId(Integer userId) {
-    this.userId = userId;
-  }
-
-  public Integer getUserId() {
-    return userId;
-  }
-
-  public void setCurrentPassword(String currentPassword) {
-    this.currentPassword = currentPassword;
-  }
-
-  public void setLogoutTime(LocalDateTime logoutTime) {
-    this.logoutTime = logoutTime;
   }
 }
