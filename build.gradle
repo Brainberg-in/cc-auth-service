@@ -26,7 +26,7 @@ repositories {
 
 ext {
     openapiVersion = '2.1.0'
-    nimubs = '9.31'
+    nimubs = '9.37.2'
 	set('sdkVersion',"1.12.720")
 }
 dependencies {
@@ -36,6 +36,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
 	implementation "com.nimbusds:nimbus-jose-jwt:${nimubs}"
@@ -59,6 +61,7 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
 
 
 }
