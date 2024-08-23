@@ -38,6 +38,13 @@ public class User {
 
     private boolean isMfaEnabled;
 
+    public User(int userId, String email) {
+        this.userId = userId;
+        this.email = email;
+    }
+    public User() {
+    }
+
     // Getters and Setters
     public Integer getUserId() {
         return userId;
@@ -169,6 +176,10 @@ public class User {
 
     public boolean isMfaEnabled() {
         return isMfaEnabled;
+    }
+
+    public void setMfaEnabled(boolean isMfaEnabled) {
+        this.isMfaEnabled = isMfaEnabled;
     }
 }
 

@@ -40,4 +40,20 @@ public class PasswordHistory {
         this.currentPassword = currentPassword;
         //this.ipAddress = o.toString();
     }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setCurrentPassword(String currentPassword) {
+        this.currentPassword = currentPassword;
+    }
+
+    public void setLogoutTime(LocalDateTime logoutTime) {
+        this.logoutTime = logoutTime;
+    }
 }

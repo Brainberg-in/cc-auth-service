@@ -39,8 +39,17 @@ public class LoginHistory {
         //this.ipAddress = o.toString();
     }
 
+    public LoginHistory() {
+    }
     public void setLogoutTime(LocalDateTime logoutTime) {
         this.logoutTime = logoutTime;
     }
 
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
 }
