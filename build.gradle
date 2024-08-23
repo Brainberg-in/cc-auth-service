@@ -32,6 +32,7 @@ dependencies {
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
+	testImplementation 'org.junit.jupiter:j'
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	// JJWT for JWT Generation
@@ -47,5 +48,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 test {
-	jvmArgs '--add-opens=java.base/java.io=ALL-UNNAMED'
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
 }
