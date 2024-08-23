@@ -1,33 +1,72 @@
 package com.mpsp.cc_auth_service.service.impl;
 
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
-import com.amazonaws.services.simpleemail.model.*;
+
 import com.mpsp.cc_auth_service.service.AwsService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import software.amazon.awssdk.services.sesv2.model.Body;
+import software.amazon.awssdk.services.sesv2.model.Content;
+import software.amazon.awssdk.services.sesv2.model.Destination;
+import software.amazon.awssdk.services.sesv2.model.EmailContent;
+import software.amazon.awssdk.services.sesv2.model.Message;
+import software.amazon.awssdk.services.sesv2.model.SendEmailRequest;
+import software.amazon.awssdk.services.sesv2.model.SesV2Exception;
+import software.amazon.awssdk.services.sesv2.SesV2Client;
+
+
+@Slf4j
 @Service
 public class AwsServiceImpl implements AwsService{
-        @Autowired
-    private AmazonSimpleEmailService amazonSimpleEmailService;
 
-    public void sendEmail(String toAddress, String subject, String body) {
-        SendEmailRequest sendEmailRequest = new SendEmailRequest()
-                .withDestination(new Destination().withToAddresses(toAddress))
-                .withMessage(new Message()
-                        .withBody(new Body()
-                                .withHtml(new Content()
-                                        .withCharset("UTF-8")
-                                        .withData(body))
-                                .withText(new Content()
-                                        .withCharset("UTF-8")
-                                        .withData(body)))
-                        .withSubject(new Content()
-                                .withCharset("UTF-8")
-                                .withData(subject)))
-                .withSource("your-email@example.com"); // Replace with your verified SES email address
+    @Autowired
+    private SesV2Client client;
 
-        SendEmailResult result = amazonSimpleEmailService.sendEmail(sendEmailRequest);
-        System.out.println("Email sent with Message ID: " + result.getMessageId());
+    public void sendEmail(final String sender,
+                          final String recipient,
+                          final String subject,
+                          final String bodyHTML) {
+
+        final Destination destination = Destination.builder()
+                .toAddresses(recipient)
+                .build();
+
+        final Content content = Content.builder()
+                .data(bodyHTML)
+                .build();
+
+        final Content sub = Content.builder()
+                .data(subject)
+                .build();
+
+        final Body body = Body.builder()
+                .html(content)
+                .build();
+
+        final Message msg = Message.builder()
+                .subject(sub)
+                .body(body)
+                .build();
+
+        final EmailContent emailContent = EmailContent.builder()
+                .simple(msg)
+                .build();
+
+        final SendEmailRequest emailRequest = SendEmailRequest.builder()
+                .destination(destination)
+                .content(emailContent)
+                .fromEmailAddress(sender)
+                .build();
+
+        try {
+            log.info("Attempting to send an email through Amazon SES ");
+            client.sendEmail(emailRequest);
+            log.info("email was sent");
+
+        } catch (SesV2Exception e) {
+            log.error("Failed to send email",e);
+        }
     }
+
 }
