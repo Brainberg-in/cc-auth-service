@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import main.java.com.mpsp.cc_auth_service.constants.AppConstants;
+import com.mpsp.cc_auth_service.constants.AppConstants;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

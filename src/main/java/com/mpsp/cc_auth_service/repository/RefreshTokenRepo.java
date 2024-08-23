@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface RefreshTokenRepo extends JpaRepository<RefreshToken, Integer> {
 
-  public void deleteByUserId(Integer userId);
+  void deleteByUserId(Integer userId);
 
-  public RefreshToken findByToken(String token);
+  RefreshToken findByToken(String token);
 
   @Query("delete from RefreshToken rt where rt.userId = ?1")
   void deleteRefreshToken(Integer userId);
