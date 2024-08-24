@@ -26,7 +26,7 @@ repositories {
 }
 
 ext {
-    openapiVersion = '2.1.0'
+    openapiVersion = '2.6.0'
     nimubs = '9.37.2'
 	set('sdkVersion',"2.27.10")
 }
@@ -38,6 +38,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	// https://mvnrepository.com/artifact/org.springframework.experimental/spring-native
+//	implementation 'org.springframework.experimental:spring-native'
 
 	implementation "com.nimbusds:nimbus-jose-jwt:${nimubs}"
 	// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-common
@@ -63,6 +65,11 @@ dependencyManagement {
 //		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
 		mavenBom "software.amazon.awssdk:bom:${sdkVersion}"
 	}
+}
+
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+	options.compilerArgs += '-parameters'
 }
 
 test {
