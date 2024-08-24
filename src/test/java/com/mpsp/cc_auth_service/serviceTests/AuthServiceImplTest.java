@@ -24,28 +24,41 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = { AuthServiceImpl.class })
 class AuthServiceImplTest {
 
-  @Mock private UserService userService;
+  @Autowired
+  private AuthServiceImpl authService;
 
-  @Mock private PasswordEncoder passwordEncoder;
+  @MockBean
+  private UserService userService;
 
-  @Mock private JwtTokenProvider jwtTokenProvider;
+  @MockBean
+  private PasswordEncoder passwordEncoder;
 
-  @Mock private LoginHistoryRepo loginHistoryRepository;
+  @MockBean
+  private JwtTokenProvider jwtTokenProvider;
 
-  @Mock private PasswordHistoryRepo passwordHistoryRepository;
+  @MockBean
+  private LoginHistoryRepo loginHistoryRepository;
 
-  @Mock private RefreshTokenRepo refreshTokenRepository;
+  @MockBean
+  private PasswordHistoryRepo passwordHistoryRepository;
 
-  @Mock private OtpService otpService;
+  @MockBean
+  private RefreshTokenRepo refreshTokenRepository;
 
-  @InjectMocks private AuthServiceImpl authService;
+  @MockBean
+  private OtpService otpService;
 
   private User user;
   private PasswordHistory passwordHistory;
@@ -73,14 +86,14 @@ class AuthServiceImplTest {
     when(userService.findByEmail(anyString())).thenReturn(user);
     when(passwordHistoryRepository.findByUserId(anyInt())).thenReturn(passwordHistory);
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-    when(jwtTokenProvider.generateToken(any(User.class), anyBoolean())).thenReturn("jwtToken");
-    when(jwtTokenProvider.generateToken(any(User.class), anyBoolean())).thenReturn("refreshToken");
+    when(jwtTokenProvider.generateToken(user, false)).thenReturn("jwtToken");
+    when(jwtTokenProvider.generateToken(user, true)).thenReturn("refreshToken");
 
-    LoginRequest loginRequest = new LoginRequest();
+    final LoginRequest loginRequest = new LoginRequest();
     loginRequest.setEmail("test@example.com");
     loginRequest.setPassword("password");
 
-    LoginResponse response = authService.login(loginRequest);
+    final LoginResponse response = authService.login(loginRequest);
 
     assertNotNull(response);
     assertEquals("jwtToken", response.getToken());
@@ -128,9 +141,8 @@ class AuthServiceImplTest {
   void testRefreshTokenSuccess() {
     when(refreshTokenRepository.findByToken(anyString())).thenReturn(refreshToken);
     when(userService.findById(anyInt())).thenReturn(user);
-    when(jwtTokenProvider.generateToken(any(User.class), anyBoolean())).thenReturn("newJwtToken");
-    when(jwtTokenProvider.generateToken(any(User.class), anyBoolean()))
-        .thenReturn("newRefreshToken");
+    when(jwtTokenProvider.generateToken(user, false)).thenReturn("newJwtToken");
+    when(jwtTokenProvider.generateToken(user, true)).thenReturn("newRefreshToken");
 
     LoginResponse response = authService.refreshToken("refreshToken");
 
