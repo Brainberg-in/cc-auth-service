@@ -31,32 +31,24 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { AuthServiceImpl.class })
+@ContextConfiguration(classes = {AuthServiceImpl.class})
 class AuthServiceImplTest {
 
-  @Autowired
-  private transient AuthServiceImpl authService;
+  @Autowired private transient AuthServiceImpl authService;
 
-  @MockBean
-  private transient UserServiceClient userService;
+  @MockBean private transient UserServiceClient userService;
 
-  @MockBean
-  private transient PasswordEncoder passwordEncoder;
+  @MockBean private transient PasswordEncoder passwordEncoder;
 
-  @MockBean
-  private transient JwtTokenProvider jwtTokenProvider;
+  @MockBean private transient JwtTokenProvider jwtTokenProvider;
 
-  @MockBean
-  private transient LoginHistoryRepo loginHistoryRepository;
+  @MockBean private transient LoginHistoryRepo loginHistoryRepository;
 
-  @MockBean
-  private transient PasswordHistoryRepo passwordHistoryRepository;
+  @MockBean private transient PasswordHistoryRepo passwordHistoryRepository;
 
-  @MockBean
-  private transient RefreshTokenRepo refreshTokenRepository;
+  @MockBean private transient RefreshTokenRepo refreshTokenRepository;
 
-  @MockBean
-  private transient OtpService otpService;
+  @MockBean private transient OtpService otpService;
 
   private User user;
   private PasswordHistory passwordHistory;

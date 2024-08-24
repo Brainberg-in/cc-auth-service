@@ -6,7 +6,6 @@ import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.OtpGenRepo;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
-
 import java.time.LocalDateTime;
 import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;

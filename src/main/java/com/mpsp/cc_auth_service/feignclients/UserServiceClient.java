@@ -11,17 +11,18 @@ import java.util.List;
 @FeignClient(name = "userServiceClient", url = "${user.service.url}")
 public interface UserServiceClient {
 
-    @GetMapping("/")
-    default User findByEmail(@RequestParam(name = "emailId") final String emailId) {
-        List<User> items = findByEmailId(emailId);
-        if (items.isEmpty()||items.get(0) == null){
-            throw new RuntimeException("No user found");
-        }
-        return items.get(0);
+  @GetMapping("/")
+  default User findByEmail(@RequestParam(name = "emailId") final String emailId) {
+    List<User> items = findByEmailId(emailId);
+    if (items.isEmpty() || items.get(0) == null) {
+      throw new RuntimeException("No user found");
     }
-    @GetMapping( value = "/")
-    List<User> findByEmailId(@RequestParam(name = "emailId") final String emailId);
+    return items.get(0);
+  }
 
-    @GetMapping(value = "/:id")
-    User findById(@PathVariable(name = "id") final Integer id);
+  @GetMapping(value = "/")
+  List<User> findByEmailId(@RequestParam(name = "emailId") final String emailId);
+
+  @GetMapping(value = "/:id")
+  User findById(@PathVariable(name = "id") final Integer id);
 }
