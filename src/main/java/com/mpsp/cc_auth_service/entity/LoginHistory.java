@@ -26,7 +26,7 @@ public class LoginHistory {
   @Column(name = "logout_time")
   private LocalDateTime logoutTime;
 
-  @Column(name = "ip_address", length = 255)
+  @Column(name = "ip_address")
   private String ipAddress;
 
   public LoginHistory(final Integer userId, final LocalDateTime now) {

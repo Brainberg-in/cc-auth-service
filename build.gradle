@@ -57,7 +57,8 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
+	// https://mvnrepository.com/artifact/com.openpojo/openpojo
+	testImplementation 'com.openpojo:openpojo:0.9.1'
 }
 
 dependencyManagement {
@@ -73,6 +74,7 @@ tasks.withType(JavaCompile) {
 }
 
 test {
+	jvmArgs '--add-opens', 'java.base/java.time=ALL-UNNAMED'
 	useJUnitPlatform()
 	testLogging {
 		events "passed", "skipped", "failed"
