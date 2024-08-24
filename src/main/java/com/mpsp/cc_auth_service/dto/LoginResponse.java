@@ -10,7 +10,9 @@ import lombok.Setter;
 public class LoginResponse {
 
   @Schema(name = "token", description = "Bearer Token")
-  @Setter private String token;
+  @Setter
+  private String token;
+
   @Schema(name = "refreshToken", description = "Bearer Token")
   private String refreshToken;
 }

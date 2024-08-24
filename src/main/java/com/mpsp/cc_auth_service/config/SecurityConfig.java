@@ -20,7 +20,12 @@ public class SecurityConfig {
             authorizeRequests ->
                 authorizeRequests
                     .requestMatchers(
-                        "/api/v1/auth/login", "/api/v1/auth/refresh-token", "/actuator/**", "/swagger-ui/**","/swagger-config/**","/v3/api-docs/**")
+                        "/api/v1/auth/login",
+                        "/api/v1/auth/refresh-token",
+                        "/actuator/**",
+                        "/swagger-ui/**",
+                        "/swagger-config/**",
+                        "/v3/api-docs/**")
                     .permitAll()
                     .requestMatchers("/api/v1/auth/**")
                     .permitAll()

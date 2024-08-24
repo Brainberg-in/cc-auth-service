@@ -10,10 +10,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.HttpHeaders;
 
-@SecurityScheme(type = SecuritySchemeType.APIKEY,name = HttpHeaders.AUTHORIZATION, in= SecuritySchemeIn.HEADER)
+@SecurityScheme(
+    type = SecuritySchemeType.APIKEY,
+    name = HttpHeaders.AUTHORIZATION,
+    in = SecuritySchemeIn.HEADER)
 @OpenAPIDefinition(
-        security = {@SecurityRequirement(name = HttpHeaders.AUTHORIZATION) },
-        info = @Info(title = "cc-auth-service", description = "Swagger documentation for cc-auth-service"))
+    security = {@SecurityRequirement(name = HttpHeaders.AUTHORIZATION)},
+    info =
+        @Info(title = "cc-auth-service", description = "Swagger documentation for cc-auth-service"))
 @SpringBootApplication
 public class CcAuthServiceApplication {
 

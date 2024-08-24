@@ -31,7 +31,8 @@ public class AuthController {
   }
 
   @PostMapping("/refresh-token")
-  public ResponseEntity<LoginResponse> refreshToken(@RequestBody @NotBlank(message = "Refresh Token is required") final String refreshToken) {
+  public ResponseEntity<LoginResponse> refreshToken(
+      @RequestBody @NotBlank(message = "Refresh Token is required") final String refreshToken) {
     LoginResponse loginResponse = authService.refreshToken(refreshToken);
     return ResponseEntity.ok(loginResponse);
   }
