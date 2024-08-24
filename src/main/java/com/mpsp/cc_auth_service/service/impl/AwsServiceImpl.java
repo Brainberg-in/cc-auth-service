@@ -44,7 +44,7 @@ public class AwsServiceImpl implements AwsService {
     try {
       log.info("Attempting to send an email through Amazon SES ");
       client.sendEmail(emailRequest);
-      log.info("email was sent");
+      log.info("email was sent to "+recipient);
 
     } catch (SesV2Exception e) {
       log.error("Failed to send email", e);
