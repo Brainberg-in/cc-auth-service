@@ -1,12 +1,11 @@
 package com.mpsp.cc_auth_service.feignclients;
 
 import com.mpsp.cc_auth_service.dto.User;
+import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
 
 @FeignClient(name = "userServiceClient", url = "${user.service.url}")
 public interface UserServiceClient {

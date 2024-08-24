@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 
 public class ErrorResponseTest {
 
-    @Test
-    public void testPojoStructureAndBehavior() {
-        final PojoClass pojoClass = PojoClassFactory.getPojoClass(ErrorResponse.class);
+  @Test
+  public void testPojoStructureAndBehavior() {
+    final PojoClass pojoClass = PojoClassFactory.getPojoClass(ErrorResponse.class);
     final Validator validator =
         ValidatorBuilder.create()
             // Add Rules to validate structure for POJO_PACKAGE
@@ -31,6 +31,6 @@ public class ErrorResponseTest {
             .with(new EqualsAndHashCodeMatchRule())
             .build();
 
-        validator.validate(pojoClass);
-    }
+    validator.validate(pojoClass);
+  }
 }
