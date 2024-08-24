@@ -17,7 +17,7 @@ import software.amazon.awssdk.services.sesv2.model.SesV2Exception;
 @Service
 public class AwsServiceImpl implements AwsService {
 
-  @Autowired private SesV2Client client;
+  @Autowired private transient SesV2Client client;
 
   public void sendEmail(
       final String sender, final String recipient, final String subject, final String bodyHTML) {

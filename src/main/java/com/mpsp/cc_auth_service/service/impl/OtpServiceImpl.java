@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class OtpServiceImpl implements OtpService {
 
-  @Autowired private UserService userService;
+  @Autowired private transient UserService userService;
 
-  @Autowired private OtpGenRepo otpGenRepo;
+  @Autowired private transient OtpGenRepo otpGenRepo;
 
-  @Autowired private AwsService awsService;
+  @Autowired private transient AwsService awsService;
 
   @Override
   public String sendOtp(String email) {

@@ -25,19 +25,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-  @Autowired private UserService userService;
+  @Autowired private transient UserService userService;
 
-  @Autowired private PasswordEncoder passwordEncoder;
+  @Autowired private transient PasswordEncoder passwordEncoder;
 
-  @Autowired private JwtTokenProvider jwtTokenProvider;
+  @Autowired private transient JwtTokenProvider jwtTokenProvider;
 
-  @Autowired private LoginHistoryRepo loginHistoryRepository;
+  @Autowired private transient LoginHistoryRepo loginHistoryRepository;
 
-  @Autowired private PasswordHistoryRepo passwordHistoryRepository;
+  @Autowired private transient PasswordHistoryRepo passwordHistoryRepository;
 
-  @Autowired private RefreshTokenRepo refreshTokenRepository;
+  @Autowired private transient RefreshTokenRepo refreshTokenRepository;
 
-  @Autowired private OtpService otpService;
+  @Autowired private transient OtpService otpService;
 
   @Override
   public LoginResponse login(final LoginRequest loginRequest) {
