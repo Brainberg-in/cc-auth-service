@@ -2,10 +2,11 @@ package com.mpsp.cc_auth_service.service.impl;
 
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.entity.OtpGen;
+import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.OtpGenRepo;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
-import com.mpsp.cc_auth_service.service.UserService;
+
 import java.time.LocalDateTime;
 import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class OtpServiceImpl implements OtpService {
 
-  @Autowired private transient UserService userService;
+  @Autowired private transient UserServiceClient userService;
 
   @Autowired private transient OtpGenRepo otpGenRepo;
 

@@ -1,4 +1,4 @@
-package com.mpsp.cc_auth_service.serviceTests;
+package com.mpsp.cc_auth_service.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,20 +10,18 @@ import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
+import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
-import com.mpsp.cc_auth_service.service.OtpService;
-import com.mpsp.cc_auth_service.service.UserService;
 import com.mpsp.cc_auth_service.service.impl.AuthServiceImpl;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -40,7 +38,7 @@ class AuthServiceImplTest {
   private transient AuthServiceImpl authService;
 
   @MockBean
-  private transient UserService userService;
+  private transient UserServiceClient userService;
 
   @MockBean
   private transient PasswordEncoder passwordEncoder;

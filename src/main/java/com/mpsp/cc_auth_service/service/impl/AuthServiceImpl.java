@@ -6,14 +6,15 @@ import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
+import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.OtpService;
-import com.mpsp.cc_auth_service.service.UserService;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.LocalDateTime;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -25,7 +26,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-  @Autowired private transient UserService userService;
+  @Autowired private transient UserServiceClient userService;
 
   @Autowired private transient PasswordEncoder passwordEncoder;
 
