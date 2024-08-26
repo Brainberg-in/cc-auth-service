@@ -33,10 +33,6 @@ public class User {
   private Long createdBy;
   private Long updatedBy;
 
-  @Schema(name = "isMfaEnabled")
-  @JsonProperty("isMfaEnabled")
-  private boolean mfaEnabled;
-
   public User(final int userId, final String email) {
     this.userId = userId;
     this.email = email;

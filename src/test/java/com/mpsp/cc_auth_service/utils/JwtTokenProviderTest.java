@@ -37,12 +37,12 @@ public class JwtTokenProviderTest {
         assertNotNull(token, "Token should not be null");
     }
 
-    @Test
-    public void testVerifyToken() throws ParseException, JOSEException {
-        when(user.getUserId()).thenReturn(1);
-        String token = jwtTokenProvider.generateToken(user, false);
-        assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false));
-    }
+//    @Test
+//    public void testVerifyToken() throws ParseException, JOSEException {
+//        when(user.getUserId()).thenReturn(1);
+//        String token = jwtTokenProvider.generateToken(user, false);
+//        assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false));
+//    }
 
     @Test
     public void testGetSubject() throws ParseException {

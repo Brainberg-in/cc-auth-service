@@ -7,12 +7,17 @@ import com.mpsp.cc_auth_service.repository.OtpGenRepo;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Random;
+
+import com.mpsp.cc_auth_service.utils.GeneratorUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class OtpServiceImpl implements OtpService {
 
   @Autowired private transient UserServiceClient userService;
@@ -28,19 +33,9 @@ public class OtpServiceImpl implements OtpService {
       throw new UsernameNotFoundException("User not found");
     }
     OtpGen otpGen = otpGenRepo.findByUserId(user.getUserId());
-    String otp = String.valueOf(new Random().nextInt(9999));
+    String otp = GeneratorUtils.generateOTP(4);
 
-    // Need to sort the dependencies part.
-    //        GoogleAuthenticator gAuth = new GoogleAuthenticator();
-    //
-    //        // Generate a secret key for the user
-    //        GoogleAuthenticatorKey key = gAuth.createCredentials();
-    //        String secret = key.getKey();
-    //
-    //        // Generate a 4-digit OTP
-    //        int otp = gAuth.getTotpPassword(secret);
-
-    awsService.sendEmail("", email, "OTP", "Your OTP is: " + otp);
+    awsService.sendEmail("sahithi.k@traitfit.com", email, "login_cc_otp",  Map.of("otp",otp));
     if (otpGen == null) {
       otpGen = new OtpGen();
       otpGen.setUserId(user.getUserId());

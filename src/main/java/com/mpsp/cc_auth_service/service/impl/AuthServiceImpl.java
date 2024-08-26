@@ -71,12 +71,9 @@ public class AuthServiceImpl implements AuthService {
     LoginHistory loginHistory =
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
 
-    String otp = null;
-    if (user.isMfaEnabled()) {
-      otpService.sendOtp(email); // Send OTP via AWS SES/SNS
-    }
+    otpService.sendOtp(email); // Send OTP via AWS SES/SNS
 
-    return new LoginResponse(jwtToken, refreshToken, user.isMfaEnabled(), false);
+    return new LoginResponse(jwtToken, refreshToken, true, false);
   }
 
   @Override
@@ -101,6 +98,7 @@ public class AuthServiceImpl implements AuthService {
     jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
 
     // Generate new JWT token
+    log.info("User ID: {}", storedToken.getUserId());
     User user = userService.findById(storedToken.getUserId());
     if (user == null) {
       throw new UsernameNotFoundException("User not found");
@@ -112,7 +110,7 @@ public class AuthServiceImpl implements AuthService {
     // Update the refresh token in the repository
     updateRefreshToken(user.getUserId(), newRefreshToken);
 
-    return new LoginResponse(newJwtToken, newRefreshToken, user.isMfaEnabled(),false);
+    return new LoginResponse(newJwtToken, newRefreshToken, true,false);
   }
 
   private void saveRefreshToken(Integer userId, String refreshToken) {
