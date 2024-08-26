@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:5",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:14",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
-            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:nishant-test",
+            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
@@ -47,25 +47,16 @@
                     "awslogs-create-group": "true",
                     "awslogs-region": "ap-south-1",
                     "awslogs-stream-prefix": "ecs"
-                }
-            },
-            "healthCheck": {
-                "command": [
-                    "CMD-SHELL",
-                    "curl -f http://localhost:8080/health || exit 1"
-                ],
-                "interval": 30,
-                "timeout": 5,
-                "retries": 3,
-                "startPeriod": 60
+                },
+                "secretOptions": []
             },
             "systemControls": []
         }
     ],
     "family": "auth-service-task-definition",
-    "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutioner-notificationService",
+    "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 5,
+    "revision": 14,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -80,9 +71,6 @@
         },
         {
             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-        },
-        {
-            "name": "ecs.capability.container-health-check"
         },
         {
             "name": "ecs.capability.execution-role-ecr-pull"
@@ -105,13 +93,13 @@
     "requiresCompatibilities": [
         "FARGATE"
     ],
-    "cpu": "1024",
-    "memory": "3072",
+    "cpu": "512",
+    "memory": "1024",
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-08-23T08:17:38.273Z",
-    "registeredBy": "arn:aws:iam::567347231314:user/nishant@traitfit.com",
+    "registeredAt": "2024-08-26T14:39:57.498Z",
+    "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
     "tags": []
 }
