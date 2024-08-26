@@ -91,15 +91,14 @@ public class AuthServiceImpl implements AuthService {
   public LoginResponse refreshToken(final String refreshToken) throws ParseException {
     // Validate refresh token
     //int userId = Integer.parseInt(jwtTokenProvider.getSubject(refreshToken));
+    log.info("Refresh token: {}", refreshToken);
     RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken);
     log.info("Stored token: {}", storedToken);
     if (storedToken == null) {
       throw new BadCredentialsException("Invalid refresh token");
     }
 
-    if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-      throw new RuntimeException("Refresh token expired");
-    }
+    jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
 
     // Generate new JWT token
     User user = userService.findById(storedToken.getUserId());
