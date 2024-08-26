@@ -36,7 +36,7 @@ public class JwtTokenProvider {
 
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder()
-            .subject(user.getEmail())
+            .subject(String.valueOf(user.getUserId()))
             // .claim("role", role)
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
             .issueTime(new Date())

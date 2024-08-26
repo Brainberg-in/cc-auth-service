@@ -15,4 +15,9 @@ public class LoginResponse {
 
   @Schema(name = "refreshToken", description = "Bearer Token")
   private String refreshToken;
+
+  @Setter
+  private boolean isMfaEnabled;
+
+  private boolean isFirstLogin;
 }

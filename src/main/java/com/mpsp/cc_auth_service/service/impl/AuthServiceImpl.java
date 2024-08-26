@@ -13,6 +13,8 @@ import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
       throw new UsernameNotFoundException("User not found");
     }
 
-    System.out.println(user.getUserId());
+    log.info("User found: {}", user);
 
     PasswordHistory pw = passwordHistoryRepository.findByUserId(user.getUserId());
     System.out.println(pw.getCurrentPassword());
@@ -64,9 +66,9 @@ public class AuthServiceImpl implements AuthService {
     final String refreshToken = jwtTokenProvider.generateToken(user, true);
     saveRefreshToken(user.getUserId(), refreshToken);
 
-    System.out.println("Login successful" + jwtToken);
 
     // Create records in the history tables
+    LoginHistory loginHistory =
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
 
     String otp = null;
@@ -74,22 +76,25 @@ public class AuthServiceImpl implements AuthService {
       otpService.sendOtp(email); // Send OTP via AWS SES/SNS
     }
 
-    return new LoginResponse(jwtToken, refreshToken);
+    return new LoginResponse(jwtToken, refreshToken, user.isMfaEnabled(), false);
   }
 
   @Override
-  public void logout(final Integer userId) {
+  public void logout(String token) throws ParseException {
+    int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     refreshTokenRepository.deleteRefreshToken(userId);
-    LoginHistory loginHistory = loginHistoryRepository.findByUserId(userId);
+    LoginHistory loginHistory = loginHistoryRepository.findByUserLatestLoginTime(userId);
     loginHistory.setLogoutTime(LocalDateTime.now());
     loginHistoryRepository.saveAndFlush(loginHistory);
   }
 
-  public LoginResponse refreshToken(final String refreshToken) {
+  public LoginResponse refreshToken(final String refreshToken) throws ParseException {
     // Validate refresh token
+    //int userId = Integer.parseInt(jwtTokenProvider.getSubject(refreshToken));
     RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken);
+    log.info("Stored token: {}", storedToken);
     if (storedToken == null) {
-      throw new RuntimeException("Invalid refresh token");
+      throw new BadCredentialsException("Invalid refresh token");
     }
 
     if (storedToken.getExpiresAt().isBefore(LocalDateTime.now())) {
@@ -108,11 +113,14 @@ public class AuthServiceImpl implements AuthService {
     // Update the refresh token in the repository
     updateRefreshToken(user.getUserId(), newRefreshToken);
 
-    return new LoginResponse(newJwtToken, newRefreshToken);
+    return new LoginResponse(newJwtToken, newRefreshToken, user.isMfaEnabled(),false);
   }
 
   private void saveRefreshToken(Integer userId, String refreshToken) {
-    RefreshToken token = new RefreshToken();
+    RefreshToken token = refreshTokenRepository.findByToken(refreshToken);
+    if(token==null){
+      token = new RefreshToken();
+    }
     token.setUserId(userId);
     token.setToken(refreshToken);
     token.setExpiresAt(LocalDateTime.now().plusDays(1));

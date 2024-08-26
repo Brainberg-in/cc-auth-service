@@ -16,6 +16,8 @@ import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.service.impl.AuthServiceImpl;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -113,20 +115,20 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testLogout() {
+  void testLogout() throws ParseException {
     LoginHistory loginHistory = new LoginHistory();
     loginHistory.setUserId(1);
 
     when(loginHistoryRepository.findByUserId(anyInt())).thenReturn(loginHistory);
 
-    authService.logout(1);
+    authService.logout("toekn");
 
     verify(refreshTokenRepository, times(1)).deleteRefreshToken(anyInt());
     verify(loginHistoryRepository, times(1)).saveAndFlush(any(LoginHistory.class));
   }
 
   @Test
-  void testRefreshTokenSuccess() {
+  void testRefreshTokenSuccess() throws ParseException {
     when(refreshTokenRepository.findByToken(anyString())).thenReturn(refreshToken);
     when(userService.findById(anyInt())).thenReturn(user);
     when(jwtTokenProvider.generateToken(user, false)).thenReturn("newJwtToken");

@@ -1,7 +1,9 @@
 package com.mpsp.cc_auth_service.repository;
 
 import com.mpsp.cc_auth_service.entity.RefreshToken;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 public interface RefreshTokenRepo extends JpaRepository<RefreshToken, Integer> {
@@ -11,5 +13,9 @@ public interface RefreshTokenRepo extends JpaRepository<RefreshToken, Integer> {
   RefreshToken findByToken(String token);
 
   @Query("delete from RefreshToken rt where rt.userId = ?1")
+  @Transactional
+  @Modifying
   void deleteRefreshToken(Integer userId);
+
+  RefreshToken findByUserId(Integer userId);
 }
