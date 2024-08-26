@@ -1,10 +1,7 @@
 package com.mpsp.cc_auth_service.utils;
 
-import com.mpsp.cc_auth_service.constants.AppConstants;
 import com.mpsp.cc_auth_service.dto.User;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jwt.JWTClaimsSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,36 +9,32 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.text.ParseException;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {JwtTokenProvider.class})
+@SpringBootTest
 public class JwtTokenProviderTest {
 
-    @InjectMocks
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
     private User user;
 
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        ReflectionTestUtils.setField(jwtTokenProvider, "jwtSecret", "c29tZXNlY3JldGtleTEyM2Zvcmp3dGJhc2VzY3JldDEyMzQ1Njc4OTA=");
-        ReflectionTestUtils.setField(jwtTokenProvider, "jwtExpiration", 3600000L);
-        ReflectionTestUtils.setField(jwtTokenProvider, "refreshTokenExpiration", 7200000L);
-    }
-
     @Test
     public void testGenerateToken() {
         when(user.getUserId()).thenReturn(1);
         String token = jwtTokenProvider.generateToken(user, false);
-        assertNotNull(token);
+        assertNotNull(token, "Token should not be null");
     }
 
     @Test
@@ -56,6 +49,6 @@ public class JwtTokenProviderTest {
         when(user.getUserId()).thenReturn(1);
         String token = jwtTokenProvider.generateToken(user, false);
         String subject = jwtTokenProvider.getSubject(token);
-        assertEquals("1", subject);
+        assertEquals("1", subject, "Subject should match the user ID");
     }
 }

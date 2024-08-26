@@ -72,7 +72,7 @@ public class JwtTokenProvider {
                               .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
                               .build(),
                       new HashSet<>(List.of("exp")));
-
+      log.info("verification is {}",jwsObject.verify(verifier));
       if (jwsObject.verify(verifier)) {
         try {
           claimsVerifier.verify(JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject()), null);
@@ -85,8 +85,9 @@ public class JwtTokenProvider {
             throw new GlobalExceptionHandler.RefreshTokenException("Token expired");
           } else throw new GlobalExceptionHandler.RefreshTokenException("Invalid issuer or subject");
         }
+      } else {
+        throw new GlobalExceptionHandler.RefreshTokenException("Invalid Signature");
       }
-      throw new GlobalExceptionHandler.RefreshTokenException("Invalid Signature");
     }catch (JOSEException | ParseException e){
       log.error("Failed to verify token", e);
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid Token");
