@@ -32,32 +32,38 @@ ext {
 	set('sdkVersion',"2.27.10")
 }
 dependencies {
+	// Spring Boot Starters
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	// Spring Cloud
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
+	// nimbus-jose-jwt library
 	implementation "com.nimbusds:nimbus-jose-jwt:${nimubs}"
-	// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-common
+
+	// Springdoc OpenAPI
 	implementation "org.springdoc:springdoc-openapi-starter-common:${openapiVersion}"
-	// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openapiVersion}"
 
-
+	// AWS SDK for SESv2
 	implementation 'software.amazon.awssdk:sesv2'
 
+	// Lombok
 	compileOnly("org.projectlombok:lombok")
-
-	runtimeOnly("com.mysql:mysql-connector-j")
 	annotationProcessor("org.projectlombok:lombok")
+
+	// MySQL Connector
+	runtimeOnly("com.mysql:mysql-connector-j")
+
+	// Testing dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-	// https://mvnrepository.com/artifact/com.openpojo/openpojo
 	testImplementation 'com.openpojo:openpojo:0.9.1'
 }
 
