@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:14",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:19",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
@@ -18,28 +18,30 @@
             "essential": true,
             "environment": [
                 {
-                    "name": "DB_NAME",
-                    "value": "auth"
-                },
-                {
-                    "name": "DB_HOST",
-                    "value": "mpsp-dev1.c46aiypwqmbl.ap-south-1.rds.amazonaws.com"
-                },
-                {
                     "name": "DB_PORT",
                     "value": "3306"
                 },
                 {
-                    "name": "DB_USER",
-                    "value": "admin"
+                    "name": "DB_NAME",
+                    "value": "auth"
                 },
                 {
-                    "name": "DB_PASSWORD",
-                    "value": "fatrandy11"
+                    "name": "DB_USER",
+                    "value": "admin"
                 }
             ],
             "mountPoints": [],
             "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "DB_HOST",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:host::"
+                },
+                {
+                    "name": "DB_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:password::"
+                }
+            ],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -54,9 +56,9 @@
         }
     ],
     "family": "auth-service-task-definition",
-    "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 14,
+    "revision": 19,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -71,6 +73,9 @@
         },
         {
             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "ecs.capability.secrets.asm.environment-variables"
         },
         {
             "name": "ecs.capability.execution-role-ecr-pull"
@@ -99,7 +104,7 @@
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-08-26T14:39:57.498Z",
+    "registeredAt": "2024-08-27T08:40:31.992Z",
     "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
     "tags": []
 }
