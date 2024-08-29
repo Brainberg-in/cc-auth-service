@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
+import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
@@ -15,6 +16,7 @@ import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.service.impl.AuthServiceImpl;
+import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 
 import java.text.ParseException;
@@ -49,6 +51,8 @@ class AuthServiceImplTest {
   @MockBean private transient RefreshTokenRepo refreshTokenRepository;
 
   @MockBean private transient OtpService otpService;
+
+  @MockBean private transient AwsService awsService;
 
   private User user;
   private PasswordHistory passwordHistory;
@@ -154,5 +158,50 @@ class AuthServiceImplTest {
     when(refreshTokenRepository.findByToken(anyString())).thenReturn(refreshToken);
 
     assertThrows(RuntimeException.class, () -> authService.refreshToken("expiredToken"));
+  }
+  @Test
+  public void testSendResetPasswordEmail_UserNotFound() {
+    when(userService.findByEmail(anyString())).thenReturn(null);
+    assertThrows(UsernameNotFoundException.class, () -> authService.sendResetPasswordEmail("test@example.com"));
+  }
+
+  @Test
+  public void testSendResetPasswordEmail_Success() {
+    User user = new User();
+    user.setUserId(1);
+    when(userService.findByEmail(anyString())).thenReturn(user);
+    doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
+
+    authService.sendResetPasswordEmail("test@example.com");
+
+    verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
+  }
+
+  @Test
+  public void testResetPassword_InvalidToken() throws ParseException {
+    ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+    resetPasswordRequest.setPassword("newPassword");
+
+    when(jwtTokenProvider.getSubject(anyString())).thenThrow(ParseException.class);
+
+    assertThrows(GlobalExceptionHandler.RefreshTokenException.class, () -> authService.resetPassword(resetPasswordRequest, "invalidToken"));
+  }
+
+  @Test
+  public void testResetPassword_Success() throws ParseException {
+    ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+    resetPasswordRequest.setPassword("newPassword");
+
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setUserId(1);
+    passwordHistory.setCurrentPassword("encodedPassword");
+
+    when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
+    when(passwordHistoryRepository.findByUserId(anyInt())).thenReturn(passwordHistory);
+    when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
+
+    authService.resetPassword(resetPasswordRequest, "validToken");
+
+    verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
   }
 }

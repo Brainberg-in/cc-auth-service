@@ -73,10 +73,7 @@ public class OtpServiceImpl implements OtpService {
     if (user == null) {
       throw new UsernameNotFoundException("User not found");
     }
-    OtpGen otpGen = otpGenRepo.findByUserId(user.getUserId());
-    String otp = sendOtp(email);
-    otpGen.setModifiedAt(LocalDateTime.now());
-    otpGen.setOtp(otp);
-    otpGenRepo.saveAndFlush(otpGen);
+    sendOtp(email);
   }
+
 }

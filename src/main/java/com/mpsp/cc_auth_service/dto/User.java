@@ -32,6 +32,16 @@ public class User {
   private Date updatedAt;
   private Long createdBy;
   private Long updatedBy;
+  private boolean isMfaEnabled;
+  private boolean isFirstLogin;
+  private UserRole userRole;
+  public enum UserRole{
+      ADMIN,
+              PRINCIPAL,
+              TEACHER,
+              STUDENT,
+               POC
+  }
 
   public User(final int userId, final String email) {
     this.userId = userId;

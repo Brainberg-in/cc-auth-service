@@ -2,15 +2,19 @@ package com.mpsp.cc_auth_service.controllers;
 
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
+import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -25,15 +29,16 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<String> logout(HttpServletRequest request) throws ParseException {
+  public ResponseEntity<Object> logout(HttpServletRequest request) throws ParseException {
     String authorizationHeader = request.getHeader("Authorization");
 
-    // Check if the Authorization header is present and starts with "Bearer "
     if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-      // Extract the token
       String token = authorizationHeader.substring(7);
       authService.logout(token);
-      return ResponseEntity.ok("Logout successful");
+      Map<String, String> response = new HashMap<>();
+      response.put("message", "Logout successfull");
+      response.put("status", "success");
+      return ResponseEntity.ok(response);
     }
     return ResponseEntity.badRequest().body("Invalid Authorization");
   }
@@ -42,5 +47,27 @@ public class AuthController {
       @RequestHeader final String refreshToken) throws ParseException {
     LoginResponse loginResponse = authService.refreshToken(refreshToken);
     return ResponseEntity.ok(loginResponse);
+  }
+  @PostMapping("/forgot-password")
+  public ResponseEntity<Object> forgotPassword(@RequestBody Map<String, String> request) {
+    String email = request.get("email");
+
+    authService.sendResetPasswordEmail(email);
+    Map<String, String> response = new HashMap<>();
+    response.put("message", "Reset password email sent.");
+    response.put("status", "success");
+
+    return ResponseEntity.ok(response);
+
+  }
+
+  @PostMapping("/reset-password")
+  public ResponseEntity<Object> resetPassword(@RequestBody @NotBlank ResetPasswordRequest resetPasswordRequest, @RequestHeader("Authorization") String token) {
+    try {
+        authService.resetPassword(resetPasswordRequest,token);
+        return ResponseEntity.ok(Map.of("message","Password reset successfully."));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token.");
+    }
   }
 }

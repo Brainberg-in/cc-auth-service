@@ -1,7 +1,9 @@
 package com.mpsp.cc_auth_service.service.impl;
 
+import com.mpsp.cc_auth_service.config.AwsSesConfig;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
+import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
@@ -11,13 +13,19 @@ import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.service.AuthService;
+import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
+import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.support.BeanDefinitionDsl;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,6 +49,11 @@ public class AuthServiceImpl implements AuthService {
 
   @Autowired private transient OtpService otpService;
 
+  @Autowired private transient AwsService awsService;
+
+  @Value("${aws.ses.sender}")
+  private String senderEmail;
+
   @Override
   public LoginResponse login(final LoginRequest loginRequest) {
     final String email = loginRequest.getEmail();
@@ -51,11 +64,13 @@ public class AuthServiceImpl implements AuthService {
     if (user == null) {
       throw new UsernameNotFoundException("User not found");
     }
+    user.setMfaEnabled(true);
+    user.setFirstLogin(false);
+    user.setUserRole(User.UserRole.PRINCIPAL);
 
     log.info("User found: {}", user);
 
     PasswordHistory pw = passwordHistoryRepository.findByUserId(user.getUserId());
-    System.out.println(pw.getCurrentPassword());
 
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
       throw new BadCredentialsException("Invalid password");
@@ -70,8 +85,10 @@ public class AuthServiceImpl implements AuthService {
     // Create records in the history tables
     LoginHistory loginHistory =
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
-
-    otpService.sendOtp(email); // Send OTP via AWS SES/SNS
+    if(user.isMfaEnabled()){
+      otpService.sendOtp(email);
+    }
+   // Send OTP via AWS SES/SNS
 
     return new LoginResponse(jwtToken, refreshToken, true, false);
   }
@@ -111,6 +128,32 @@ public class AuthServiceImpl implements AuthService {
     updateRefreshToken(user.getUserId(), newRefreshToken);
 
     return new LoginResponse(newJwtToken, newRefreshToken, true,false);
+  }
+
+  @Override
+  public void sendResetPasswordEmail(String email) {
+    User user = userService.findByEmail(email);
+    if (user == null) {
+      throw new UsernameNotFoundException("User not found");
+    }
+    awsService.sendEmail(senderEmail, email, "reset_password", Map.of("link","http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
+  }
+
+  @Override
+  public void resetPassword(ResetPasswordRequest resetPasswordRequest, String token) {
+    PasswordHistory passwordHistory;
+    int userId;
+      try {
+          userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+          passwordHistory = passwordHistoryRepository.findByUserId(userId);
+      } catch (ParseException e) {
+          throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
+      }
+      if(passwordHistory!=null) {
+        passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
+        passwordHistory.setUserId(userId);
+        passwordHistoryRepository.save(passwordHistory);
+      }
   }
 
   private void saveRefreshToken(Integer userId, String refreshToken) {
