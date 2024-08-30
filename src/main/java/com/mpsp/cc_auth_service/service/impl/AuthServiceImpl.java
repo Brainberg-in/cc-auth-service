@@ -64,9 +64,6 @@ public class AuthServiceImpl implements AuthService {
     if (user == null) {
       throw new UsernameNotFoundException("User not found");
     }
-
-    user.setMfaEnabled(false);
-    user.setFirstLogin(true);
     user.setUserRole(User.UserRole.PRINCIPAL);
 
     log.info("User found: {}", user);
@@ -137,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
     if (user == null) {
       throw new UsernameNotFoundException("User not found");
     }
-    awsService.sendEmail(senderEmail, email, "reset_password", Map.of("link","http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
+    awsService.sendEmail(senderEmail, email, "cc_reset_password", Map.of("link","http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
   }
 
   @Override

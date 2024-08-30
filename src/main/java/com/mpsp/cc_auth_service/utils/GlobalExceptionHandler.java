@@ -3,6 +3,7 @@ package com.mpsp.cc_auth_service.utils;
 import com.mpsp.cc_auth_service.error.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -20,7 +21,7 @@ public class GlobalExceptionHandler {
   // Handle Refresh Token Exception
   @ExceptionHandler(RefreshTokenException.class)
   public ResponseEntity<ErrorResponse> handleRefreshTokenException(RefreshTokenException ex) {
-    ErrorResponse errorResponse = new ErrorResponse("Invalid Refresh Token", ex.getMessage());
+    ErrorResponse errorResponse = new ErrorResponse("Invalid Token", ex.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
@@ -28,6 +29,11 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
     ErrorResponse errorResponse = new ErrorResponse("Internal Server Error", ex.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  public ResponseEntity<ErrorResponse> handleSesV2Exception(Exception e){
+    ErrorResponse errorResponse = new ErrorResponse("Email not sent", e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
@@ -44,4 +50,10 @@ public class GlobalExceptionHandler {
       super(message);
     }
   }
+
+  public static class SesV2Exception extends RuntimeException {
+    public SesV2Exception(String message) {super(message); }
+  }
+
+
 }

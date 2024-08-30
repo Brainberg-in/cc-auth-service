@@ -1,6 +1,7 @@
 package com.mpsp.cc_auth_service.service.impl;
 
 import com.mpsp.cc_auth_service.service.AwsService;
+import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.ObjectMapperUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +42,7 @@ public class AwsServiceImpl implements AwsService {
             log.info("email was sent to " + recipient);
 
         } catch (SesV2Exception e) {
-            log.error("Failed to send email");
+            throw new GlobalExceptionHandler.SesV2Exception("Email not sent for template "+templateName + " to "+recipient);
         }
     }
 }

@@ -58,9 +58,12 @@ public class JwtTokenProvider {
     return jwsObject.serialize();
   }
 
-  public void verifyToken(final String token, final String userId, final boolean isRefreshToken)
+  public void verifyToken(String token, final String userId, final boolean isRefreshToken)
   {
     try {
+        if(token.startsWith("Bearer ")){
+            token = token.substring(7);
+        }
       final JWSObject jwsObject = JWSObject.parse(token);
       final JWSVerifier verifier = new MACVerifier(jwtSecret);
       final DefaultJWTClaimsVerifier<?> claimsVerifier =
