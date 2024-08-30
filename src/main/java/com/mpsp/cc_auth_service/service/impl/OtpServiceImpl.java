@@ -6,11 +6,16 @@ import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.OtpGenRepo;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
+
+import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import com.mpsp.cc_auth_service.utils.GeneratorUtils;
+import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
+import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,6 +30,8 @@ public class OtpServiceImpl implements OtpService {
   @Autowired private transient OtpGenRepo otpGenRepo;
 
   @Autowired private transient AwsService awsService;
+
+  @Autowired private transient JwtTokenProvider jwtTokenProvider;
 
   @Override
   public String sendOtp(String email) {
@@ -52,19 +59,28 @@ public class OtpServiceImpl implements OtpService {
   }
 
   @Override
-  public boolean verifyOtp(String email, String otp) {
-    User user = userService.findByEmail(email);
-    if (user == null) {
+  public boolean verifyOtp(String token, String otp) {
+    int userId;
+    try {
+      log.info("token: {}", token);
+      userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+    }catch (ParseException e){
+      throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
+    }
+    if (userId == 0) {
       throw new UsernameNotFoundException("User not found");
     }
-    OtpGen otpGen = otpGenRepo.findByUserId(user.getUserId());
+    OtpGen otpGen = otpGenRepo.findByUserId(userId);
     if (otpGen == null) {
       return false;
     }
     if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
       throw new RuntimeException("OTP expired");
     }
-    return otpGen.getOtp().equals(otp);
+    if(otpGen.getOtp().equals(otp)){
+        return true;
+    }
+    return false;
   }
 
   @Override

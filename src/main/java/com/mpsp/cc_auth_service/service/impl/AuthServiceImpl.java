@@ -64,8 +64,9 @@ public class AuthServiceImpl implements AuthService {
     if (user == null) {
       throw new UsernameNotFoundException("User not found");
     }
-    user.setMfaEnabled(true);
-    user.setFirstLogin(false);
+
+    user.setMfaEnabled(false);
+    user.setFirstLogin(true);
     user.setUserRole(User.UserRole.PRINCIPAL);
 
     log.info("User found: {}", user);
@@ -81,16 +82,20 @@ public class AuthServiceImpl implements AuthService {
     final String refreshToken = jwtTokenProvider.generateToken(user, true);
     saveRefreshToken(user.getUserId(), refreshToken);
 
-
-    // Create records in the history tables
-    LoginHistory loginHistory =
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
+    if(user.isFirstLogin()) {
+      try {
+        user.setFirstLogin(false);
+        userService.updateUser(user.getUserId(), user);
+      }catch (Exception e){
+        log.error("Error updating user", e);
+      }
+    }
     if(user.isMfaEnabled()){
       otpService.sendOtp(email);
     }
-   // Send OTP via AWS SES/SNS
 
-    return new LoginResponse(jwtToken, refreshToken, true, false);
+    return new LoginResponse(jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), User.UserRole.PRINCIPAL);
   }
 
   @Override
@@ -102,9 +107,7 @@ public class AuthServiceImpl implements AuthService {
     loginHistoryRepository.saveAndFlush(loginHistory);
   }
 
-  public LoginResponse refreshToken(final String refreshToken) throws ParseException {
-    // Validate refresh token
-    //int userId = Integer.parseInt(jwtTokenProvider.getSubject(refreshToken));
+  public LoginResponse refreshToken(final String refreshToken){
     log.info("Refresh token: {}", refreshToken);
     RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken);
     log.info("Stored token: {}", storedToken);
@@ -123,11 +126,9 @@ public class AuthServiceImpl implements AuthService {
 
     String newJwtToken = jwtTokenProvider.generateToken(user, false);
     String newRefreshToken = jwtTokenProvider.generateToken(user, true);
-
-    // Update the refresh token in the repository
+    log.info("New refresh token: {}", newRefreshToken);
     updateRefreshToken(user.getUserId(), newRefreshToken);
-
-    return new LoginResponse(newJwtToken, newRefreshToken, true,false);
+    return new LoginResponse(newJwtToken, newRefreshToken, true,false, User.UserRole.PRINCIPAL);
   }
 
   @Override
@@ -144,7 +145,11 @@ public class AuthServiceImpl implements AuthService {
     PasswordHistory passwordHistory;
     int userId;
       try {
+          log.info("Token: {}", token);
+          log.info(jwtTokenProvider.getSubject(token));
           userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+          log.info("User ID: {}", userId);
+          jwtTokenProvider.verifyToken(token, String.valueOf(userId), false);
           passwordHistory = passwordHistoryRepository.findByUserId(userId);
       } catch (ParseException e) {
           throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
@@ -169,7 +174,6 @@ public class AuthServiceImpl implements AuthService {
   }
 
   private void updateRefreshToken(Integer userId, String newRefreshToken) {
-    refreshTokenRepository.deleteByUserId(userId);
-    saveRefreshToken(userId, newRefreshToken);
+    refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
   }
 }

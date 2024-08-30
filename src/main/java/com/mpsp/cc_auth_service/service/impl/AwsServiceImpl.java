@@ -18,7 +18,7 @@ public class AwsServiceImpl implements AwsService {
     private transient SesV2Client client;
 
     public void sendEmail(final String sender, final String recipient, final String templateName, final Map<String, String> objectMap) {
-        final Destination destination = Destination.builder().toAddresses("bhargav@traitfit.com").build();
+        final Destination destination = Destination.builder().toAddresses("sahithi.k@traitfit.com").build();
 
         final EmailContent emailContent = EmailContent.builder()
                 .template(Template.builder()

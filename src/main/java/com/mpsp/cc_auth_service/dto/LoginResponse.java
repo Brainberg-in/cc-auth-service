@@ -21,6 +21,10 @@ public class LoginResponse {
   @JsonProperty("isMfaEnabled")
   private boolean isMfaEnabled;
 
+  @Setter
   @JsonProperty("isFirstLogin")
   private boolean isFirstLogin;
+
+  @JsonProperty("userRole")
+  private User.UserRole userRole;
 }

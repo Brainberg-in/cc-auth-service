@@ -7,6 +7,7 @@ import com.mpsp.cc_auth_service.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Slf4j
 public class AuthController {
 
   @Autowired private AuthService authService;
@@ -62,8 +64,9 @@ public class AuthController {
   }
 
   @PostMapping("/reset-password")
-  public ResponseEntity<Object> resetPassword(@RequestBody @NotBlank ResetPasswordRequest resetPasswordRequest, @RequestHeader("Authorization") String token) {
+  public ResponseEntity<Object> resetPassword(@RequestBody @Valid ResetPasswordRequest resetPasswordRequest, @RequestHeader("Authorization") String token) {
     try {
+        log.info("inside auth controller, inside reset password method");
         authService.resetPassword(resetPasswordRequest,token);
         return ResponseEntity.ok(Map.of("message","Password reset successfully."));
     } catch (Exception e) {

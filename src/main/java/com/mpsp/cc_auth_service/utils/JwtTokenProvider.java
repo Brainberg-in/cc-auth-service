@@ -39,7 +39,6 @@ public class JwtTokenProvider {
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder()
             .subject(String.valueOf(user.getUserId()))
-            // .claim("role", role)
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
             .issueTime(new Date())
             .expirationTime(
@@ -79,8 +78,6 @@ public class JwtTokenProvider {
         } catch (BadJWTException e) {
           log.error("Token Verification failed", e);
           if (e.getMessage().trim().equals("Expired JWT")) {
-            // LoggerUtility.error(UUID.randomUUID().toString(), e.getMessage(), e, null,
-            // e);
             log.error(e.getMessage());
             throw new GlobalExceptionHandler.RefreshTokenException("Token expired");
           } else throw new GlobalExceptionHandler.RefreshTokenException("Invalid issuer or subject");
@@ -94,7 +91,10 @@ public class JwtTokenProvider {
     }
   }
 
-  public String getSubject(final String token) throws ParseException {
+  public String getSubject(String token) throws ParseException {
+    if(token.startsWith("Bearer ")){
+        token = token.substring(7);
+    }
     final JWSObject jwsObject = JWSObject.parse(token);
 
     final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
