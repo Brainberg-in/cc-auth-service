@@ -18,21 +18,25 @@
             "essential": true,
             "environment": [
                 {
-                    "name": "DB_PORT",
-                    "value": "3306"
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "dev"
                 },
                 {
                     "name": "DB_NAME",
                     "value": "auth"
-                },
-                {
-                    "name": "DB_USER",
-                    "value": "admin"
                 }
             ],
             "mountPoints": [],
             "volumesFrom": [],
             "secrets": [
+                {
+                    "name": "DB_USER",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:username::"
+                },
+                {
+                    "name": "DB_PORT",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:port::"
+                },
                 {
                     "name": "DB_HOST",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:host::"
@@ -40,6 +44,10 @@
                 {
                     "name": "DB_PASSWORD",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:password::"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
                 }
             ],
             "logConfiguration": {
