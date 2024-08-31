@@ -9,46 +9,49 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.text.ParseException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {JwtTokenProvider.class})
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class JwtTokenProviderTest {
 
-    @Autowired
+    @InjectMocks
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
     private User user;
 
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        ReflectionTestUtils.setField(jwtTokenProvider, "jwtSecret", "c29tZXNlY3JldGtleTEyM2Zvcmp3dGJhc2VzY3JldDEyMzQ1Njc4OTA=");
+        ReflectionTestUtils.setField(jwtTokenProvider, "jwtExpiration", 3600000L);
+        ReflectionTestUtils.setField(jwtTokenProvider, "refreshTokenExpiration", 7200000L);
+    }
+
     @Test
     public void testGenerateToken() {
         when(user.getUserId()).thenReturn(1);
         String token = jwtTokenProvider.generateToken(user, false);
-        assertNotNull(token, "Token should not be null");
+        assertNotNull(token);
     }
 
-//    @Test
-//    public void testVerifyToken() throws ParseException, JOSEException {
-//        when(user.getUserId()).thenReturn(1);
-//        String token = jwtTokenProvider.generateToken(user, false);
-//        assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false));
-//    }
+    @Test
+    public void testVerifyToken() throws ParseException, JOSEException {
+        when(user.getUserId()).thenReturn(1);
+        String token = jwtTokenProvider.generateToken(user, false);
+        assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false));
+    }
 
     @Test
     public void testGetSubject() throws ParseException {
         when(user.getUserId()).thenReturn(1);
         String token = jwtTokenProvider.generateToken(user, false);
         String subject = jwtTokenProvider.getSubject(token);
-        assertEquals("1", subject, "Subject should match the user ID");
+        assertEquals("1", subject);
     }
 }
