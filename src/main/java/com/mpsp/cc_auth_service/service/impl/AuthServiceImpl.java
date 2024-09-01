@@ -1,5 +1,6 @@
 package com.mpsp.cc_auth_service.service.impl;
 
+import com.mpsp.cc_auth_service.constants.UserRole;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
@@ -61,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
 
     // Validate user and password
     final User user = userService.findByEmail(email);
-    user.setUserRole(User.UserRole.PRINCIPAL);
+    user.setUserRole(UserRole.PRINCIPAL);
 
     log.info("User found: {}", user);
 
@@ -95,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), User.UserRole.PRINCIPAL);
+        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), UserRole.PRINCIPAL);
   }
 
   @Override
@@ -132,7 +133,7 @@ public class AuthServiceImpl implements AuthService {
     final String newRefreshToken = jwtTokenProvider.generateToken(user, true);
     log.info("New refresh token: {}", newRefreshToken);
     updateRefreshToken(user.getUserId(), newRefreshToken);
-    return new LoginResponse(newJwtToken, newRefreshToken, true, false, User.UserRole.PRINCIPAL);
+    return new LoginResponse(newJwtToken, newRefreshToken, true, false, UserRole.PRINCIPAL);
   }
 
   @Override
