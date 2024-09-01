@@ -22,6 +22,7 @@ import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -29,8 +30,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -81,7 +83,7 @@ class AuthServiceImplTest {
   @Test
   void testLoginSuccess() {
     when(userService.findByEmail(anyString())).thenReturn(user);
-    when(passwordHistoryRepository.findByUserId(anyInt())).thenReturn(passwordHistory);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
     when(jwtTokenProvider.generateToken(user, false)).thenReturn("jwtToken");
     when(jwtTokenProvider.generateToken(user, true)).thenReturn("refreshToken");
@@ -101,7 +103,7 @@ class AuthServiceImplTest {
   @Test
   void testLoginInvalidPassword() {
     when(userService.findByEmail(anyString())).thenReturn(user);
-    when(passwordHistoryRepository.findByUserId(anyInt())).thenReturn(passwordHistory);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
     LoginRequest loginRequest = new LoginRequest();
@@ -186,7 +188,7 @@ class AuthServiceImplTest {
     passwordHistory.setCurrentPassword("encodedPassword");
 
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
-    when(passwordHistoryRepository.findByUserId(anyInt())).thenReturn(passwordHistory);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
 
     authService.resetPassword(resetPasswordRequest, "validToken");

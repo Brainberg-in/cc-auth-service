@@ -24,9 +24,14 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -60,6 +65,7 @@ public class AuthServiceImpl implements AuthService {
   private String senderEmail;
 
   @Override
+  @Transactional
   public LoginResponse login(final LoginRequest loginRequest) {
     final String email = loginRequest.getEmail();
     final String password = loginRequest.getPassword();
@@ -70,7 +76,8 @@ public class AuthServiceImpl implements AuthService {
 
     log.info("User found: {}", user);
 
-    PasswordHistory pw = passwordHistoryRepository.findByUserId(user.getUserId());
+    final PasswordHistory pw = passwordHistoryRepository
+        .findAllByUserId(user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending())).getContent().get(0);
 
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
       throw new BadCredentialsException("Invalid password");
@@ -98,14 +105,21 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public void logout(String token) throws ParseException {
-    int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+  @Transactional
+  public void logout(final String token) throws ParseException {
+    final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     refreshTokenRepository.deleteRefreshToken(userId);
-    LoginHistory loginHistory = loginHistoryRepository.findByUserLatestLoginTime(userId);
-    loginHistory.setLogoutTime(LocalDateTime.now());
-    loginHistoryRepository.saveAndFlush(loginHistory);
+
+    final Page<LoginHistory> loginHistoryPage = loginHistoryRepository.findAllByUserId(userId,
+        PageRequest.of(0, 1, Sort.by("lastLoginTime").descending()));
+    if (!loginHistoryPage.isEmpty()) {
+      final LoginHistory loginHistory = loginHistoryPage.getContent().get(0);
+      loginHistory.setLogoutTime(LocalDateTime.now());
+      loginHistoryRepository.saveAndFlush(loginHistory);
+    }
   }
 
+  @Transactional
   public LoginResponse refreshToken(final String refreshToken) {
     log.info("Refresh token: {}", refreshToken);
     RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
@@ -115,16 +129,17 @@ public class AuthServiceImpl implements AuthService {
 
     // Generate new JWT token
     log.info("User ID: {}", storedToken.getUserId());
-    User user = userService.findById(storedToken.getUserId());
+    final User user = userService.findById(storedToken.getUserId());
 
-    String newJwtToken = jwtTokenProvider.generateToken(user, false);
-    String newRefreshToken = jwtTokenProvider.generateToken(user, true);
+    final String newJwtToken = jwtTokenProvider.generateToken(user, false);
+    final String newRefreshToken = jwtTokenProvider.generateToken(user, true);
     log.info("New refresh token: {}", newRefreshToken);
     updateRefreshToken(user.getUserId(), newRefreshToken);
     return new LoginResponse(newJwtToken, newRefreshToken, true, false, User.UserRole.PRINCIPAL);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public void sendResetPasswordEmail(String email) {
     userService.findByEmail(email);
 
@@ -133,16 +148,17 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public void resetPassword(ResetPasswordRequest resetPasswordRequest, String token) {
-    PasswordHistory passwordHistory;
-    int userId;
+  @Transactional
+  public void resetPassword(final ResetPasswordRequest resetPasswordRequest, final String token) {
+    final PasswordHistory passwordHistory;
+    final int userId;
     try {
-      log.info("Token: {}", token);
       log.info(jwtTokenProvider.getSubject(token));
       userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
       log.info("User ID: {}", userId);
       jwtTokenProvider.verifyToken(token, String.valueOf(userId), false);
-      passwordHistory = passwordHistoryRepository.findByUserId(userId);
+      passwordHistory = passwordHistoryRepository
+          .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending())).getContent().get(0);
     } catch (ParseException e) {
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
     }
@@ -153,6 +169,7 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
+  @Transactional
   private void saveRefreshToken(final Integer userId, final String refreshToken) {
     final RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
         .orElse(new RefreshToken());
@@ -164,6 +181,7 @@ public class AuthServiceImpl implements AuthService {
     refreshTokenRepository.save(token);
   }
 
+  @Transactional
   private void updateRefreshToken(Integer userId, String newRefreshToken) {
     refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
   }
