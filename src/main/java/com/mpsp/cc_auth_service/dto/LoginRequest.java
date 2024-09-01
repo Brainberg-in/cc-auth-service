@@ -22,4 +22,8 @@ public class LoginRequest {
   @Schema(name = "password", example = "P@ssword123")
   @NotBlank(message = "Password is required")
   private String password;
+
+  public String toString() {
+    return String.format("LoginRequest{email='%s'}", email);
+  }
 }

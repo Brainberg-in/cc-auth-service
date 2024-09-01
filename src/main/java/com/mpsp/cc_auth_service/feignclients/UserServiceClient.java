@@ -12,9 +12,7 @@ public interface UserServiceClient {
 
   @GetMapping("/")
   default User findByEmail(@RequestParam(name = "emailId") final String emailId) {
-    System.out.println("emailId: " + emailId);
-    List<User> items = findByEmailId(emailId);
-    System.out.println(items);
+    final List<User> items = findByEmailId(emailId);
     if (items.isEmpty() || items.get(0) == null) {
       throw new UsernameNotFoundException("User not found");
     }

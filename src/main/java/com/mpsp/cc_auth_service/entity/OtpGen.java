@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -11,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Getter
 @Entity
 @Table(name = "otp_gen")
+@ToString(exclude = {"otp"})
 public class OtpGen {
 
   @Id
@@ -21,7 +23,7 @@ public class OtpGen {
   private Integer userId;
 
   @CreationTimestamp
-  @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+  @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",updatable = false)
   private LocalDateTime createdAt;
 
   @Column(name = "modified_at")

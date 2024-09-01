@@ -1,9 +1,8 @@
 package com.mpsp.cc_auth_service.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mpsp.cc_auth_service.constants.Gender;
+import com.mpsp.cc_auth_service.constants.UserRole;
 import com.mpsp.cc_auth_service.constants.UserStatus;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +12,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString
+@ToString(exclude = {"fullName","mobile","email","addressLine1","addressLine2","city","pinCode","state","dateOfBirth"})
 // User class
 public class User {
   private Integer userId;
@@ -35,13 +34,7 @@ public class User {
   private boolean isMfaEnabled;
   private boolean isFirstLogin;
   private UserRole userRole;
-  public enum UserRole{
-      ADMIN,
-              PRINCIPAL,
-              TEACHER,
-              STUDENT,
-               POC
-  }
+  
 
   public User(final int userId, final String email) {
     this.userId = userId;
