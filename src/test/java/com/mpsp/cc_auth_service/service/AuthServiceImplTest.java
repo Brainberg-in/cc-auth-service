@@ -8,7 +8,8 @@ import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.dto.User;
-import com.mpsp.cc_auth_service.entity.LoginHistory;
+
+
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
@@ -21,6 +22,8 @@ import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -94,16 +97,6 @@ class AuthServiceImplTest {
     assertEquals("refreshToken", response.getRefreshToken());
   }
 
-  @Test
-  void testLoginUserNotFound() {
-    when(userService.findByEmail(anyString())).thenReturn(null);
-
-    LoginRequest loginRequest = new LoginRequest();
-    loginRequest.setEmail("test@example.com");
-    loginRequest.setPassword("password");
-
-    assertThrows(UsernameNotFoundException.class, () -> authService.login(loginRequest));
-  }
 
   @Test
   void testLoginInvalidPassword() {
@@ -133,7 +126,7 @@ class AuthServiceImplTest {
 
   @Test
   void testRefreshTokenSuccess() throws ParseException {
-    when(refreshTokenRepository.findByToken(anyString())).thenReturn(refreshToken);
+    when(refreshTokenRepository.findByToken(anyString())).thenReturn(Optional.of(refreshToken));
     when(userService.findById(anyInt())).thenReturn(user);
     when(jwtTokenProvider.generateToken(user, false)).thenReturn("newJwtToken");
     when(jwtTokenProvider.generateToken(user, true)).thenReturn("newRefreshToken");
@@ -155,15 +148,11 @@ class AuthServiceImplTest {
   @Test
   void testRefreshTokenExpired() {
     refreshToken.setExpiresAt(LocalDateTime.now().minusDays(1));
-    when(refreshTokenRepository.findByToken(anyString())).thenReturn(refreshToken);
+    when(refreshTokenRepository.findByToken(anyString())).thenReturn(Optional.of(refreshToken));
 
     assertThrows(RuntimeException.class, () -> authService.refreshToken("expiredToken"));
   }
-  @Test
-  public void testSendResetPasswordEmail_UserNotFound() {
-    when(userService.findByEmail(anyString())).thenReturn(null);
-    assertThrows(UsernameNotFoundException.class, () -> authService.sendResetPasswordEmail("test@example.com"));
-  }
+  
 
   @Test
   public void testSendResetPasswordEmail_Success() {

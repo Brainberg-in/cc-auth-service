@@ -12,7 +12,7 @@ public interface RefreshTokenRepo extends JpaRepository<RefreshToken, Integer> {
 
   void deleteByUserId(Integer userId);
 
-  RefreshToken findByToken(String token);
+  Optional<RefreshToken> findByToken(String token);
 
   @Query("delete from RefreshToken rt where rt.userId = ?1")
   @Transactional

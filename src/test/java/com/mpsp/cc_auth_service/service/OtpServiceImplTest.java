@@ -13,10 +13,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -45,17 +44,11 @@ public class OtpServiceImplTest {
     }
 
     @Test
-    public void testSendOtp_UserNotFound() {
-        when(userService.findByEmail(anyString())).thenReturn(null);
-        assertThrows(UsernameNotFoundException.class, () -> otpService.sendOtp("test@example.com"));
-    }
-
-    @Test
     public void testSendOtp_UserFound() {
         User user = new User();
         user.setUserId(1);
         when(userService.findByEmail(anyString())).thenReturn(user);
-        when(otpGenRepo.findByUserId(anyInt())).thenReturn(null);
+        when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.empty());
         doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
 
         String otp = otpService.sendOtp("test@example.com");
@@ -95,11 +88,6 @@ public class OtpServiceImplTest {
 //        assertTrue(otpService.verifyOtp("test@example.com", "1234"));
 //    }
 
-    @Test
-    public void testResendOtp_UserNotFound() {
-        when(userService.findByEmail(anyString())).thenReturn(null);
-        assertThrows(UsernameNotFoundException.class, () -> otpService.resendOtp("test@example.com"));
-    }
 
     @Test
     public void testResendOtp_UserFound() {
@@ -109,7 +97,7 @@ public class OtpServiceImplTest {
         otpGen.setModifiedAt(LocalDateTime.now());
         otpGen.setOtp("1234");
         when(userService.findByEmail(anyString())).thenReturn(user);
-        when(otpGenRepo.findByUserId(anyInt())).thenReturn(otpGen);
+        when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.of(otpGen));
         doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
 
         otpService.resendOtp("test@example.com");

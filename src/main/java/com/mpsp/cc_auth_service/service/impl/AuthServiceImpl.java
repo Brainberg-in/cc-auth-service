@@ -1,6 +1,5 @@
 package com.mpsp.cc_auth_service.service.impl;
 
-import com.mpsp.cc_auth_service.config.AwsSesConfig;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
@@ -25,9 +24,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.support.BeanDefinitionDsl;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -35,21 +32,29 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-  @Autowired private transient UserServiceClient userService;
+  @Autowired
+  private transient UserServiceClient userService;
 
-  @Autowired private transient PasswordEncoder passwordEncoder;
+  @Autowired
+  private transient PasswordEncoder passwordEncoder;
 
-  @Autowired private transient JwtTokenProvider jwtTokenProvider;
+  @Autowired
+  private transient JwtTokenProvider jwtTokenProvider;
 
-  @Autowired private transient LoginHistoryRepo loginHistoryRepository;
+  @Autowired
+  private transient LoginHistoryRepo loginHistoryRepository;
 
-  @Autowired private transient PasswordHistoryRepo passwordHistoryRepository;
+  @Autowired
+  private transient PasswordHistoryRepo passwordHistoryRepository;
 
-  @Autowired private transient RefreshTokenRepo refreshTokenRepository;
+  @Autowired
+  private transient RefreshTokenRepo refreshTokenRepository;
 
-  @Autowired private transient OtpService otpService;
+  @Autowired
+  private transient OtpService otpService;
 
-  @Autowired private transient AwsService awsService;
+  @Autowired
+  private transient AwsService awsService;
 
   @Value("${aws.ses.sender}")
   private String senderEmail;
@@ -61,9 +66,6 @@ public class AuthServiceImpl implements AuthService {
 
     // Validate user and password
     final User user = userService.findByEmail(email);
-    if (user == null) {
-      throw new UsernameNotFoundException("User not found");
-    }
     user.setUserRole(User.UserRole.PRINCIPAL);
 
     log.info("User found: {}", user);
@@ -80,15 +82,15 @@ public class AuthServiceImpl implements AuthService {
     saveRefreshToken(user.getUserId(), refreshToken);
 
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
-    if(user.isFirstLogin()) {
+    if (user.isFirstLogin()) {
       try {
         user.setFirstLogin(false);
         userService.updateUser(user.getUserId(), user);
-      }catch (Exception e){
+      } catch (Exception e) {
         log.error("Error updating user", e);
       }
     }
-    if(user.isMfaEnabled()){
+    if (user.isMfaEnabled()) {
       otpService.sendOtp(email);
     }
 
@@ -104,65 +106,57 @@ public class AuthServiceImpl implements AuthService {
     loginHistoryRepository.saveAndFlush(loginHistory);
   }
 
-  public LoginResponse refreshToken(final String refreshToken){
+  public LoginResponse refreshToken(final String refreshToken) {
     log.info("Refresh token: {}", refreshToken);
-    RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken);
-    log.info("Stored token: {}", storedToken);
-    if (storedToken == null) {
-      throw new BadCredentialsException("Invalid refresh token");
-    }
+    RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
+        .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
 
     jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
 
     // Generate new JWT token
     log.info("User ID: {}", storedToken.getUserId());
     User user = userService.findById(storedToken.getUserId());
-    if (user == null) {
-      throw new UsernameNotFoundException("User not found");
-    }
 
     String newJwtToken = jwtTokenProvider.generateToken(user, false);
     String newRefreshToken = jwtTokenProvider.generateToken(user, true);
     log.info("New refresh token: {}", newRefreshToken);
     updateRefreshToken(user.getUserId(), newRefreshToken);
-    return new LoginResponse(newJwtToken, newRefreshToken, true,false, User.UserRole.PRINCIPAL);
+    return new LoginResponse(newJwtToken, newRefreshToken, true, false, User.UserRole.PRINCIPAL);
   }
 
   @Override
   public void sendResetPasswordEmail(String email) {
-    User user = userService.findByEmail(email);
-    if (user == null) {
-      throw new UsernameNotFoundException("User not found");
-    }
-    awsService.sendEmail(senderEmail, email, "cc_reset_password", Map.of("link","http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
+    userService.findByEmail(email);
+
+    awsService.sendEmail(senderEmail, email, "cc_reset_password",
+        Map.of("link", "http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
   }
 
   @Override
   public void resetPassword(ResetPasswordRequest resetPasswordRequest, String token) {
     PasswordHistory passwordHistory;
     int userId;
-      try {
-          log.info("Token: {}", token);
-          log.info(jwtTokenProvider.getSubject(token));
-          userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
-          log.info("User ID: {}", userId);
-          jwtTokenProvider.verifyToken(token, String.valueOf(userId), false);
-          passwordHistory = passwordHistoryRepository.findByUserId(userId);
-      } catch (ParseException e) {
-          throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
-      }
-      if(passwordHistory!=null) {
-        passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
-        passwordHistory.setUserId(userId);
-        passwordHistoryRepository.save(passwordHistory);
-      }
+    try {
+      log.info("Token: {}", token);
+      log.info(jwtTokenProvider.getSubject(token));
+      userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+      log.info("User ID: {}", userId);
+      jwtTokenProvider.verifyToken(token, String.valueOf(userId), false);
+      passwordHistory = passwordHistoryRepository.findByUserId(userId);
+    } catch (ParseException e) {
+      throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
+    }
+    if (passwordHistory != null) {
+      passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
+      passwordHistory.setUserId(userId);
+      passwordHistoryRepository.save(passwordHistory);
+    }
   }
 
-  private void saveRefreshToken(Integer userId, String refreshToken) {
-    RefreshToken token = refreshTokenRepository.findByToken(refreshToken);
-    if(token==null){
-      token = new RefreshToken();
-    }
+  private void saveRefreshToken(final Integer userId, final String refreshToken) {
+    final RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
+        .orElse(new RefreshToken());
+
     token.setUserId(userId);
     token.setToken(refreshToken);
     token.setExpiresAt(LocalDateTime.now().plusDays(1));

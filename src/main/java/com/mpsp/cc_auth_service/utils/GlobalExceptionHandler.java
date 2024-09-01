@@ -1,14 +1,41 @@
 package com.mpsp.cc_auth_service.utils;
 
 import com.mpsp.cc_auth_service.error.ErrorResponse;
+
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.lang.Nullable;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+@Slf4j
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+  
+
+  @Override
+  @Nullable
+  protected ResponseEntity<Object> handleMethodArgumentNotValid(final MethodArgumentNotValidException ex, final HttpHeaders headers,
+      final HttpStatusCode status, final WebRequest request) {
+    log.error("MethodArgumentNotValidException occurred", ex);
+    final List<String> message =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(DefaultMessageSourceResolvable::getDefaultMessage)
+            .toList();
+    return ResponseEntity.badRequest().body(new ErrorResponse("Invalid Arguments", message.get(0)));
+  
+  }
 
   // Handle Invalid Credentials Exception
   @ExceptionHandler(InvalidCredentialsException.class)
@@ -32,7 +59,7 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  public ResponseEntity<ErrorResponse> handleSesV2Exception(Exception e){
+  public ResponseEntity<ErrorResponse> handleSesV2Exception(Exception e) {
     ErrorResponse errorResponse = new ErrorResponse("Email not sent", e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
@@ -52,8 +79,9 @@ public class GlobalExceptionHandler {
   }
 
   public static class SesV2Exception extends RuntimeException {
-    public SesV2Exception(String message) {super(message); }
+    public SesV2Exception(String message) {
+      super(message);
+    }
   }
-
 
 }
