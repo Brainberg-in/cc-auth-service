@@ -2,8 +2,8 @@ package com.mpsp.cc_auth_service.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import org.hibernate.annotations.ColumnDefault;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "login_history")

@@ -23,7 +23,10 @@ public class OtpGen {
   private Integer userId;
 
   @CreationTimestamp
-  @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",updatable = false)
+  @Column(
+      name = "created_at",
+      columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+      updatable = false)
   private LocalDateTime createdAt;
 
   @Column(name = "modified_at")

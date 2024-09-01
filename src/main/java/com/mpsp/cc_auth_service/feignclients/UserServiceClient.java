@@ -2,7 +2,6 @@ package com.mpsp.cc_auth_service.feignclients;
 
 import com.mpsp.cc_auth_service.dto.User;
 import java.util.List;
-
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;

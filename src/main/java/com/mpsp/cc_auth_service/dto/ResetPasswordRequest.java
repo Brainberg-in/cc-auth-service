@@ -9,12 +9,12 @@ import lombok.Setter;
 @Getter
 public class ResetPasswordRequest {
 
-    @Schema(description = "User Password")
-    @NotBlank(message = "Password is required")
-    private String password;
+  @Schema(description = "User Password")
+  @NotBlank(message = "Password is required")
+  private String password;
 
-    @Override
-    public String toString() {
-        return String.format("ResetPasswordRequest[password=%s]", "********");
-    }
+  @Override
+  public String toString() {
+    return String.format("ResetPasswordRequest[password=%s]", "********");
+  }
 }

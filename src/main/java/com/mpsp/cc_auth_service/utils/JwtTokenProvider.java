@@ -34,16 +34,17 @@ public class JwtTokenProvider {
 
   public String generateToken(final User user, final boolean isRefreshToken) {
 
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .subject(String.valueOf(user.getUserId()))
-        .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
-        .issueTime(new Date())
-        .expirationTime(
-            new Date(
-                System.currentTimeMillis()
-                    + (isRefreshToken ? jwtExpiration : refreshTokenExpiration)))
-        .issuer(issuer)
-        .build();
+    final JWTClaimsSet claims =
+        new JWTClaimsSet.Builder()
+            .subject(String.valueOf(user.getUserId()))
+            .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
+            .issueTime(new Date())
+            .expirationTime(
+                new Date(
+                    System.currentTimeMillis()
+                        + (isRefreshToken ? jwtExpiration : refreshTokenExpiration)))
+            .issuer(issuer)
+            .build();
     final Payload payload = new Payload(claims.toJSONObject());
     final JWSObject jwsObject = new JWSObject(new JWSHeader(algorithm), payload);
     try {
@@ -57,15 +58,17 @@ public class JwtTokenProvider {
 
   public void verifyToken(final String token, final String userId, final boolean isRefreshToken) {
     try {
-      final JWSObject jwsObject = JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
+      final JWSObject jwsObject =
+          JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
       final JWSVerifier verifier = new MACVerifier(jwtSecret);
-      final DefaultJWTClaimsVerifier<?> claimsVerifier = new DefaultJWTClaimsVerifier<>(
-          new JWTClaimsSet.Builder()
-              .issuer(issuer)
-              .subject(userId)
-              .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
-              .build(),
-          new HashSet<>(List.of("exp")));
+      final DefaultJWTClaimsVerifier<?> claimsVerifier =
+          new DefaultJWTClaimsVerifier<>(
+              new JWTClaimsSet.Builder()
+                  .issuer(issuer)
+                  .subject(userId)
+                  .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
+                  .build(),
+              new HashSet<>(List.of("exp")));
       log.info("verification is {}", jwsObject.verify(verifier));
       if (jwsObject.verify(verifier)) {
         try {
@@ -89,7 +92,8 @@ public class JwtTokenProvider {
 
   public String getSubject(final String token) throws ParseException {
 
-    final JWSObject jwsObject = JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
+    final JWSObject jwsObject =
+        JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
 
     final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
     return claims.getSubject();

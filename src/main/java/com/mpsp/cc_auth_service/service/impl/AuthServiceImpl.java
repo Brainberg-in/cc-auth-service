@@ -16,15 +16,12 @@ import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
-
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Map;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -37,29 +34,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-  @Autowired
-  private transient UserServiceClient userService;
+  @Autowired private transient UserServiceClient userService;
 
-  @Autowired
-  private transient PasswordEncoder passwordEncoder;
+  @Autowired private transient PasswordEncoder passwordEncoder;
 
-  @Autowired
-  private transient JwtTokenProvider jwtTokenProvider;
+  @Autowired private transient JwtTokenProvider jwtTokenProvider;
 
-  @Autowired
-  private transient LoginHistoryRepo loginHistoryRepository;
+  @Autowired private transient LoginHistoryRepo loginHistoryRepository;
 
-  @Autowired
-  private transient PasswordHistoryRepo passwordHistoryRepository;
+  @Autowired private transient PasswordHistoryRepo passwordHistoryRepository;
 
-  @Autowired
-  private transient RefreshTokenRepo refreshTokenRepository;
+  @Autowired private transient RefreshTokenRepo refreshTokenRepository;
 
-  @Autowired
-  private transient OtpService otpService;
+  @Autowired private transient OtpService otpService;
 
-  @Autowired
-  private transient AwsService awsService;
+  @Autowired private transient AwsService awsService;
 
   @Value("${aws.ses.sender}")
   private String senderEmail;
@@ -76,8 +65,12 @@ public class AuthServiceImpl implements AuthService {
 
     log.info("User found: {}", user);
 
-    final PasswordHistory pw = passwordHistoryRepository
-        .findAllByUserId(user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending())).getContent().get(0);
+    final PasswordHistory pw =
+        passwordHistoryRepository
+            .findAllByUserId(
+                user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
 
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
       throw new BadCredentialsException("Invalid password");
@@ -101,7 +94,8 @@ public class AuthServiceImpl implements AuthService {
       otpService.sendOtp(email);
     }
 
-    return new LoginResponse(jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), User.UserRole.PRINCIPAL);
+    return new LoginResponse(
+        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), User.UserRole.PRINCIPAL);
   }
 
   @Override
@@ -110,8 +104,9 @@ public class AuthServiceImpl implements AuthService {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     refreshTokenRepository.deleteRefreshToken(userId);
 
-    final Page<LoginHistory> loginHistoryPage = loginHistoryRepository.findAllByUserId(userId,
-        PageRequest.of(0, 1, Sort.by("lastLoginTime").descending()));
+    final Page<LoginHistory> loginHistoryPage =
+        loginHistoryRepository.findAllByUserId(
+            userId, PageRequest.of(0, 1, Sort.by("lastLoginTime").descending()));
     if (!loginHistoryPage.isEmpty()) {
       final LoginHistory loginHistory = loginHistoryPage.getContent().get(0);
       loginHistory.setLogoutTime(LocalDateTime.now());
@@ -122,8 +117,10 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   public LoginResponse refreshToken(final String refreshToken) {
     log.info("Refresh token: {}", refreshToken);
-    RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken)
-        .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+    RefreshToken storedToken =
+        refreshTokenRepository
+            .findByToken(refreshToken)
+            .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
 
     jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
 
@@ -143,8 +140,13 @@ public class AuthServiceImpl implements AuthService {
   public void sendResetPasswordEmail(String email) {
     userService.findByEmail(email);
 
-    awsService.sendEmail(senderEmail, email, "cc_reset_password",
-        Map.of("link", "http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
+    awsService.sendEmail(
+        senderEmail,
+        email,
+        "cc_reset_password",
+        Map.of(
+            "link",
+            "http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
   }
 
   @Override
@@ -157,13 +159,17 @@ public class AuthServiceImpl implements AuthService {
       userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
       log.info("User ID: {}", userId);
       jwtTokenProvider.verifyToken(token, String.valueOf(userId), false);
-      passwordHistory = passwordHistoryRepository
-          .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending())).getContent().get(0);
+      passwordHistory =
+          passwordHistoryRepository
+              .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+              .getContent()
+              .get(0);
     } catch (ParseException e) {
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
     }
     if (passwordHistory != null) {
-      passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
+      passwordHistory.setCurrentPassword(
+          passwordEncoder.encode(resetPasswordRequest.getPassword()));
       passwordHistory.setUserId(userId);
       passwordHistoryRepository.save(passwordHistory);
     }
@@ -171,8 +177,8 @@ public class AuthServiceImpl implements AuthService {
 
   @Transactional
   private void saveRefreshToken(final Integer userId, final String refreshToken) {
-    final RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
-        .orElse(new RefreshToken());
+    final RefreshToken token =
+        refreshTokenRepository.findByToken(refreshToken).orElse(new RefreshToken());
 
     token.setUserId(userId);
     token.setToken(refreshToken);

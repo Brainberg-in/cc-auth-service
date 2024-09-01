@@ -1,12 +1,8 @@
 package com.mpsp.cc_auth_service.utils;
 
 import com.mpsp.cc_auth_service.error.ErrorResponse;
-
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.ArrayList;
 import java.util.List;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,19 +18,20 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
-  
 
   @Override
   @Nullable
-  protected ResponseEntity<Object> handleMethodArgumentNotValid(final MethodArgumentNotValidException ex, final HttpHeaders headers,
-      final HttpStatusCode status, final WebRequest request) {
+  protected ResponseEntity<Object> handleMethodArgumentNotValid(
+      final MethodArgumentNotValidException ex,
+      final HttpHeaders headers,
+      final HttpStatusCode status,
+      final WebRequest request) {
     log.error("MethodArgumentNotValidException occurred", ex);
     final List<String> message =
         ex.getBindingResult().getFieldErrors().stream()
             .map(DefaultMessageSourceResolvable::getDefaultMessage)
             .toList();
     return ResponseEntity.badRequest().body(new ErrorResponse("Invalid Arguments", message.get(0)));
-  
   }
 
   // Handle Invalid Credentials Exception
@@ -83,5 +80,4 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       super(message);
     }
   }
-
 }

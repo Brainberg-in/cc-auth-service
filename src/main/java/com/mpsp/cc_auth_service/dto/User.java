@@ -12,7 +12,18 @@ import lombok.ToString;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"fullName","mobile","email","addressLine1","addressLine2","city","pinCode","state","dateOfBirth"})
+@ToString(
+    exclude = {
+      "fullName",
+      "mobile",
+      "email",
+      "addressLine1",
+      "addressLine2",
+      "city",
+      "pinCode",
+      "state",
+      "dateOfBirth"
+    })
 // User class
 public class User {
   private Integer userId;
@@ -34,7 +45,6 @@ public class User {
   private boolean isMfaEnabled;
   private boolean isFirstLogin;
   private UserRole userRole;
-  
 
   public User(final int userId, final String email) {
     this.userId = userId;

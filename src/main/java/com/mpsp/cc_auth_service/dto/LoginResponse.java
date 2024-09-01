@@ -10,7 +10,7 @@ import lombok.ToString;
 
 @AllArgsConstructor
 @Getter
-@ToString(exclude = {"token","refreshToken"})
+@ToString(exclude = {"token", "refreshToken"})
 public class LoginResponse {
 
   @Schema(name = "token", description = "Bearer Token")

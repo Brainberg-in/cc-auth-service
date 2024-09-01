@@ -7,8 +7,9 @@ import com.mpsp.cc_auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import java.text.ParseException;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,17 +17,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/v1/auth")
 @Slf4j
 @Validated
 public class AuthController {
 
-  @Autowired
-  private AuthService authService;
+  @Autowired private AuthService authService;
 
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(@RequestBody @Valid final LoginRequest loginRequest) {
@@ -35,13 +32,13 @@ public class AuthController {
 
   @PostMapping("/logout")
   public ResponseEntity<Map<String, String>> logout(
-      @RequestHeader(name = HttpHeaders.AUTHORIZATION) @NotBlank(
-          message = "Authorization Token is required") @Pattern(regexp = "^Bearer\\s",
-              message = "Invalid Authorization") final String authorizationHeader)
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+          @NotBlank(message = "Authorization Token is required")
+          @Pattern(regexp = "^Bearer\\s", message = "Invalid Authorization")
+          final String authorizationHeader)
       throws ParseException {
     authService.logout(authorizationHeader.substring(7));
     return ResponseEntity.ok(Map.of("message", "Logout successful", "status", "success"));
-
   }
 
   @PostMapping("/refresh-token")
@@ -57,7 +54,6 @@ public class AuthController {
     authService.sendResetPasswordEmail(email);
 
     return ResponseEntity.ok(Map.of("message", "Reset password email sent.", "status", "success"));
-
   }
 
   @PostMapping("/reset-password")
