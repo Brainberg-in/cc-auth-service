@@ -1,6 +1,5 @@
 package com.mpsp.cc_auth_service.service.impl;
 
-import com.mpsp.cc_auth_service.config.AwsSesConfig;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
@@ -17,19 +16,19 @@ import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
-
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Map;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.support.BeanDefinitionDsl;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -55,20 +54,23 @@ public class AuthServiceImpl implements AuthService {
   private String senderEmail;
 
   @Override
+  @Transactional
   public LoginResponse login(final LoginRequest loginRequest) {
     final String email = loginRequest.getEmail();
     final String password = loginRequest.getPassword();
 
     // Validate user and password
     final User user = userService.findByEmail(email);
-    if (user == null) {
-      throw new UsernameNotFoundException("User not found");
-    }
     user.setUserRole(User.UserRole.PRINCIPAL);
 
     log.info("User found: {}", user);
 
-    PasswordHistory pw = passwordHistoryRepository.findByUserId(user.getUserId());
+    final PasswordHistory pw =
+        passwordHistoryRepository
+            .findAllByUserId(
+                user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
 
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
       throw new BadCredentialsException("Invalid password");
@@ -80,89 +82,104 @@ public class AuthServiceImpl implements AuthService {
     saveRefreshToken(user.getUserId(), refreshToken);
 
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
-    if(user.isFirstLogin()) {
+    if (user.isFirstLogin()) {
       try {
         user.setFirstLogin(false);
         userService.updateUser(user.getUserId(), user);
-      }catch (Exception e){
+      } catch (Exception e) {
         log.error("Error updating user", e);
       }
     }
-    if(user.isMfaEnabled()){
+    if (user.isMfaEnabled()) {
       otpService.sendOtp(email);
     }
 
-    return new LoginResponse(jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), User.UserRole.PRINCIPAL);
+    return new LoginResponse(
+        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), User.UserRole.PRINCIPAL);
   }
 
   @Override
-  public void logout(String token) throws ParseException {
-    int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+  @Transactional
+  public void logout(final String token) throws ParseException {
+    final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     refreshTokenRepository.deleteRefreshToken(userId);
-    LoginHistory loginHistory = loginHistoryRepository.findByUserLatestLoginTime(userId);
-    loginHistory.setLogoutTime(LocalDateTime.now());
-    loginHistoryRepository.saveAndFlush(loginHistory);
+
+    final Page<LoginHistory> loginHistoryPage =
+        loginHistoryRepository.findAllByUserId(
+            userId, PageRequest.of(0, 1, Sort.by("lastLoginTime").descending()));
+    if (!loginHistoryPage.isEmpty()) {
+      final LoginHistory loginHistory = loginHistoryPage.getContent().get(0);
+      loginHistory.setLogoutTime(LocalDateTime.now());
+      loginHistoryRepository.saveAndFlush(loginHistory);
+    }
   }
 
-  public LoginResponse refreshToken(final String refreshToken){
+  @Transactional
+  public LoginResponse refreshToken(final String refreshToken) {
     log.info("Refresh token: {}", refreshToken);
-    RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken);
-    log.info("Stored token: {}", storedToken);
-    if (storedToken == null) {
-      throw new BadCredentialsException("Invalid refresh token");
-    }
+    RefreshToken storedToken =
+        refreshTokenRepository
+            .findByToken(refreshToken)
+            .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
 
     jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
 
     // Generate new JWT token
     log.info("User ID: {}", storedToken.getUserId());
-    User user = userService.findById(storedToken.getUserId());
-    if (user == null) {
-      throw new UsernameNotFoundException("User not found");
-    }
+    final User user = userService.findById(storedToken.getUserId());
 
-    String newJwtToken = jwtTokenProvider.generateToken(user, false);
-    String newRefreshToken = jwtTokenProvider.generateToken(user, true);
+    final String newJwtToken = jwtTokenProvider.generateToken(user, false);
+    final String newRefreshToken = jwtTokenProvider.generateToken(user, true);
     log.info("New refresh token: {}", newRefreshToken);
     updateRefreshToken(user.getUserId(), newRefreshToken);
-    return new LoginResponse(newJwtToken, newRefreshToken, true,false, User.UserRole.PRINCIPAL);
+    return new LoginResponse(newJwtToken, newRefreshToken, true, false, User.UserRole.PRINCIPAL);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public void sendResetPasswordEmail(String email) {
-    User user = userService.findByEmail(email);
-    if (user == null) {
-      throw new UsernameNotFoundException("User not found");
-    }
-    awsService.sendEmail(senderEmail, email, "cc_reset_password", Map.of("link","http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
+    userService.findByEmail(email);
+
+    awsService.sendEmail(
+        senderEmail,
+        email,
+        "cc_reset_password",
+        Map.of(
+            "link",
+            "http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
   }
 
   @Override
-  public void resetPassword(ResetPasswordRequest resetPasswordRequest, String token) {
-    PasswordHistory passwordHistory;
-    int userId;
-      try {
-          log.info("Token: {}", token);
-          log.info(jwtTokenProvider.getSubject(token));
-          userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
-          log.info("User ID: {}", userId);
-          jwtTokenProvider.verifyToken(token, String.valueOf(userId), false);
-          passwordHistory = passwordHistoryRepository.findByUserId(userId);
-      } catch (ParseException e) {
-          throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
-      }
-      if(passwordHistory!=null) {
-        passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
-        passwordHistory.setUserId(userId);
-        passwordHistoryRepository.save(passwordHistory);
-      }
+  @Transactional
+  public void resetPassword(final ResetPasswordRequest resetPasswordRequest, final String token) {
+    final PasswordHistory passwordHistory;
+    final int userId;
+    try {
+      log.info(jwtTokenProvider.getSubject(token));
+      userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+      log.info("User ID: {}", userId);
+      jwtTokenProvider.verifyToken(token, String.valueOf(userId), false);
+      passwordHistory =
+          passwordHistoryRepository
+              .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+              .getContent()
+              .get(0);
+    } catch (ParseException e) {
+      throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
+    }
+    if (passwordHistory != null) {
+      passwordHistory.setCurrentPassword(
+          passwordEncoder.encode(resetPasswordRequest.getPassword()));
+      passwordHistory.setUserId(userId);
+      passwordHistoryRepository.save(passwordHistory);
+    }
   }
 
-  private void saveRefreshToken(Integer userId, String refreshToken) {
-    RefreshToken token = refreshTokenRepository.findByToken(refreshToken);
-    if(token==null){
-      token = new RefreshToken();
-    }
+  @Transactional
+  private void saveRefreshToken(final Integer userId, final String refreshToken) {
+    final RefreshToken token =
+        refreshTokenRepository.findByToken(refreshToken).orElse(new RefreshToken());
+
     token.setUserId(userId);
     token.setToken(refreshToken);
     token.setExpiresAt(LocalDateTime.now().plusDays(1));
@@ -170,6 +187,7 @@ public class AuthServiceImpl implements AuthService {
     refreshTokenRepository.save(token);
   }
 
+  @Transactional
   private void updateRefreshToken(Integer userId, String newRefreshToken) {
     refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
   }

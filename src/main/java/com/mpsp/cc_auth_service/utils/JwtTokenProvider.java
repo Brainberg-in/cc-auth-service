@@ -32,8 +32,6 @@ public class JwtTokenProvider {
   @Value("${jwt.refresh.expiration}")
   private long refreshTokenExpiration;
 
-
-
   public String generateToken(final User user, final boolean isRefreshToken) {
 
     final JWTClaimsSet claims =
@@ -58,23 +56,20 @@ public class JwtTokenProvider {
     return jwsObject.serialize();
   }
 
-  public void verifyToken(String token, final String userId, final boolean isRefreshToken)
-  {
+  public void verifyToken(final String token, final String userId, final boolean isRefreshToken) {
     try {
-        if(token.startsWith("Bearer ")){
-            token = token.substring(7);
-        }
-      final JWSObject jwsObject = JWSObject.parse(token);
+      final JWSObject jwsObject =
+          JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
       final JWSVerifier verifier = new MACVerifier(jwtSecret);
       final DefaultJWTClaimsVerifier<?> claimsVerifier =
-              new DefaultJWTClaimsVerifier<>(
-                      new JWTClaimsSet.Builder()
-                              .issuer(issuer)
-                              .subject(userId)
-                              .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
-                              .build(),
-                      new HashSet<>(List.of("exp")));
-      log.info("verification is {}",jwsObject.verify(verifier));
+          new DefaultJWTClaimsVerifier<>(
+              new JWTClaimsSet.Builder()
+                  .issuer(issuer)
+                  .subject(userId)
+                  .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
+                  .build(),
+              new HashSet<>(List.of("exp")));
+      log.info("verification is {}", jwsObject.verify(verifier));
       if (jwsObject.verify(verifier)) {
         try {
           claimsVerifier.verify(JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject()), null);
@@ -83,22 +78,22 @@ public class JwtTokenProvider {
           if (e.getMessage().trim().equals("Expired JWT")) {
             log.error(e.getMessage());
             throw new GlobalExceptionHandler.RefreshTokenException("Token expired");
-          } else throw new GlobalExceptionHandler.RefreshTokenException("Invalid issuer or subject");
+          } else
+            throw new GlobalExceptionHandler.RefreshTokenException("Invalid issuer or subject");
         }
       } else {
         throw new GlobalExceptionHandler.RefreshTokenException("Invalid Signature");
       }
-    }catch (JOSEException | ParseException e){
+    } catch (JOSEException | ParseException e) {
       log.error("Failed to verify token", e);
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid Token");
     }
   }
 
-  public String getSubject(String token) throws ParseException {
-    if(token.startsWith("Bearer ")){
-        token = token.substring(7);
-    }
-    final JWSObject jwsObject = JWSObject.parse(token);
+  public String getSubject(final String token) throws ParseException {
+
+    final JWSObject jwsObject =
+        JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
 
     final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
     return claims.getSubject();
