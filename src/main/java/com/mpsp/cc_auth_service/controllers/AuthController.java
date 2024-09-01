@@ -34,17 +34,19 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<Map<String,String>> logout(
-      @RequestHeader(name = HttpHeaders.AUTHORIZATION) @NotBlank(message = "Authorization Token is required") @Pattern(regexp = "^Bearer\\s", message = "Invalid Authorization") final String authorizationHeader)
+  public ResponseEntity<Map<String, String>> logout(
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION) @NotBlank(
+          message = "Authorization Token is required") @Pattern(regexp = "^Bearer\\s",
+              message = "Invalid Authorization") final String authorizationHeader)
       throws ParseException {
     authService.logout(authorizationHeader.substring(7));
-    return ResponseEntity.ok(Map.of("message", "Logout successful","status", "success"));
+    return ResponseEntity.ok(Map.of("message", "Logout successful", "status", "success"));
 
   }
 
   @PostMapping("/refresh-token")
-  public ResponseEntity<LoginResponse> refreshToken(
-      @RequestHeader final String refreshToken) throws ParseException {
+  public ResponseEntity<LoginResponse> refreshToken(@RequestHeader final String refreshToken)
+      throws ParseException {
     return ResponseEntity.ok(authService.refreshToken(refreshToken));
   }
 
@@ -54,12 +56,13 @@ public class AuthController {
 
     authService.sendResetPasswordEmail(email);
 
-    return ResponseEntity.ok(Map.of("message", "Reset password email sent.","status", "success"));
+    return ResponseEntity.ok(Map.of("message", "Reset password email sent.", "status", "success"));
 
   }
 
   @PostMapping("/reset-password")
-  public ResponseEntity<Object> resetPassword(@RequestBody @Valid final ResetPasswordRequest resetPasswordRequest,
+  public ResponseEntity<Object> resetPassword(
+      @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest,
       @RequestHeader("Authorization") final String token) {
     try {
       log.info("inside auth controller, inside reset password method");
