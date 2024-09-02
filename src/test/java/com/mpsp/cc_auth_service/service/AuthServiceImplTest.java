@@ -100,14 +100,14 @@ class AuthServiceImplTest {
   void testLoginInvalidPassword() {
     when(userService.findByEmail(anyString())).thenReturn(user);
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
     LoginRequest loginRequest = new LoginRequest();
     loginRequest.setEmail("test@example.com");
     loginRequest.setPassword("password");
 
-    assertThrows(BadCredentialsException.class, () -> authService.login(loginRequest));
+    assertThrows(GlobalExceptionHandler.InvalidCredentialsException.class, () -> authService.login(loginRequest));
   }
 
   //  @Test
