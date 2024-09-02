@@ -15,5 +15,5 @@ public class UserCreateRequest {
 
     private String password;
 
-    private List<UserRole> role;
+    private UserRole role;
 }
