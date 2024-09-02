@@ -48,6 +48,14 @@
                 {
                     "name": "JWT_SECRET",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
+                },
+                {
+                    "name": "SES_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:ses_keys-ItpYsk:aws_access_key_id::"
+                },
+                {
+                    "name": "SES_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:ses_keys-ItpYsk:aws_secret_access_key::"
                 }
             ],
             "logConfiguration": {

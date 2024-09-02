@@ -3,6 +3,7 @@ package com.mpsp.cc_auth_service.controllers;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
+import com.mpsp.cc_auth_service.dto.UserCreateRequest;
 import com.mpsp.cc_auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -34,7 +35,7 @@ public class AuthController {
   public ResponseEntity<Map<String, String>> logout(
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
           @NotBlank(message = "Authorization Token is required")
-          @Pattern(regexp = "^Bearer\\s", message = "Invalid Authorization")
+          @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization Token")
           final String authorizationHeader)
       throws ParseException {
     authService.logout(authorizationHeader.substring(7));
@@ -60,12 +61,14 @@ public class AuthController {
   public ResponseEntity<Object> resetPassword(
       @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest,
       @RequestHeader("Authorization") final String token) {
-    try {
       log.info("inside auth controller, inside reset password method");
       authService.resetPassword(resetPasswordRequest, token);
       return ResponseEntity.ok(Map.of("message", "Password reset successfully."));
-    } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token.");
-    }
+  }
+
+  @PostMapping("/create-user")
+  public ResponseEntity<Void> createNewUser(@RequestBody @Valid final UserCreateRequest userCreateRequest) {
+    authService.createNewUser(userCreateRequest);
+    return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 }

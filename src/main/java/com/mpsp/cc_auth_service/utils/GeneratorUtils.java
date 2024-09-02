@@ -26,4 +26,30 @@ public class GeneratorUtils {
     }
     return input.replaceAll(EMAIL_REGEX, "$1****$2");
   }
+
+  public static boolean checkIfUrlsContainUri(final String uri, final String[] urls) {
+    boolean skip = false;
+    for (String value : urls) {
+      if (uri.contains(value)) {
+        skip = true;
+        break;
+      }
+    }
+    return skip;
+  }
+  /**
+   * @param url
+   * @param urls
+   * @return true if the url ends with any of the String that is present in urls else false
+   */
+  public static boolean checkIfUrlEndsWith(final String url, final String[] urls) {
+    boolean endsWith = false;
+    for (String value : urls) {
+      if (url.contains(value)) {
+        endsWith = true;
+        break;
+      }
+    }
+    return endsWith;
+  }
 }

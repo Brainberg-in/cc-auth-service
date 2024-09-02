@@ -13,6 +13,9 @@ public class ResetPasswordRequest {
   @NotBlank(message = "Password is required")
   private String password;
 
+  @Schema(description = "Current Password")
+  private String currentPassword;
+
   @Override
   public String toString() {
     return String.format("ResetPasswordRequest[password=%s]", "********");

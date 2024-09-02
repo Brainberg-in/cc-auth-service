@@ -1,6 +1,8 @@
 package com.mpsp.cc_auth_service.utils;
 
 import com.mpsp.cc_auth_service.error.ErrorResponse;
+
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -34,6 +37,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return ResponseEntity.badRequest().body(new ErrorResponse("Invalid Arguments", message.get(0)));
   }
 
+  @Override
+  protected ResponseEntity<Object> handleMissingServletRequestParameter(
+          final MissingServletRequestParameterException ex,
+          final HttpHeaders headers,
+          final HttpStatusCode status,
+          final WebRequest request) {
+    log.error("MissingServletRequestParameterException occurred", ex);
+    ErrorResponse response =
+            new ErrorResponse( "Missing Request Parameter", "parameter is missing");
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+  }
+
   // Handle Invalid Credentials Exception
   @ExceptionHandler(InvalidCredentialsException.class)
   public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
@@ -52,13 +67,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   // Handle General Exception
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-    ErrorResponse errorResponse = new ErrorResponse("Internal Server Error", ex.getMessage());
+    ErrorResponse errorResponse = new ErrorResponse("Internal Server Error", "Unknown error occurred");
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  public ResponseEntity<ErrorResponse> handleSesV2Exception(Exception e) {
+  @ExceptionHandler(SesV2Exception.class)
+  public ResponseEntity<ErrorResponse> handleSesV2Exception(SesV2Exception e) {
     ErrorResponse errorResponse = new ErrorResponse("Email not sent", e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(UserNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException e){
+    ErrorResponse errorResponse = new ErrorResponse("User not found", e.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
   }
 
   // Custom exception for invalid credentials
@@ -77,6 +99,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   public static class SesV2Exception extends RuntimeException {
     public SesV2Exception(String message) {
+      super(message);
+    }
+  }
+
+  public static class UserNotFoundException extends RuntimeException{
+    public UserNotFoundException(String message){
       super(message);
     }
   }

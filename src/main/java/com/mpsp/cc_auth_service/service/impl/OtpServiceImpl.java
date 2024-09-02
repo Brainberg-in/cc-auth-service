@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,11 +32,14 @@ public class OtpServiceImpl implements OtpService {
 
   @Autowired private transient JwtTokenProvider jwtTokenProvider;
 
+  @Value("${spring.profiles.active}")
+  private String activeProfile;
+
   @Override
   @Transactional
   public String sendOtp(final String email) {
     final User user = userService.findByEmail(email);
-    final String otp = GeneratorUtils.generateOTP(4);
+    final String otp = "dev".equals(activeProfile)?"1234":GeneratorUtils.generateOTP(4);
     otpGenRepo
         .findByUserId(user.getUserId())
         .ifPresentOrElse(
@@ -67,7 +71,7 @@ public class OtpServiceImpl implements OtpService {
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
     }
     if (userId == 0) {
-      throw new UsernameNotFoundException("User not found");
+      throw new GlobalExceptionHandler.UserNotFoundException("User not found");
     }
     final AtomicBoolean result = new AtomicBoolean(false);
     otpGenRepo
@@ -77,7 +81,7 @@ public class OtpServiceImpl implements OtpService {
               if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
                 throw new RuntimeException("OTP expired");
               }
-              ;
+
               if (otpGen.getOtp().equals(otp)) {
                 result.set(true);
               }
