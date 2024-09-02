@@ -29,5 +29,5 @@ public class LoginResponse {
   private boolean isFirstLogin;
 
   @JsonProperty("userRole")
-  private UserRole userRole;
+  private String userRole;
 }

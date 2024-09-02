@@ -1,13 +1,11 @@
 package com.mpsp.cc_auth_service.service.impl;
 
 import com.mpsp.cc_auth_service.constants.UserRole;
-import com.mpsp.cc_auth_service.dto.LoginRequest;
-import com.mpsp.cc_auth_service.dto.LoginResponse;
-import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
-import com.mpsp.cc_auth_service.dto.User;
+import com.mpsp.cc_auth_service.dto.*;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
+import com.mpsp.cc_auth_service.error.ErrorResponse;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
@@ -19,6 +17,7 @@ import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -54,6 +54,9 @@ public class AuthServiceImpl implements AuthService {
   @Value("${aws.ses.sender}")
   private String senderEmail;
 
+  @Value("${fallback.url.reset.password}")
+  private String resetPasswordUrl;
+
   @Override
   @Transactional
   public LoginResponse login(final LoginRequest loginRequest) {
@@ -62,8 +65,9 @@ public class AuthServiceImpl implements AuthService {
 
     // Validate user and password
     final User user = userService.findByEmail(email);
-    user.setUserRole(UserRole.PRINCIPAL);
-
+    if(user==null){
+      throw new GlobalExceptionHandler.UserNotFoundException("User not found");
+    }
     log.info("User found: {}", user);
 
     final PasswordHistory pw =
@@ -72,9 +76,12 @@ public class AuthServiceImpl implements AuthService {
                 user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
             .getContent()
             .get(0);
-
+    log.info(String.valueOf(pw));
+    if(pw==null){
+      throw new GlobalExceptionHandler.UserNotFoundException("User not found");
+    }
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
-      throw new BadCredentialsException("Invalid password");
+      throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
     }
 
     // Generate tokens
@@ -94,9 +101,8 @@ public class AuthServiceImpl implements AuthService {
     if (user.isMfaEnabled()) {
       otpService.sendOtp(email);
     }
-
     return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), UserRole.PRINCIPAL);
+        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(),pw.getUserRole());
   }
 
   @Override
@@ -129,11 +135,17 @@ public class AuthServiceImpl implements AuthService {
     log.info("User ID: {}", storedToken.getUserId());
     final User user = userService.findById(storedToken.getUserId());
 
+    PasswordHistory p = passwordHistoryRepository
+            .findAllByUserId(
+                user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
+
     final String newJwtToken = jwtTokenProvider.generateToken(user, false);
     final String newRefreshToken = jwtTokenProvider.generateToken(user, true);
     log.info("New refresh token: {}", newRefreshToken);
     updateRefreshToken(user.getUserId(), newRefreshToken);
-    return new LoginResponse(newJwtToken, newRefreshToken, true, false, UserRole.PRINCIPAL);
+    return new LoginResponse(newJwtToken, newRefreshToken, true, false, p.getUserRole());
   }
 
   @Override
@@ -146,8 +158,8 @@ public class AuthServiceImpl implements AuthService {
         email,
         "cc_reset_password",
         Map.of(
-            "link",
-            "http://platform-frontend-alb-946551445.ap-south-1.elb.amazonaws.com/user/change-password"));
+            "link",resetPasswordUrl
+            ));
   }
 
   @Override
@@ -159,7 +171,6 @@ public class AuthServiceImpl implements AuthService {
       log.info(jwtTokenProvider.getSubject(token));
       userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
       log.info("User ID: {}", userId);
-      jwtTokenProvider.verifyToken(token, String.valueOf(userId), false);
       passwordHistory =
           passwordHistoryRepository
               .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
@@ -168,12 +179,33 @@ public class AuthServiceImpl implements AuthService {
     } catch (ParseException e) {
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
     }
+    if(resetPasswordRequest.getCurrentPassword()!=null){
+      log.info("entered current password");
+        if (passwordEncoder.matches(resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
+          log.info("cam here");
+            throw new GlobalExceptionHandler.InvalidCredentialsException("Cannot reset to current password");
+        }else if(!passwordEncoder.matches(resetPasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword())){
+            throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
+        }
+    }
     if (passwordHistory != null) {
       passwordHistory.setCurrentPassword(
           passwordEncoder.encode(resetPasswordRequest.getPassword()));
       passwordHistory.setUserId(userId);
       passwordHistoryRepository.save(passwordHistory);
     }
+  }
+
+  @Override
+  public void createNewUser(UserCreateRequest userCreateRequest) {
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setUserId(userCreateRequest.getUserId());
+    passwordHistory.setCurrentPassword(passwordEncoder.encode(userCreateRequest.getPassword()));
+    passwordHistory.setUserRole(String.join(", ",userCreateRequest.getRole().toString()));
+    passwordHistory.setCreatedAt(LocalDateTime.now());
+    passwordHistory.setModifiedAt(LocalDateTime.now());
+
+    passwordHistoryRepository.saveAndFlush(passwordHistory);
   }
 
   @Transactional

@@ -12,6 +12,8 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -56,39 +58,42 @@ public class JwtTokenProvider {
     return jwsObject.serialize();
   }
 
-  public void verifyToken(final String token, final String userId, final boolean isRefreshToken) {
+  public boolean verifyToken(final String token, final String userId, final boolean isRefreshToken) {
     try {
-      final JWSObject jwsObject =
-          JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
+      // Parse the token, stripping the "Bearer " prefix if present
+      final JWSObject jwsObject = JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
       final JWSVerifier verifier = new MACVerifier(jwtSecret);
+
+      // Create a claims verifier to match the expected claims
       final DefaultJWTClaimsVerifier<?> claimsVerifier =
-          new DefaultJWTClaimsVerifier<>(
-              new JWTClaimsSet.Builder()
-                  .issuer(issuer)
-                  .subject(userId)
-                  .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
-                  .build(),
-              new HashSet<>(List.of("exp")));
-      log.info("verification is {}", jwsObject.verify(verifier));
+              new DefaultJWTClaimsVerifier<>(
+                      new JWTClaimsSet.Builder()
+                              .issuer(issuer)
+                              .subject(userId)
+                              .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
+                              .build(),
+                      new HashSet<>(List.of("exp")));
+
+      // Verify the token's signature
       if (jwsObject.verify(verifier)) {
+        // Verify the token's claims
         try {
           claimsVerifier.verify(JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject()), null);
+          return true; // Token is valid
         } catch (BadJWTException e) {
-          log.error("Token Verification failed", e);
-          if (e.getMessage().trim().equals("Expired JWT")) {
-            log.error(e.getMessage());
-            throw new GlobalExceptionHandler.RefreshTokenException("Token expired");
-          } else
-            throw new GlobalExceptionHandler.RefreshTokenException("Invalid issuer or subject");
+          log.error("Token Verification failed: {}", e.getMessage());
+          return false; // Invalid claims
         }
       } else {
-        throw new GlobalExceptionHandler.RefreshTokenException("Invalid Signature");
+        log.error("Invalid Token Signature");
+        return false; // Invalid signature
       }
     } catch (JOSEException | ParseException e) {
-      log.error("Failed to verify token", e);
-      throw new GlobalExceptionHandler.RefreshTokenException("Invalid Token");
+      log.error("Failed to verify token: {}", e.getMessage());
+      return false; // Parsing or verification exception
     }
   }
+
 
   public String getSubject(final String token) throws ParseException {
 
@@ -98,4 +103,13 @@ public class JwtTokenProvider {
     final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
     return claims.getSubject();
   }
+
+  public String resolveToken(HttpServletRequest request) {
+    String bearerToken = request.getHeader("Authorization");
+    if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+      return bearerToken.substring(7);
+    }
+    return null;
+  }
+
 }

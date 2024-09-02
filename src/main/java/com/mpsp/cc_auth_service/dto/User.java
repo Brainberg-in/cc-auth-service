@@ -44,7 +44,6 @@ public class User {
   private Long updatedBy;
   private boolean isMfaEnabled;
   private boolean isFirstLogin;
-  private UserRole userRole;
 
   public User(final int userId, final String email) {
     this.userId = userId;
