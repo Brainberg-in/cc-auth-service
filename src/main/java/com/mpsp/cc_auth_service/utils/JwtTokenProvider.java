@@ -86,7 +86,7 @@ public class JwtTokenProvider {
           claimsVerifier.verify(JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject()), null);
           return true; // Token is valid
         } catch (BadJWTException e) {
-          log.error("Token Verification failed: {}", e.getMessage());
+          log.error("Token Verification failed: {}", token, e);
           return false; // Invalid claims
         }
       } else {
@@ -94,21 +94,26 @@ public class JwtTokenProvider {
         return false; // Invalid signature
       }
     } catch (JOSEException | ParseException e) {
-      log.error("Failed to verify token: {}", e.getMessage());
+      log.error("Failed to verify token: {}", token, e);
       return false; // Parsing or verification exception
     }
   }
 
-  public String getSubject(final String token) throws ParseException {
+  public String getSubject(final String token) {
 
-    final JWSObject jwsObject =
-        JWSObject.parse(
-            token.startsWith(AppConstants.BEARER)
-                ? token.substring(AppConstants.BEARER.length())
-                : token);
+    try {
+      final JWSObject jwsObject =
+          JWSObject.parse(
+              token.startsWith(AppConstants.BEARER)
+                  ? token.substring(AppConstants.BEARER.length())
+                  : token);
 
-    final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
-    return claims.getSubject();
+      final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
+      return claims.getSubject();
+    } catch (ParseException e) {
+      log.error("Failed to parse {}", token, e);
+      throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
+    }
   }
 
   public String resolveToken(final HttpServletRequest request) {

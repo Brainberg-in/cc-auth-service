@@ -4,12 +4,11 @@ import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.dto.UserCreateRequest;
-import java.text.ParseException;
 
 public interface AuthService {
   LoginResponse login(LoginRequest loginRequest);
 
-  void logout(String token) throws ParseException;
+  void logout(String token);
 
   LoginResponse refreshToken(String refreshToken);
 

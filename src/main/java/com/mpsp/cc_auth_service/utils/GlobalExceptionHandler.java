@@ -2,6 +2,7 @@ package com.mpsp.cc_auth_service.utils;
 
 import com.mpsp.cc_auth_service.error.ErrorResponse;
 import java.util.List;
+import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import software.amazon.awssdk.services.sesv2.model.SesV2Exception;
 
 @RestControllerAdvice
 @Slf4j
@@ -42,7 +44,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       final HttpStatusCode status,
       final WebRequest request) {
     log.error("MissingServletRequestParameterException occurred", ex);
-    ErrorResponse response = new ErrorResponse("Missing Request Parameter", "parameter is missing");
+    final ErrorResponse response =
+        new ErrorResponse("Missing Request Parameter", "parameter is missing");
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
@@ -50,34 +53,35 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(InvalidCredentialsException.class)
   public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
       InvalidCredentialsException ex) {
-    ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials", ex.getMessage());
+    final ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials", ex.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
   // Handle Refresh Token Exception
   @ExceptionHandler(RefreshTokenException.class)
   public ResponseEntity<ErrorResponse> handleRefreshTokenException(RefreshTokenException ex) {
-    ErrorResponse errorResponse = new ErrorResponse("Invalid Token", ex.getMessage());
+    final ErrorResponse errorResponse = new ErrorResponse("Invalid Token", ex.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
   // Handle General Exception
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-    ErrorResponse errorResponse =
-        new ErrorResponse("Internal Server Error", "Unknown error occurred");
+    final ErrorResponse errorResponse =
+        new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "Unknown error occurred");
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @ExceptionHandler(SesV2Exception.class)
   public ResponseEntity<ErrorResponse> handleSesV2Exception(SesV2Exception e) {
-    ErrorResponse errorResponse = new ErrorResponse("Email not sent", e.getMessage());
+    final ErrorResponse errorResponse = new ErrorResponse("Email not sent", "Failed to send email");
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-  @ExceptionHandler(UserNotFoundException.class)
-  public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException e) {
-    ErrorResponse errorResponse = new ErrorResponse("User not found", e.getMessage());
+  @ExceptionHandler(NoSuchElementException.class)
+  public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e) {
+    final ErrorResponse errorResponse = new ErrorResponse("User not found", e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
   }
 
@@ -91,18 +95,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   // Custom exception for invalid refresh token
   public static class RefreshTokenException extends RuntimeException {
     public RefreshTokenException(String message) {
-      super(message);
-    }
-  }
-
-  public static class SesV2Exception extends RuntimeException {
-    public SesV2Exception(String message) {
-      super(message);
-    }
-  }
-
-  public static class UserNotFoundException extends RuntimeException {
-    public UserNotFoundException(String message) {
       super(message);
     }
   }

@@ -7,11 +7,10 @@ import com.mpsp.cc_auth_service.repository.OtpGenRepo;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GeneratorUtils;
-import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,14 +62,10 @@ public class OtpServiceImpl implements OtpService {
 
   @Override
   public boolean verifyOtp(final String token, final String otp) {
-    final int userId;
-    try {
-      userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
-    } catch (ParseException e) {
-      throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
-    }
+    final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+
     if (userId == 0) {
-      throw new GlobalExceptionHandler.UserNotFoundException("User not found");
+      throw new NoSuchElementException("User not found");
     }
     final AtomicBoolean result = new AtomicBoolean(false);
     otpGenRepo

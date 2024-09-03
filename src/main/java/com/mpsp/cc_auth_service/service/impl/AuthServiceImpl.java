@@ -13,9 +13,9 @@ import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
     // Validate user and password
     final User user = userService.findByEmail(email);
     if (user == null) {
-      throw new GlobalExceptionHandler.UserNotFoundException("User not found");
+      throw new NoSuchElementException("User not found");
     }
     log.info("User found: {}", user);
 
@@ -72,9 +72,8 @@ public class AuthServiceImpl implements AuthService {
                 user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
             .getContent()
             .get(0);
-    log.info(String.valueOf(pw));
     if (pw == null) {
-      throw new GlobalExceptionHandler.UserNotFoundException("User not found");
+      throw new NoSuchElementException("User not found");
     }
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
       throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
@@ -103,7 +102,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void logout(final String token) throws ParseException {
+  public void logout(final String token) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     refreshTokenRepository.deleteRefreshToken(userId);
 
@@ -155,20 +154,14 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public void resetPassword(final ResetPasswordRequest resetPasswordRequest, final String token) {
-    final PasswordHistory passwordHistory;
-    final int userId;
-    try {
-      log.info(jwtTokenProvider.getSubject(token));
-      userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
-      log.info("User ID: {}", userId);
-      passwordHistory =
-          passwordHistoryRepository
-              .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-              .getContent()
-              .get(0);
-    } catch (ParseException e) {
-      throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
-    }
+    final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+    log.info("User ID: {}", userId);
+    final PasswordHistory passwordHistory =
+        passwordHistoryRepository
+            .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
+
     if (resetPasswordRequest.getCurrentPassword() != null) {
       log.info("entered current password");
       if (passwordEncoder.matches(

@@ -2,8 +2,8 @@ package com.mpsp.cc_auth_service.feignclients;
 
 import com.mpsp.cc_auth_service.constants.UserStatus;
 import com.mpsp.cc_auth_service.dto.User;
-import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +14,7 @@ public interface UserServiceClient {
   default User findByEmail(@RequestParam(name = "emailId") final String emailId) {
     final List<User> items = findByEmailId(emailId);
     if (items.isEmpty() || items.get(0) == null) {
-      throw new GlobalExceptionHandler.UserNotFoundException("User not found");
+      throw new NoSuchElementException("User not found");
     }
     if (items.size() == 1) {
       return items.get(0);
@@ -23,8 +23,7 @@ public interface UserServiceClient {
     return items.stream()
         .filter(user -> user.getStatus().equals(UserStatus.ACTIVE))
         .findFirst()
-        .orElseThrow(
-            () -> new GlobalExceptionHandler.UserNotFoundException("Multiple users found"));
+        .orElseThrow(() -> new NoSuchElementException("Multiple users found"));
   }
 
   @GetMapping(value = "/")

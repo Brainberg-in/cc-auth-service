@@ -61,27 +61,22 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
       return;
     }
-    token = token.substring(7);
-    try {
-      String userId = tokenProvider.getSubject(token);
-      if (tokenProvider.verifyToken(token, userId, false)) {
-        UsernamePasswordAuthenticationToken authentication =
-            new UsernamePasswordAuthenticationToken(tokenProvider.getSubject(token), null, null);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        filterChain.doFilter(request, response);
-      } else {
-        log.error("Cannot Authorize {} to access {}", userId, request.getRequestURI());
-        response
-            .getWriter()
-            .write(
-                new ObjectMapper()
-                    .writeValueAsString(new ErrorResponse("Unauthorized", "Invalid Token")));
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-      }
-    } catch (Exception e) {
-      log.error("Cannot Authorize user to access {}", request.getRequestURI(), e);
+    token = token.substring(AppConstants.BEARER.length());
+    final String userId = tokenProvider.getSubject(token);
+    if (tokenProvider.verifyToken(token, userId, false)) {
+      UsernamePasswordAuthenticationToken authentication =
+          new UsernamePasswordAuthenticationToken(tokenProvider.getSubject(token), null, null);
+      SecurityContextHolder.getContext().setAuthentication(authentication);
       filterChain.doFilter(request, response);
+    } else {
+      log.error("Cannot Authorize {} to access {}", userId, request.getRequestURI());
+      response
+          .getWriter()
+          .write(
+              new ObjectMapper()
+                  .writeValueAsString(new ErrorResponse("Unauthorized", "Invalid Token")));
+      response.setStatus(HttpStatus.UNAUTHORIZED.value());
+      response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     }
   }
 }

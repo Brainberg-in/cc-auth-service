@@ -167,18 +167,6 @@ class AuthServiceImplTest {
   }
 
   @Test
-  public void testResetPassword_InvalidToken() throws ParseException {
-    ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
-    resetPasswordRequest.setPassword("newPassword");
-
-    when(jwtTokenProvider.getSubject(anyString())).thenThrow(ParseException.class);
-
-    assertThrows(
-        GlobalExceptionHandler.RefreshTokenException.class,
-        () -> authService.resetPassword(resetPasswordRequest, "invalidToken"));
-  }
-
-  @Test
   public void testResetPassword_Success() throws ParseException {
     ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
     resetPasswordRequest.setPassword("newPassword");
