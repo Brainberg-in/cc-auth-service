@@ -33,13 +33,13 @@ public class OtpServiceImpl implements OtpService {
   @Value("${spring.profiles.active}")
   private String activeProfile;
 
-  @Override
-  @Transactional
-  public String sendOtp(final String email) {
-    final User user = userService.findByEmail(email);
+  @Value("${aws.ses.sender}")
+  private String senderEmail;
+
+  private String generateOTP(final int userId) {
     final String otp = "dev".equals(activeProfile) ? "1234" : GeneratorUtils.generateOTP(4);
     otpGenRepo
-        .findByUserId(user.getUserId())
+        .findByUserId(userId)
         .ifPresentOrElse(
             otpGen -> {
               otpGen.setModifiedAt(LocalDateTime.now());
@@ -48,15 +48,21 @@ public class OtpServiceImpl implements OtpService {
             },
             () -> {
               final OtpGen otpGen = new OtpGen();
-              otpGen.setUserId(user.getUserId());
+              otpGen.setUserId(userId);
               otpGen.setOtp(otp);
               otpGen.setCreatedAt(LocalDateTime.now());
               otpGen.setModifiedAt(LocalDateTime.now());
               otpGenRepo.saveAndFlush(otpGen);
             });
+    return otp;
+  }
 
-    awsService.sendEmail("sahithi.k@traitfit.com", email, "login_cc_otp", Map.of("otp", otp));
-
+  @Override
+  @Transactional
+  public String sendOtp(final String email) {
+    final User user = userService.findByEmail(email);
+    final String otp = generateOTP(user.getUserId());
+    awsService.sendEmail(senderEmail, email, "login_cc_otp", Map.of("otp", otp));
     return otp;
   }
 
@@ -83,7 +89,8 @@ public class OtpServiceImpl implements OtpService {
   @Override
   @Transactional
   public void resendOtp(String email) {
-    userService.findByEmail(email);
-    sendOtp(email);
+    final User user = userService.findByEmail(email);
+    awsService.sendEmail(
+        senderEmail, email, "login_cc_otp", Map.of("otp", generateOTP(user.getUserId())));
   }
 }

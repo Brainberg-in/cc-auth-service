@@ -53,6 +53,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(InvalidCredentialsException.class)
   public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
       InvalidCredentialsException ex) {
+    log.error("InvalidCredentialsException occurred", ex);
     final ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials", ex.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
@@ -67,6 +68,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   // Handle General Exception
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+    log.error("Unexpected error occurred", ex);
     final ErrorResponse errorResponse =
         new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "Unknown error occurred");
@@ -81,6 +83,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   @ExceptionHandler(NoSuchElementException.class)
   public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e) {
+    log.error("NoSuchElementException occurred", e);
     final ErrorResponse errorResponse = new ErrorResponse("User not found", e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
   }

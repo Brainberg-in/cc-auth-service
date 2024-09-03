@@ -11,41 +11,39 @@ import com.mpsp.cc_auth_service.service.impl.OtpServiceImpl;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@ActiveProfiles("dev")
+@ContextConfiguration(classes = {OtpServiceImpl.class})
 public class OtpServiceImplTest {
 
-  @InjectMocks private OtpServiceImpl otpService;
+  @Autowired private OtpServiceImpl otpService;
 
-  @Mock private UserServiceClient userService;
+  @MockBean private UserServiceClient userService;
 
-  @Mock private OtpGenRepo otpGenRepo;
+  @MockBean private OtpGenRepo otpGenRepo;
 
-  @Mock private AwsService awsService;
+  @MockBean private AwsService awsService;
 
-  @Mock private JwtTokenProvider jwtTokenProvider;
-
-  @BeforeEach
-  public void setUp() {
-    MockitoAnnotations.openMocks(this);
-  }
+  @MockBean private JwtTokenProvider jwtTokenProvider;
 
   @Test
   public void testSendOtp_UserFound() {
     User user = new User();
     user.setUserId(1);
-    when(userService.findByEmail(anyString())).thenReturn(user);
+    user.setEmail("test@example.com");
+    when(userService.findByEmail("test@example.com")).thenReturn(user);
     when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.empty());
     doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
 
-    String otp = otpService.sendOtp("test@example.com");
+    final String otp = otpService.sendOtp("test@example.com");
     assertNotNull(otp);
     verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
     verify(otpGenRepo, times(1)).saveAndFlush(any(OtpGen.class));
@@ -86,9 +84,9 @@ public class OtpServiceImplTest {
 
   @Test
   public void testResendOtp_UserFound() {
-    User user = new User();
+    final User user = new User();
     user.setUserId(1);
-    OtpGen otpGen = new OtpGen();
+    final OtpGen otpGen = new OtpGen();
     otpGen.setModifiedAt(LocalDateTime.now());
     otpGen.setOtp("1234");
     when(userService.findByEmail(anyString())).thenReturn(user);

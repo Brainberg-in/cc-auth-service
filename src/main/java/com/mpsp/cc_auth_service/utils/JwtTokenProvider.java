@@ -8,13 +8,11 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
-import jakarta.servlet.http.HttpServletRequest;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -100,7 +98,6 @@ public class JwtTokenProvider {
   }
 
   public String getSubject(final String token) {
-
     try {
       final JWSObject jwsObject =
           JWSObject.parse(
@@ -114,13 +111,5 @@ public class JwtTokenProvider {
       log.error("Failed to parse {}", token, e);
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
     }
-  }
-
-  public String resolveToken(final HttpServletRequest request) {
-    String bearerToken = request.getHeader(org.springframework.http.HttpHeaders.AUTHORIZATION);
-    if (StringUtils.isNotBlank(bearerToken) && bearerToken.startsWith(AppConstants.BEARER)) {
-      return bearerToken.substring(AppConstants.BEARER.length());
-    }
-    return null;
   }
 }
