@@ -4,8 +4,6 @@ import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.dto.UserCreateRequest;
-import org.springframework.http.HttpStatus;
-
 import java.text.ParseException;
 
 public interface AuthService {
@@ -13,7 +11,7 @@ public interface AuthService {
 
   void logout(String token) throws ParseException;
 
-  LoginResponse refreshToken(String refreshToken) throws ParseException;
+  LoginResponse refreshToken(String refreshToken);
 
   void sendResetPasswordEmail(String email);
 

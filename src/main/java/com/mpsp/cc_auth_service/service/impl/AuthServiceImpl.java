@@ -1,11 +1,9 @@
 package com.mpsp.cc_auth_service.service.impl;
 
-import com.mpsp.cc_auth_service.constants.UserRole;
 import com.mpsp.cc_auth_service.dto.*;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
-import com.mpsp.cc_auth_service.error.ErrorResponse;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
@@ -17,7 +15,6 @@ import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -65,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
 
     // Validate user and password
     final User user = userService.findByEmail(email);
-    if(user==null){
+    if (user == null) {
       throw new GlobalExceptionHandler.UserNotFoundException("User not found");
     }
     log.info("User found: {}", user);
@@ -77,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
             .getContent()
             .get(0);
     log.info(String.valueOf(pw));
-    if(pw==null){
+    if (pw == null) {
       throw new GlobalExceptionHandler.UserNotFoundException("User not found");
     }
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
@@ -102,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
       otpService.sendOtp(email);
     }
     return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(),pw.getUserRole());
+        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), pw.getUserRole());
   }
 
   @Override
@@ -122,8 +118,8 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Transactional
+  @Override
   public LoginResponse refreshToken(final String refreshToken) {
-    log.info("Refresh token: {}", refreshToken);
     RefreshToken storedToken =
         refreshTokenRepository
             .findByToken(refreshToken)
@@ -135,7 +131,8 @@ public class AuthServiceImpl implements AuthService {
     log.info("User ID: {}", storedToken.getUserId());
     final User user = userService.findById(storedToken.getUserId());
 
-    PasswordHistory p = passwordHistoryRepository
+    final PasswordHistory p =
+        passwordHistoryRepository
             .findAllByUserId(
                 user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
             .getContent()
@@ -143,7 +140,6 @@ public class AuthServiceImpl implements AuthService {
 
     final String newJwtToken = jwtTokenProvider.generateToken(user, false);
     final String newRefreshToken = jwtTokenProvider.generateToken(user, true);
-    log.info("New refresh token: {}", newRefreshToken);
     updateRefreshToken(user.getUserId(), newRefreshToken);
     return new LoginResponse(newJwtToken, newRefreshToken, true, false, p.getUserRole());
   }
@@ -153,13 +149,7 @@ public class AuthServiceImpl implements AuthService {
   public void sendResetPasswordEmail(String email) {
     userService.findByEmail(email);
 
-    awsService.sendEmail(
-        senderEmail,
-        email,
-        "cc_reset_password",
-        Map.of(
-            "link",resetPasswordUrl
-            ));
+    awsService.sendEmail(senderEmail, email, "cc_reset_password", Map.of("link", resetPasswordUrl));
   }
 
   @Override
@@ -179,14 +169,17 @@ public class AuthServiceImpl implements AuthService {
     } catch (ParseException e) {
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
     }
-    if(resetPasswordRequest.getCurrentPassword()!=null){
+    if (resetPasswordRequest.getCurrentPassword() != null) {
       log.info("entered current password");
-        if (passwordEncoder.matches(resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
-          log.info("cam here");
-            throw new GlobalExceptionHandler.InvalidCredentialsException("Cannot reset to current password");
-        }else if(!passwordEncoder.matches(resetPasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword())){
-            throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
-        }
+      if (passwordEncoder.matches(
+          resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
+        log.info("cam here");
+        throw new GlobalExceptionHandler.InvalidCredentialsException(
+            "Cannot reset to current password");
+      } else if (!passwordEncoder.matches(
+          resetPasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword())) {
+        throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
+      }
     }
     if (passwordHistory != null) {
       passwordHistory.setCurrentPassword(

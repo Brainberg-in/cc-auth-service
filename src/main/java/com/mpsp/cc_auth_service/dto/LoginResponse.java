@@ -1,7 +1,6 @@
 package com.mpsp.cc_auth_service.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mpsp.cc_auth_service.constants.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +21,7 @@ public class LoginResponse {
 
   @Setter
   @JsonProperty("isMfaEnabled")
-  private boolean isMfaEnabled;
+  private boolean mfaEnabled;
 
   @Setter
   @JsonProperty("isFirstLogin")

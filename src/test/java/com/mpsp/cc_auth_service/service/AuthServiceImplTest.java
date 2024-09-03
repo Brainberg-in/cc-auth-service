@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -100,14 +99,16 @@ class AuthServiceImplTest {
   void testLoginInvalidPassword() {
     when(userService.findByEmail(anyString())).thenReturn(user);
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
     LoginRequest loginRequest = new LoginRequest();
     loginRequest.setEmail("test@example.com");
     loginRequest.setPassword("password");
 
-    assertThrows(GlobalExceptionHandler.InvalidCredentialsException.class, () -> authService.login(loginRequest));
+    assertThrows(
+        GlobalExceptionHandler.InvalidCredentialsException.class,
+        () -> authService.login(loginRequest));
   }
 
   //  @Test
@@ -129,7 +130,8 @@ class AuthServiceImplTest {
     when(userService.findById(anyInt())).thenReturn(user);
     when(jwtTokenProvider.generateToken(user, false)).thenReturn("newJwtToken");
     when(jwtTokenProvider.generateToken(user, true)).thenReturn("newRefreshToken");
-    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     LoginResponse response = authService.refreshToken("refreshToken");
 
     assertNotNull(response);

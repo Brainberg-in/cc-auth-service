@@ -1,12 +1,9 @@
 package com.mpsp.cc_auth_service.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mpsp.cc_auth_service.constants.Gender;
-import com.mpsp.cc_auth_service.constants.UserRole;
 import com.mpsp.cc_auth_service.constants.UserStatus;
 import java.util.Date;
-
 import lombok.*;
 
 @Getter
@@ -43,8 +40,10 @@ public class User {
   private Date updatedAt;
   private Long createdBy;
   private Long updatedBy;
+
   @JsonProperty("isMfaEnabled")
   private boolean isMfaEnabled;
+
   @JsonProperty("isFirstLogin")
   private boolean isFirstLogin;
 

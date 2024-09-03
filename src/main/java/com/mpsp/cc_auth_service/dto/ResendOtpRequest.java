@@ -1,6 +1,5 @@
 package com.mpsp.cc_auth_service.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mpsp.cc_auth_service.utils.GeneratorUtils;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

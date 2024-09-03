@@ -8,13 +8,13 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.BadJWTException;
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import jakarta.servlet.http.HttpServletRequest;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -58,21 +58,26 @@ public class JwtTokenProvider {
     return jwsObject.serialize();
   }
 
-  public boolean verifyToken(final String token, final String userId, final boolean isRefreshToken) {
+  public boolean verifyToken(
+      final String token, final String userId, final boolean isRefreshToken) {
     try {
       // Parse the token, stripping the "Bearer " prefix if present
-      final JWSObject jwsObject = JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
+      final JWSObject jwsObject =
+          JWSObject.parse(
+              token.startsWith(AppConstants.BEARER)
+                  ? token.substring(AppConstants.BEARER.length())
+                  : token);
       final JWSVerifier verifier = new MACVerifier(jwtSecret);
 
       // Create a claims verifier to match the expected claims
       final DefaultJWTClaimsVerifier<?> claimsVerifier =
-              new DefaultJWTClaimsVerifier<>(
-                      new JWTClaimsSet.Builder()
-                              .issuer(issuer)
-                              .subject(userId)
-                              .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
-                              .build(),
-                      new HashSet<>(List.of("exp")));
+          new DefaultJWTClaimsVerifier<>(
+              new JWTClaimsSet.Builder()
+                  .issuer(issuer)
+                  .subject(userId)
+                  .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
+                  .build(),
+              new HashSet<>(List.of("exp")));
 
       // Verify the token's signature
       if (jwsObject.verify(verifier)) {
@@ -94,22 +99,23 @@ public class JwtTokenProvider {
     }
   }
 
-
   public String getSubject(final String token) throws ParseException {
 
     final JWSObject jwsObject =
-        JWSObject.parse(token.startsWith("Bearer ") ? token.substring(7) : token);
+        JWSObject.parse(
+            token.startsWith(AppConstants.BEARER)
+                ? token.substring(AppConstants.BEARER.length())
+                : token);
 
     final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
     return claims.getSubject();
   }
 
-  public String resolveToken(HttpServletRequest request) {
-    String bearerToken = request.getHeader("Authorization");
-    if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-      return bearerToken.substring(7);
+  public String resolveToken(final HttpServletRequest request) {
+    String bearerToken = request.getHeader(org.springframework.http.HttpHeaders.AUTHORIZATION);
+    if (StringUtils.isNotBlank(bearerToken) && bearerToken.startsWith(AppConstants.BEARER)) {
+      return bearerToken.substring(AppConstants.BEARER.length());
     }
     return null;
   }
-
 }

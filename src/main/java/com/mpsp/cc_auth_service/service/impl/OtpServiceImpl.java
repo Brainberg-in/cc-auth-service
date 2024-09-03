@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +38,7 @@ public class OtpServiceImpl implements OtpService {
   @Transactional
   public String sendOtp(final String email) {
     final User user = userService.findByEmail(email);
-    final String otp = "dev".equals(activeProfile)?"1234":GeneratorUtils.generateOTP(4);
+    final String otp = "dev".equals(activeProfile) ? "1234" : GeneratorUtils.generateOTP(4);
     otpGenRepo
         .findByUserId(user.getUserId())
         .ifPresentOrElse(
@@ -81,15 +80,13 @@ public class OtpServiceImpl implements OtpService {
               if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
                 throw new RuntimeException("OTP expired");
               }
-
-              if (otpGen.getOtp().equals(otp)) {
-                result.set(true);
-              }
+              result.set(otpGen.getOtp().equals(otp));
             });
     return result.get();
   }
 
   @Override
+  @Transactional
   public void resendOtp(String email) {
     userService.findByEmail(email);
     sendOtp(email);

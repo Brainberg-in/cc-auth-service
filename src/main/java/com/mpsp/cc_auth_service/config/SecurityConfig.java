@@ -25,17 +25,16 @@ public class SecurityConfig {
   @Value("${allowed.origins}")
   private String[] allowedOrigins;
 
-  @Autowired
-  private transient CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+  @Autowired private transient CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
-  @Autowired
-  private transient  JwtAuthorizationFilter jwtAuthorizationFilter;
+  @Autowired private transient JwtAuthorizationFilter jwtAuthorizationFilter;
 
   @Bean
   public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
 
     http.cors(c -> c.configurationSource(request -> corsConfiguration()))
-            .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .sessionManagement(
+            (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .csrf(AbstractHttpConfigurer::disable) // Disable CSRF protection
         .authorizeHttpRequests(
             authorizeRequests ->
@@ -53,8 +52,10 @@ public class SecurityConfig {
                     .authenticated()
                     .anyRequest()
                     .denyAll())
-            .addFilterBefore(jwtAuthorizationFilter, BasicAuthenticationFilter.class)
-    .exceptionHandling((exceptionHandling) -> exceptionHandling.authenticationEntryPoint(customAuthenticationEntryPoint));
+        .addFilterBefore(jwtAuthorizationFilter, BasicAuthenticationFilter.class)
+        .exceptionHandling(
+            (exceptionHandling) ->
+                exceptionHandling.authenticationEntryPoint(customAuthenticationEntryPoint));
     return http.build();
   }
 

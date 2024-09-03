@@ -16,10 +16,14 @@ public class AwsSesConfig {
 
   @Value("${aws.ses.secret}")
   private String sesSecret;
+
   @Bean
   public SesV2Client amazonSimpleEmailService() {
     final AwsBasicCredentials awsBasicCredentials = AwsBasicCredentials.create(sesKey, sesSecret);
 
-    return SesV2Client.builder().region(Region.AP_SOUTH_1).credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials)).build();
+    return SesV2Client.builder()
+        .region(Region.AP_SOUTH_1)
+        .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
+        .build();
   }
 }

@@ -1,8 +1,6 @@
 package com.mpsp.cc_auth_service.utils;
 
 import com.mpsp.cc_auth_service.error.ErrorResponse;
-
-import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -39,13 +37,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   @Override
   protected ResponseEntity<Object> handleMissingServletRequestParameter(
-          final MissingServletRequestParameterException ex,
-          final HttpHeaders headers,
-          final HttpStatusCode status,
-          final WebRequest request) {
+      final MissingServletRequestParameterException ex,
+      final HttpHeaders headers,
+      final HttpStatusCode status,
+      final WebRequest request) {
     log.error("MissingServletRequestParameterException occurred", ex);
-    ErrorResponse response =
-            new ErrorResponse( "Missing Request Parameter", "parameter is missing");
+    ErrorResponse response = new ErrorResponse("Missing Request Parameter", "parameter is missing");
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
@@ -67,7 +64,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   // Handle General Exception
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-    ErrorResponse errorResponse = new ErrorResponse("Internal Server Error", "Unknown error occurred");
+    ErrorResponse errorResponse =
+        new ErrorResponse("Internal Server Error", "Unknown error occurred");
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
@@ -78,7 +76,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   @ExceptionHandler(UserNotFoundException.class)
-  public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException e){
+  public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException e) {
     ErrorResponse errorResponse = new ErrorResponse("User not found", e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
   }
@@ -103,8 +101,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
   }
 
-  public static class UserNotFoundException extends RuntimeException{
-    public UserNotFoundException(String message){
+  public static class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(String message) {
       super(message);
     }
   }

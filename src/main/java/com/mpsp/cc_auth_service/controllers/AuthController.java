@@ -1,15 +1,17 @@
 package com.mpsp.cc_auth_service.controllers;
 
+import com.mpsp.cc_auth_service.constants.AppConstants;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
+import com.mpsp.cc_auth_service.dto.ResendOtpRequest;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
+import com.mpsp.cc_auth_service.dto.SuccessResponse;
 import com.mpsp.cc_auth_service.dto.UserCreateRequest;
 import com.mpsp.cc_auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import java.text.ParseException;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -32,42 +34,45 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<Map<String, String>> logout(
+  public ResponseEntity<SuccessResponse> logout(
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
           @NotBlank(message = "Authorization Token is required")
           @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization Token")
           final String authorizationHeader)
       throws ParseException {
-    authService.logout(authorizationHeader.substring(7));
-    return ResponseEntity.ok(Map.of("message", "Logout successful", "status", "success"));
+    authService.logout(authorizationHeader.substring(AppConstants.BEARER.length()));
+    return ResponseEntity.ok(new SuccessResponse("success", "Logout successful"));
   }
 
   @PostMapping("/refresh-token")
-  public ResponseEntity<LoginResponse> refreshToken(@RequestHeader final String refreshToken)
-      throws ParseException {
+  public ResponseEntity<LoginResponse> refreshToken(
+      @RequestHeader @NotBlank(message = "Refresh Token is required") final String refreshToken) {
     return ResponseEntity.ok(authService.refreshToken(refreshToken));
   }
 
   @PostMapping("/forgot-password")
-  public ResponseEntity<Object> forgotPassword(@RequestBody final Map<String, String> request) {
-    final String email = request.get("email");
+  public ResponseEntity<SuccessResponse> forgotPassword(
+      @RequestBody @Valid final ResendOtpRequest request) {
+    final String email = request.getEmail();
 
     authService.sendResetPasswordEmail(email);
 
-    return ResponseEntity.ok(Map.of("message", "Reset password email sent.", "status", "success"));
+    return ResponseEntity.ok(new SuccessResponse("Reset password email sent.", "success"));
   }
 
   @PostMapping("/reset-password")
-  public ResponseEntity<Object> resetPassword(
+  public ResponseEntity<SuccessResponse> resetPassword(
       @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest,
-      @RequestHeader("Authorization") final String token) {
-      log.info("inside auth controller, inside reset password method");
-      authService.resetPassword(resetPasswordRequest, token);
-      return ResponseEntity.ok(Map.of("message", "Password reset successfully."));
+      @RequestHeader(HttpHeaders.AUTHORIZATION)
+          @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization Token")
+          final String token) {
+    authService.resetPassword(resetPasswordRequest, token);
+    return ResponseEntity.ok(new SuccessResponse("success", "Password reset successfully."));
   }
 
   @PostMapping("/create-user")
-  public ResponseEntity<Void> createNewUser(@RequestBody @Valid final UserCreateRequest userCreateRequest) {
+  public ResponseEntity<Void> createNewUser(
+      @RequestBody @Valid final UserCreateRequest userCreateRequest) {
     authService.createNewUser(userCreateRequest);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
