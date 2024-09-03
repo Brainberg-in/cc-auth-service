@@ -1,7 +1,9 @@
 package com.mpsp.cc_auth_service.error;
 
+import lombok.Getter;
 import lombok.ToString;
 
+@Getter
 @ToString
 public class ErrorResponse {
   private final String error;
