@@ -27,9 +27,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         .getWriter()
         .write(
             new ObjectMapper()
-                .writeValueAsString(
-                    new ErrorResponse(
-                        HttpStatus.UNAUTHORIZED.getReasonPhrase(), "Token Not Found")));
+                .writeValueAsString(new ErrorResponse(HttpStatus.FORBIDDEN.getReasonPhrase())));
     response.setStatus(HttpStatus.FORBIDDEN.value());
   }
 }

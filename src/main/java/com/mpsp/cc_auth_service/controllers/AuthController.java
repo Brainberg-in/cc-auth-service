@@ -57,7 +57,7 @@ public class AuthController {
 
     authService.sendResetPasswordEmail(email);
 
-    return ResponseEntity.ok(new SuccessResponse("success","Reset password email sent."));
+    return ResponseEntity.ok(new SuccessResponse("success", "Reset password email sent."));
   }
 
   @PostMapping("/reset-password")

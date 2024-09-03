@@ -34,7 +34,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ex.getBindingResult().getFieldErrors().stream()
             .map(DefaultMessageSourceResolvable::getDefaultMessage)
             .toList();
-    return ResponseEntity.badRequest().body(new ErrorResponse("Invalid Arguments", message.get(0)));
+    return ResponseEntity.badRequest().body(new ErrorResponse(message.get(0)));
   }
 
   @Override
@@ -44,8 +44,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       final HttpStatusCode status,
       final WebRequest request) {
     log.error("MissingServletRequestParameterException occurred", ex);
-    final ErrorResponse response =
-        new ErrorResponse("Missing Request Parameter", "parameter is missing");
+    final ErrorResponse response = new ErrorResponse("Missing Request Parameter");
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
@@ -54,14 +53,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
       InvalidCredentialsException ex) {
     log.error("InvalidCredentialsException occurred", ex);
-    final ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials", ex.getMessage());
+    final ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials");
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
   // Handle Refresh Token Exception
   @ExceptionHandler(RefreshTokenException.class)
   public ResponseEntity<ErrorResponse> handleRefreshTokenException(RefreshTokenException ex) {
-    final ErrorResponse errorResponse = new ErrorResponse("Invalid Token", ex.getMessage());
+    final ErrorResponse errorResponse = new ErrorResponse("Invalid Token");
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
@@ -70,21 +69,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
     log.error("Unexpected error occurred", ex);
     final ErrorResponse errorResponse =
-        new ErrorResponse(
-            HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "Unknown error occurred");
+        new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @ExceptionHandler(SesV2Exception.class)
   public ResponseEntity<ErrorResponse> handleSesV2Exception(SesV2Exception e) {
-    final ErrorResponse errorResponse = new ErrorResponse("Email not sent", "Failed to send email");
+    final ErrorResponse errorResponse = new ErrorResponse("Failed to send email");
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @ExceptionHandler(NoSuchElementException.class)
   public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e) {
     log.error("NoSuchElementException occurred", e);
-    final ErrorResponse errorResponse = new ErrorResponse("User not found", e.getMessage());
+    final ErrorResponse errorResponse = new ErrorResponse("User not found");
     return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
   }
 

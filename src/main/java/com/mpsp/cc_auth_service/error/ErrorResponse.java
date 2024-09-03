@@ -1,13 +1,14 @@
 package com.mpsp.cc_auth_service.error;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 
-@Getter
-@Setter
-@AllArgsConstructor
+@ToString
 public class ErrorResponse {
-  private String error;
-  private String message;
+  private final String error;
+  private final String status;
+
+  public ErrorResponse(final String error) {
+    this.error = error;
+    this.status = "failed";
+  }
 }
