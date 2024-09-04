@@ -21,7 +21,7 @@ public class AwsServiceImpl implements AwsService {
       final String templateName,
       final Map<String, String> objectMap) {
     final Destination destination =
-        Destination.builder().toAddresses(sender).build();
+        Destination.builder().toAddresses(recipient).build();
 
     final EmailContent emailContent =
         EmailContent.builder()

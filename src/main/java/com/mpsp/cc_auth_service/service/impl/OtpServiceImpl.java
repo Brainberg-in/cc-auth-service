@@ -88,7 +88,7 @@ public class OtpServiceImpl implements OtpService {
 
   @Override
   @Transactional
-  public void resendOtp(String email) {
+  public void resendOtp(final String email) {
     final User user = userService.findByEmail(email);
     awsService.sendEmail(
         senderEmail, email, "login_cc_otp", Map.of("otp", generateOTP(user.getUserId())));
