@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:19",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:39",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
-            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
+            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:75d0cc9ea05903a0a7bf7da12b1737bd18fb1a32",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
@@ -18,25 +18,17 @@
             "essential": true,
             "environment": [
                 {
-                    "name": "SPRING_PROFILES_ACTIVE",
-                    "value": "dev"
-                },
-                {
                     "name": "DB_NAME",
                     "value": "auth"
+                },
+                {
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "dev"
                 }
             ],
             "mountPoints": [],
             "volumesFrom": [],
             "secrets": [
-                {
-                    "name": "DB_USER",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:username::"
-                },
-                {
-                    "name": "DB_PORT",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:port::"
-                },
                 {
                     "name": "DB_HOST",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:host::"
@@ -44,6 +36,14 @@
                 {
                     "name": "DB_PASSWORD",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:password::"
+                },
+                {
+                    "name": "DB_PORT",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:port::"
+                },
+                {
+                    "name": "DB_USER",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:username::"
                 },
                 {
                     "name": "JWT_SECRET",
@@ -74,7 +74,7 @@
     "family": "auth-service-task-definition",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 19,
+    "revision": 39,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -117,10 +117,10 @@
     "cpu": "512",
     "memory": "1024",
     "runtimePlatform": {
-        "cpuArchitecture": "X86_64",
+        "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-08-27T08:40:31.992Z",
+    "registeredAt": "2024-09-04T07:26:17.815Z",
     "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
     "tags": []
 }
