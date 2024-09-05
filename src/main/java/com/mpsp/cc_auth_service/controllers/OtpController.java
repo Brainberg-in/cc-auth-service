@@ -1,16 +1,14 @@
 package com.mpsp.cc_auth_service.controllers;
 
 import com.mpsp.cc_auth_service.dto.ResendOtpRequest;
-import com.mpsp.cc_auth_service.dto.SuccessResponse;
 import com.mpsp.cc_auth_service.dto.VerifyOtpRequest;
 import com.mpsp.cc_auth_service.service.OtpService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,29 +21,26 @@ public class OtpController {
   @Autowired private OtpService otpService;
 
   @PostMapping("/validateOtp")
-  public ResponseEntity<Object> verifyOtp(
+  public ResponseEntity<String> verifyOtp(
       @RequestBody @Valid VerifyOtpRequest verifyOtpRequest,
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
           @NotBlank(message = "Authorization Token is required")
           @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
           String token) {
     if (otpService.verifyOtp(token, verifyOtpRequest.getOtp())) {
-      Map<String, String> response = new HashMap<>();
-      response.put("message", "OTP verified successfully");
-      response.put("status", "success");
-      return ResponseEntity.ok(response);
+      return ResponseEntity.ok("OTP verified successfully");
     } else {
-      Map<String, String> response = new HashMap<>();
-      response.put("message", "OTP verification failed");
-      response.put("status", "failed");
-      return ResponseEntity.badRequest().body(response);
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("OTP verification failed");
     }
   }
 
   @PostMapping("/resendOtp")
-  public ResponseEntity<SuccessResponse> resendOtp(
-      @RequestBody @Valid ResendOtpRequest resendOtpRequest) {
-    otpService.resendOtp(resendOtpRequest.getEmail());
-    return ResponseEntity.ok(new SuccessResponse("success", "OTP resent successfully"));
+  public ResponseEntity<String> resendOtp(
+      @RequestBody @Valid ResendOtpRequest resendOtpRequest, @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+      @NotBlank(message = "Authorization Token is required")
+      @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
+      String token) {
+    otpService.resendOtp(token);
+    return ResponseEntity.ok("OTP resent successfully");
   }
 }

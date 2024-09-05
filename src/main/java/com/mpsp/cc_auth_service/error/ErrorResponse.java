@@ -1,13 +1,21 @@
 package com.mpsp.cc_auth_service.error;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-@Getter
-@Setter
-@AllArgsConstructor
+import lombok.Data;
+
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-  private String error;
-  private String message;
+    private final String error;
+    private String details;
+
+    public ErrorResponse(String error) {
+        this.error = error;
+    }
+
+    public ErrorResponse(String error, String details) {
+        this.error = error;
+        this.details = details;
+    }
 }
