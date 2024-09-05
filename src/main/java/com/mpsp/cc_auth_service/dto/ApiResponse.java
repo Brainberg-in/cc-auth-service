@@ -7,7 +7,6 @@ import lombok.ToString;
 @Getter
 @AllArgsConstructor
 @ToString
-public class SuccessResponse {
-  private String status;
+public class ApiResponse {
   private String message;
 }

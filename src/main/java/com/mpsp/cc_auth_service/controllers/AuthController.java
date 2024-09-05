@@ -1,6 +1,7 @@
 package com.mpsp.cc_auth_service.controllers;
 
 import com.mpsp.cc_auth_service.constants.AppConstants;
+import com.mpsp.cc_auth_service.dto.ApiResponse;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResendOtpRequest;
@@ -33,14 +34,14 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<String> logout(
+  public ResponseEntity<ApiResponse> logout(
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
           @NotBlank(message = "Authorization Token is required")
           @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization Token")
           final String authorizationHeader)
       throws ParseException {
     authService.logout(authorizationHeader.substring(AppConstants.BEARER.length()));
-    return ResponseEntity.ok("Logout successful");
+    return ResponseEntity.ok(new ApiResponse("Logout successful"));
   }
 
   @PostMapping("/refresh-token")
@@ -50,23 +51,23 @@ public class AuthController {
   }
 
   @PostMapping("/forgot-password")
-  public ResponseEntity<String> forgotPassword(
+  public ResponseEntity<ApiResponse> forgotPassword(
       @RequestBody @Valid final ResendOtpRequest request) {
     final String email = request.getEmail();
 
     authService.sendResetPasswordEmail(email);
 
-    return ResponseEntity.ok("A link to reset your password has been sent to your email.");
+    return ResponseEntity.ok(new ApiResponse("A link to reset your password has been sent to your email."));
   }
 
   @PostMapping("/reset-password")
-  public ResponseEntity<String> resetPassword(
+  public ResponseEntity<ApiResponse> resetPassword(
       @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest,
       @RequestHeader(HttpHeaders.AUTHORIZATION)
           @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization Token")
           final String token) {
     authService.resetPassword(resetPasswordRequest, token);
-    return ResponseEntity.ok("Password reset successfully.");
+    return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
   }
 
   @PostMapping("/create-user")
