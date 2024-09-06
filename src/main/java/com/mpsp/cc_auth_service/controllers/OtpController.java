@@ -37,7 +37,7 @@ public class OtpController {
 
   @PostMapping("/resendOtp")
   public ResponseEntity<ApiResponse> resendOtp(
-      @RequestBody @Valid ResendOtpRequest resendOtpRequest, @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION)
       @NotBlank(message = "Authorization Token is required")
       @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
       String token) {
