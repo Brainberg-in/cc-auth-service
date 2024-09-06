@@ -3,7 +3,7 @@
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
-            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:6427ff3ee1316a911dc0eac0a41f80ce360dcde5",
+            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
