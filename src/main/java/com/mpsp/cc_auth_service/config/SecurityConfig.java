@@ -66,8 +66,7 @@ public class SecurityConfig {
   }
 
   private CorsConfiguration corsConfiguration() {
-    log.info("CORS URL is: {}", Arrays.toString(allowedOrigins));
-    CorsConfiguration corsConfiguration = new CorsConfiguration();
+    final CorsConfiguration corsConfiguration = new CorsConfiguration();
     corsConfiguration.setAllowedHeaders(List.of("*"));
     corsConfiguration.setAllowedOrigins(Arrays.asList(allowedOrigins));
     corsConfiguration.setAllowedMethods(List.of("GET", "POST", "OPTIONS", "PUT"));

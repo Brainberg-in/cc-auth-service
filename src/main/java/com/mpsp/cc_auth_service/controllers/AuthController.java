@@ -46,7 +46,8 @@ public class AuthController {
 
   @PostMapping("/refresh-token")
   public ResponseEntity<LoginResponse> refreshToken(
-      @RequestHeader("refreshToken") @NotBlank(message = "Refresh Token is required") final String refreshToken) {
+      @RequestHeader("refreshToken") @NotBlank(message = "Refresh Token is required")
+          final String refreshToken) {
     return ResponseEntity.ok(authService.refreshToken(refreshToken));
   }
 
@@ -57,8 +58,8 @@ public class AuthController {
 
     authService.sendResetPasswordEmail(email);
 
-    return ResponseEntity.ok(new ApiResponse("A link to reset your password has been sent to your email."));
-
+    return ResponseEntity.ok(
+        new ApiResponse("A link to reset your password has been sent to your email."));
   }
 
   @PostMapping("/reset-password")

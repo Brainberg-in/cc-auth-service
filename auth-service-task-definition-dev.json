@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:39",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:47",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
-            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:75d0cc9ea05903a0a7bf7da12b1737bd18fb1a32",
+            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
@@ -68,13 +68,23 @@
                 },
                 "secretOptions": []
             },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -f http://localhost:8080/actuator/health || exit 1"
+                ],
+                "interval": 10,
+                "timeout": 10,
+                "retries": 3,
+                "startPeriod": 70
+            },
             "systemControls": []
         }
     ],
     "family": "auth-service-task-definition",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 39,
+    "revision": 47,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -92,6 +102,9 @@
         },
         {
             "name": "ecs.capability.secrets.asm.environment-variables"
+        },
+        {
+            "name": "ecs.capability.container-health-check"
         },
         {
             "name": "ecs.capability.execution-role-ecr-pull"
@@ -120,7 +133,7 @@
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-09-04T07:26:17.815Z",
+    "registeredAt": "2024-09-06T11:38:52.532Z",
     "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
     "tags": []
 }

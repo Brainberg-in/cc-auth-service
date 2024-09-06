@@ -10,8 +10,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,12 +40,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
       final FilterChain filterChain)
       throws ServletException, IOException {
 
-        log.info("JwtAuthorizationFilter processing request for URI: {}", request.getRequestURI());
-        log.info("Request method: {}", request.getMethod());
-        log.info("skipAuthorizationUrls: {}", Arrays.toString(skipAuthorizationUrls));
-        log.info("skipTokenCheckPaths: {}", Arrays.toString(skipTokenCheckPaths));
-
-    String token = request.getHeader(HttpHeaders.AUTHORIZATION);
+    final String token = request.getHeader(HttpHeaders.AUTHORIZATION);
     // checking if token is present and is of bearer type. Also checking if the request is for
     // refreshing token
     if (GeneratorUtils.checkIfUrlEndsWith(request.getRequestURI(), skipAuthorizationUrls)
@@ -67,8 +60,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
       return;
     }
-    token = token.substring(AppConstants.BEARER.length());
-    final String userId = tokenProvider.getSubject(token);
+
+    final String userId = tokenProvider.getSubject(token.substring(AppConstants.BEARER.length()));
     if (tokenProvider.verifyToken(token, userId, false)) {
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(tokenProvider.getSubject(token), null, null);
