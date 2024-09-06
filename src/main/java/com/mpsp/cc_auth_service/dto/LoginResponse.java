@@ -14,7 +14,7 @@ public class LoginResponse {
 
   @Schema(name = "token", description = "Bearer Token")
   @Setter
-  private String token;
+  private String accessToken;
 
   @Schema(name = "refreshToken", description = "Bearer Token")
   private String refreshToken;
