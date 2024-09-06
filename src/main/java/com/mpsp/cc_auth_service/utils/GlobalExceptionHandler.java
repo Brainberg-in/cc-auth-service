@@ -120,4 +120,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       super(message);
     }
   }
+
+  public static class OTPVerificationException extends RuntimeException {
+    public OTPVerificationException(String message) {
+      super(message);
+    }
+  }
+
+  @ExceptionHandler(OTPExpiredException.class)
+  public ResponseEntity<ErrorResponse> handleOtpExpiredException(OTPExpiredException e) {
+    final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  
+
+  @ExceptionHandler(OTPVerificationException.class)
+  public ResponseEntity<ErrorResponse> handleOtpVerificationException(OTPVerificationException e) {
+    final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+  
 }

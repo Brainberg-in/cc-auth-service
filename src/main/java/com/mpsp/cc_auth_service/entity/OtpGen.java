@@ -19,17 +19,17 @@ public class OtpGen {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
-  @Column(name = "user_id", nullable = false)
+  @Column(name = "userId", nullable = false)
   private Integer userId;
 
   @CreationTimestamp
   @Column(
-      name = "created_at",
+      name = "createdAt",
       columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
       updatable = false)
   private LocalDateTime createdAt;
 
-  @Column(name = "modified_at")
+  @Column(name = "modifiedAt")
   @UpdateTimestamp
   private LocalDateTime modifiedAt;
 
