@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,7 +35,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ex.getBindingResult().getFieldErrors().stream()
             .map(DefaultMessageSourceResolvable::getDefaultMessage)
             .toList();
-    return ResponseEntity.badRequest().body(new ErrorResponse("Invalid Arguments", message.get(0)));
+    return ResponseEntity.badRequest().body(new ErrorResponse(message.get(0)));
   }
 
   @Override
@@ -44,8 +45,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       final HttpStatusCode status,
       final WebRequest request) {
     log.error("MissingServletRequestParameterException occurred", ex);
-    final ErrorResponse response =
-        new ErrorResponse("Missing Request Parameter");
+    final ErrorResponse response = new ErrorResponse("Missing Request Parameter");
     return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
@@ -58,6 +58,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<ErrorResponse> handleBadCredentialsException(
+    BadCredentialsException ex) {
+    log.error("InvalidCredentialsException occurred", ex);
+    final ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials");
+    return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+  }
   // Handle Refresh Token Exception
   @ExceptionHandler(RefreshTokenException.class)
   public ResponseEntity<ErrorResponse> handleRefreshTokenException(RefreshTokenException ex) {

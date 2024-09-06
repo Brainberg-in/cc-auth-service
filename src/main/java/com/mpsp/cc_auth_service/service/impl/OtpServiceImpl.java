@@ -97,6 +97,7 @@ public class OtpServiceImpl implements OtpService {
     }
 
     final User user = userService.findByEmail(userEmail);
+
     awsService.sendEmail(
         senderEmail, userEmail, "login_cc_otp", Map.of("otp", generateOTP(user.getUserId())));
   }

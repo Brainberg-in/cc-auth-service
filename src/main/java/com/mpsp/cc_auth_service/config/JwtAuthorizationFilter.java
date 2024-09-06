@@ -54,9 +54,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
       response
           .getWriter()
-          .write(
-              new ObjectMapper()
-                  .writeValueAsString(new ErrorResponse("Unauthorized", "Token Not Found")));
+          .write(new ObjectMapper().writeValueAsString(new ErrorResponse("Token Not Found")));
       response.setStatus(HttpStatus.UNAUTHORIZED.value());
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
       return;
@@ -72,9 +70,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
       log.error("Cannot Authorize {} to access {}", userId, request.getRequestURI());
       response
           .getWriter()
-          .write(
-              new ObjectMapper()
-                  .writeValueAsString(new ErrorResponse("Unauthorized", "Invalid Token")));
+          .write(new ObjectMapper().writeValueAsString(new ErrorResponse("Invalid Token")));
       response.setStatus(HttpStatus.UNAUTHORIZED.value());
       response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     }
