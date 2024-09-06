@@ -11,8 +11,7 @@ public class ErrorResponseTest {
   public void testErrorResponse() {
     final ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials");
     assertEquals("Invalid Credentials", errorResponse.getError());
-    assertEquals("failed", errorResponse.getStatus());
     assertEquals(
-        "ErrorResponse(error=Invalid Credentials, status=failed)", errorResponse.toString());
+        "ErrorResponse(error=Invalid Credentials)", errorResponse.toString());
   }
 }
