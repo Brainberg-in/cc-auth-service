@@ -37,6 +37,8 @@ public class JwtTokenProvider {
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder()
             .subject(String.valueOf(user.getUserId()))
+            //TODO check how this works for a student. Else workaround this problem. 
+            .claim(AppConstants.USER_EMAIL, user.getEmail()) 
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
             .issueTime(new Date())
             .expirationTime(
@@ -107,6 +109,22 @@ public class JwtTokenProvider {
 
       final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
       return claims.getSubject();
+    } catch (ParseException e) {
+      log.error("Failed to parse {}", token, e);
+      throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
+    }
+  }
+
+  public String getUserEmail(final String token) {
+    try {
+      final JWSObject jwsObject =
+          JWSObject.parse(
+              token.startsWith(AppConstants.BEARER)
+                  ? token.substring(AppConstants.BEARER.length())
+                  : token);
+
+      final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
+      return claims.getClaim(AppConstants.USER_EMAIL).toString();
     } catch (ParseException e) {
       log.error("Failed to parse {}", token, e);
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");

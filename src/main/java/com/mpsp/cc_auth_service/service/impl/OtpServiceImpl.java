@@ -8,6 +8,8 @@ import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GeneratorUtils;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.OTPExpiredException;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -79,7 +81,7 @@ public class OtpServiceImpl implements OtpService {
         .ifPresent(
             otpGen -> {
               if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
-                throw new RuntimeException("OTP expired");
+                throw new OTPExpiredException("OTP expired");
               }
               result.set(otpGen.getOtp().equals(otp));
             });
@@ -88,9 +90,15 @@ public class OtpServiceImpl implements OtpService {
 
   @Override
   @Transactional
-  public void resendOtp(final String email) {
-    final User user = userService.findByEmail(email);
+  public void resendOtp(String token) {
+    final String userEmail = jwtTokenProvider.getUserEmail(token);
+    if (userEmail == null) {
+      throw new IllegalArgumentException("User does not have a registered email");
+    }
+
+    final User user = userService.findByEmail(userEmail);
+
     awsService.sendEmail(
-        senderEmail, email, "login_cc_otp", Map.of("otp", generateOTP(user.getUserId())));
+        senderEmail, userEmail, "login_cc_otp", Map.of("otp", generateOTP(user.getUserId())));
   }
 }

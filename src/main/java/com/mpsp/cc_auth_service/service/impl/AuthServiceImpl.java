@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,7 +121,7 @@ public class AuthServiceImpl implements AuthService {
     RefreshToken storedToken =
         refreshTokenRepository
             .findByToken(refreshToken)
-            .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+            .orElseThrow(() -> new GlobalExceptionHandler.RefreshTokenException("Invalid refresh token"));
 
     jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
 
@@ -167,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
       if (passwordEncoder.matches(
           resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
         log.info("cam here");
-        throw new GlobalExceptionHandler.InvalidCredentialsException(
+        throw new IllegalArgumentException(
             "Cannot reset to current password");
       } else if (!passwordEncoder.matches(
           resetPasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword())) {

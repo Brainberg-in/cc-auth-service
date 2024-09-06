@@ -54,7 +54,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(
       InvalidCredentialsException ex) {
     log.error("InvalidCredentialsException occurred", ex);
-    final ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials");
+    final ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
@@ -68,7 +68,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   // Handle Refresh Token Exception
   @ExceptionHandler(RefreshTokenException.class)
   public ResponseEntity<ErrorResponse> handleRefreshTokenException(RefreshTokenException ex) {
-    final ErrorResponse errorResponse = new ErrorResponse("Invalid Token");
+    final ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
@@ -77,7 +77,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
     log.error("Unexpected error occurred", ex);
     final ErrorResponse errorResponse =
-        new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
@@ -90,8 +91,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(NoSuchElementException.class)
   public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e) {
     log.error("NoSuchElementException occurred", e);
-    final ErrorResponse errorResponse = new ErrorResponse("User not found");
+    final ErrorResponse errorResponse = new ErrorResponse("User is not registered");
     return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+    log.error("IllegalArgumentException occurred", e);
+    final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
   // Custom exception for invalid credentials
@@ -104,6 +112,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   // Custom exception for invalid refresh token
   public static class RefreshTokenException extends RuntimeException {
     public RefreshTokenException(String message) {
+      super(message);
+    }
+  }
+
+  public static class OTPExpiredException extends RuntimeException {
+    public OTPExpiredException(String message) {
       super(message);
     }
   }

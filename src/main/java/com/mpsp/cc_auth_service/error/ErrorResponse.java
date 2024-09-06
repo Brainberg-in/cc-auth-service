@@ -1,16 +1,22 @@
 package com.mpsp.cc_auth_service.error;
 
-import lombok.Getter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-@Getter
-@ToString
+import lombok.Data;
+
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-  private final String error;
-  private final String status;
+    private final String error;
+    private String details;
 
-  public ErrorResponse(final String error) {
-    this.error = error;
-    this.status = "failed";
-  }
+    public ErrorResponse(String error) {
+        this.error = error;
+    }
+
+    public ErrorResponse(String error, String details) {
+        this.error = error;
+        this.details = details;
+    }
 }
+
