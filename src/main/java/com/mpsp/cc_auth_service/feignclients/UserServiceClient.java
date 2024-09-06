@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(name = "userServiceClient", url = "${user.service.url}")
 public interface UserServiceClient {
 
-  @GetMapping("/")
+  @GetMapping("/api/v1/users")
   default User findByEmail(@RequestParam(name = "emailId") final String emailId) {
     final List<User> items = findByEmailId(emailId);
     if (items.isEmpty() || items.get(0) == null) {
@@ -26,12 +26,12 @@ public interface UserServiceClient {
         .orElseThrow(() -> new NoSuchElementException("Multiple users found"));
   }
 
-  @GetMapping(value = "/")
+  @GetMapping(value = "/api/v1/users")
   List<User> findByEmailId(@RequestParam(name = "emailId") final String emailId);
 
-  @GetMapping(value = "/{id}")
+  @GetMapping(value = "/api/v1/users/{id}")
   User findById(@PathVariable(name = "id") final Integer id);
 
-  @PutMapping(value = "/{id}")
+  @PutMapping(value = "/api/v1/users/{id}")
   void updateUser(@PathVariable(name = "id") final Integer id, @RequestBody final User user);
 }

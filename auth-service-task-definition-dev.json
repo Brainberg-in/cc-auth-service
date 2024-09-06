@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:47",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:51",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
-            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
+            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:6427ff3ee1316a911dc0eac0a41f80ce360dcde5",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
@@ -17,6 +17,10 @@
             ],
             "essential": true,
             "environment": [
+                {
+                    "name": "USER_SERVICE_URL",
+                    "value": "http://user.dev-environment-cluster"
+                },
                 {
                     "name": "DB_NAME",
                     "value": "auth"
@@ -84,7 +88,7 @@
     "family": "auth-service-task-definition",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 47,
+    "revision": 51,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -133,7 +137,12 @@
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-09-06T11:38:52.532Z",
+    "registeredAt": "2024-09-06T16:52:30.454Z",
     "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
-    "tags": []
+    "tags": [
+        {
+            "key": "environment",
+            "value": "dev"
+        }
+    ]
 }
