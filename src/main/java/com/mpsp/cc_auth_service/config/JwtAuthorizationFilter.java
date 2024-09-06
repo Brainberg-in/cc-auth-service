@@ -10,6 +10,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +41,12 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
       final HttpServletResponse response,
       final FilterChain filterChain)
       throws ServletException, IOException {
+
+        log.info("JwtAuthorizationFilter processing request for URI: {}", request.getRequestURI());
+        log.info("Request method: {}", request.getMethod());
+        log.info("skipAuthorizationUrls: {}", Arrays.toString(skipAuthorizationUrls));
+        log.info("skipTokenCheckPaths: {}", Arrays.toString(skipTokenCheckPaths));
+
     String token = request.getHeader(HttpHeaders.AUTHORIZATION);
     // checking if token is present and is of bearer type. Also checking if the request is for
     // refreshing token

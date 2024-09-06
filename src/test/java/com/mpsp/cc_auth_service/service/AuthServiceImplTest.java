@@ -129,14 +129,12 @@ class AuthServiceImplTest {
     when(refreshTokenRepository.findByToken(anyString())).thenReturn(Optional.of(refreshToken));
     when(userService.findById(anyInt())).thenReturn(user);
     when(jwtTokenProvider.generateToken(user, false)).thenReturn("newJwtToken");
-    when(jwtTokenProvider.generateToken(user, true)).thenReturn("newRefreshToken");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     LoginResponse response = authService.refreshToken("refreshToken");
 
     assertNotNull(response);
     assertEquals("newJwtToken", response.getAccessToken());
-    assertEquals("newRefreshToken", response.getRefreshToken());
   }
 
   @Test

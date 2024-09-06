@@ -39,7 +39,7 @@ public class OtpServiceImpl implements OtpService {
   private String senderEmail;
 
   private String generateOTP(final int userId) {
-    final String otp = "dev".equals(activeProfile) ? "1234" : GeneratorUtils.generateOTP(4);
+    final String otp = GeneratorUtils.generateOTP(4);
     otpGenRepo
         .findByUserId(userId)
         .ifPresentOrElse(

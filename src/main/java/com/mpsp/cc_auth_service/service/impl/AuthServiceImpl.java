@@ -136,10 +136,10 @@ public class AuthServiceImpl implements AuthService {
             .getContent()
             .get(0);
 
+    // Refresh token only gets generated when the user logs in
+    // The refresh token is only used for refreshing the access token. 
     final String newJwtToken = jwtTokenProvider.generateToken(user, false);
-    final String newRefreshToken = jwtTokenProvider.generateToken(user, true);
-    updateRefreshToken(user.getUserId(), newRefreshToken);
-    return new LoginResponse(newJwtToken, newRefreshToken, true, false, p.getUserRole());
+    return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole());
   }
 
   @Override
