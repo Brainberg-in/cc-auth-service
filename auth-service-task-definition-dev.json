@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:51",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:56",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
@@ -69,8 +69,7 @@
                     "awslogs-create-group": "true",
                     "awslogs-region": "ap-south-1",
                     "awslogs-stream-prefix": "ecs"
-                },
-                "secretOptions": []
+                }
             },
             "healthCheck": {
                 "command": [
@@ -88,7 +87,7 @@
     "family": "auth-service-task-definition",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 51,
+    "revision": 56,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -137,8 +136,8 @@
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-09-06T16:52:30.454Z",
-    "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
+    "registeredAt": "2024-09-07T07:05:05.835Z",
+    "registeredBy": "arn:aws:iam::567347231314:user/Github_Actions_User",
     "tags": [
         {
             "key": "environment",
