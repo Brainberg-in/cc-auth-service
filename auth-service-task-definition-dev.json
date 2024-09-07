@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:56",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:57",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
-            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
+            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:6f6d12d056c7600f03970fd2dde831b3bb4c3c1c",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
@@ -69,7 +69,8 @@
                     "awslogs-create-group": "true",
                     "awslogs-region": "ap-south-1",
                     "awslogs-stream-prefix": "ecs"
-                }
+                },
+                "secretOptions": []
             },
             "healthCheck": {
                 "command": [
@@ -85,9 +86,10 @@
         }
     ],
     "family": "auth-service-task-definition",
+    "taskRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 56,
+    "revision": 57,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -105,6 +107,9 @@
         },
         {
             "name": "ecs.capability.secrets.asm.environment-variables"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
         },
         {
             "name": "ecs.capability.container-health-check"
@@ -136,8 +141,8 @@
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-09-07T07:05:05.835Z",
-    "registeredBy": "arn:aws:iam::567347231314:user/Github_Actions_User",
+    "registeredAt": "2024-09-07T07:13:40.445Z",
+    "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
     "tags": [
         {
             "key": "environment",
