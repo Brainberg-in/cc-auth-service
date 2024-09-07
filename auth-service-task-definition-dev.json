@@ -19,7 +19,7 @@
             "environment": [
                 {
                     "name": "USER_SERVICE_URL",
-                    "value": "http://user.dev-environment-cluster"
+                    "value": "http://user.dev-environment-cluster:3000"
                 },
                 {
                     "name": "DB_NAME",
