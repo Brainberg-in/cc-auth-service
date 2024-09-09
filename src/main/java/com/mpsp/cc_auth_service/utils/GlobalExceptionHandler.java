@@ -139,6 +139,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
+  @ExceptionHandler(SamePasswordException.class)
   public ResponseEntity<ErrorResponse> handleSamePasswordException(SamePasswordException e){
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
