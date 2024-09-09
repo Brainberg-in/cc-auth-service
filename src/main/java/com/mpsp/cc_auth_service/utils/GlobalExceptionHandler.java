@@ -127,13 +127,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
   }
 
+  public static class SamePasswordException extends RuntimeException {
+    public SamePasswordException(String message) {
+      super(message);
+    }
+  }
+
   @ExceptionHandler(OTPExpiredException.class)
   public ResponseEntity<ErrorResponse> handleOtpExpiredException(OTPExpiredException e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
-  
+  public ResponseEntity<ErrorResponse> handleSamePasswordException(SamePasswordException e){
+    final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
 
   @ExceptionHandler(OTPVerificationException.class)
   public ResponseEntity<ErrorResponse> handleOtpVerificationException(OTPVerificationException e) {

@@ -152,7 +152,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void resetPassword(final ResetPasswordRequest resetPasswordRequest, final String token) {
+  public void changePassword(final ChangePasswordRequest changePasswordRequest, final String token) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     log.info("User ID: {}", userId);
     final PasswordHistory passwordHistory =
@@ -161,21 +161,19 @@ public class AuthServiceImpl implements AuthService {
             .getContent()
             .get(0);
 
-    if (resetPasswordRequest.getCurrentPassword() != null) {
-      log.info("entered current password");
+    if (changePasswordRequest.getCurrentPassword() != null) {
       if (passwordEncoder.matches(
-          resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
-        log.info("cam here");
-        throw new IllegalArgumentException(
-            "Cannot reset to current password");
+          changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword()))
+      {
+        throw new GlobalExceptionHandler.SamePasswordException("New password cannot be the same as the current password");
       } else if (!passwordEncoder.matches(
-          resetPasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword())) {
+          changePasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword())) {
         throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
       }
     }
     if (passwordHistory != null) {
       passwordHistory.setCurrentPassword(
-          passwordEncoder.encode(resetPasswordRequest.getPassword()));
+          passwordEncoder.encode(changePasswordRequest.getPassword()));
       passwordHistory.setUserId(userId);
       passwordHistoryRepository.save(passwordHistory);
     }

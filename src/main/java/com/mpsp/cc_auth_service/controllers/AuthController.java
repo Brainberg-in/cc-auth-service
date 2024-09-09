@@ -1,12 +1,7 @@
 package com.mpsp.cc_auth_service.controllers;
 
 import com.mpsp.cc_auth_service.constants.AppConstants;
-import com.mpsp.cc_auth_service.dto.ApiResponse;
-import com.mpsp.cc_auth_service.dto.LoginRequest;
-import com.mpsp.cc_auth_service.dto.LoginResponse;
-import com.mpsp.cc_auth_service.dto.ResendOtpRequest;
-import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
-import com.mpsp.cc_auth_service.dto.UserCreateRequest;
+import com.mpsp.cc_auth_service.dto.*;
 import com.mpsp.cc_auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -62,14 +57,21 @@ public class AuthController {
         new ApiResponse("A link to reset your password has been sent to your email."));
   }
 
-  @PostMapping("/reset-password")
-  public ResponseEntity<ApiResponse> resetPassword(
-      @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest,
+//  @PostMapping("/reset-password")
+//  public ResponseEntity<ApiResponse> resetPassword(
+//      @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest) {
+//    authService.resetPassword(resetPasswordRequest);
+//    return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
+//  }
+
+  @PostMapping("/change-password")
+  public ResponseEntity<ApiResponse> changePassword(
+      @RequestBody @Valid final ChangePasswordRequest changePasswordRequest,
       @RequestHeader(HttpHeaders.AUTHORIZATION)
           @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization Token")
           final String token) {
-    authService.resetPassword(resetPasswordRequest, token);
-    return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
+    authService.changePassword(changePasswordRequest, token);
+    return ResponseEntity.ok(new ApiResponse("Password changed successfully."));
   }
 
   @PostMapping("/create-user")
