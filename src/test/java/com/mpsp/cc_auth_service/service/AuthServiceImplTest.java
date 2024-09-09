@@ -4,10 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.mpsp.cc_auth_service.dto.LoginRequest;
-import com.mpsp.cc_auth_service.dto.LoginResponse;
-import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
-import com.mpsp.cc_auth_service.dto.User;
+import com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer;
+import com.mpsp.cc_auth_service.dto.*;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
@@ -164,10 +162,32 @@ class AuthServiceImplTest {
     verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
   }
 
+
   @Test
-  public void testResetPassword_Success() throws ParseException {
-    ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
-    resetPasswordRequest.setPassword("newPassword");
+  void changePassword_Success() throws ParseException {
+    // Create a request with the current and new password
+    ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
+    changePasswordRequest.setPassword("newPassword");
+    changePasswordRequest.setCurrentPassword("currentPassword");
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setUserId(1);
+    passwordHistory.setCurrentPassword("encodedCurrentPassword");
+    when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.matches(changePasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword()))
+            .thenReturn(true);
+    when(passwordEncoder.matches(changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword()))
+            .thenReturn(false);
+    authService.changePassword(changePasswordRequest, "validToken");
+    verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
+  }
+
+  @Test
+  void changePassword_InvalidCurrentPassword() throws ParseException {
+    ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
+    changePasswordRequest.setPassword("newPassword");
+    changePasswordRequest.setCurrentPassword("wrongPassword");
 
     PasswordHistory passwordHistory = new PasswordHistory();
     passwordHistory.setUserId(1);
@@ -175,10 +195,47 @@ class AuthServiceImplTest {
 
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+
+    assertThrows(GlobalExceptionHandler.InvalidCredentialsException.class, () ->
+            authService.changePassword(changePasswordRequest, "validToken"));
+  }
+
+  @Test
+  void changePassword_SameAsCurrentPassword() throws ParseException {
+    ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
+    changePasswordRequest.setPassword("encodedPassword");
+    changePasswordRequest.setCurrentPassword("encodedPassword");
+
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setUserId(1);
+    passwordHistory.setCurrentPassword("encodedPassword");
+
+    when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+
+    assertThrows(GlobalExceptionHandler.SamePasswordException.class, () ->
+            authService.changePassword(changePasswordRequest, "validToken"));
+  }
+
+  @Test
+  void changePassword_NoCurrentPasswordProvided() throws ParseException {
+    ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
+    changePasswordRequest.setPassword("newPassword");
+
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setUserId(1);
+    passwordHistory.setCurrentPassword("encodedPassword");
+
+    when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
 
-    authService.resetPassword(resetPasswordRequest, "validToken");
+    authService.changePassword(changePasswordRequest, "validToken");
 
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
   }
