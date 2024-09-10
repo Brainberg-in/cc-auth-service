@@ -4,18 +4,23 @@ import com.mpsp.cc_auth_service.dto.*;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
+import com.mpsp.cc_auth_service.entity.ResetPassword;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
+import com.mpsp.cc_auth_service.repository.ResetPasswordRepo;
 import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +50,8 @@ public class AuthServiceImpl implements AuthService {
   @Autowired private transient OtpService otpService;
 
   @Autowired private transient AwsService awsService;
+
+  @Autowired private transient ResetPasswordRepo resetPasswordRepo;
 
   @Value("${aws.ses.sender}")
   private String senderEmail;
@@ -121,7 +128,8 @@ public class AuthServiceImpl implements AuthService {
     RefreshToken storedToken =
         refreshTokenRepository
             .findByToken(refreshToken)
-            .orElseThrow(() -> new GlobalExceptionHandler.RefreshTokenException("Invalid refresh token"));
+            .orElseThrow(
+                () -> new GlobalExceptionHandler.RefreshTokenException("Invalid refresh token"));
 
     jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
 
@@ -137,22 +145,45 @@ public class AuthServiceImpl implements AuthService {
             .get(0);
 
     // Refresh token only gets generated when the user logs in
-    // The refresh token is only used for refreshing the access token. 
+    // The refresh token is only used for refreshing the access token.
     final String newJwtToken = jwtTokenProvider.generateToken(user, false);
     return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole());
   }
 
   @Override
-  @Transactional(readOnly = true)
   public void sendResetPasswordEmail(String email) {
-    userService.findByEmail(email);
+    User user = userService.findByEmail(email);
 
-    awsService.sendEmail(senderEmail, email, "cc_reset_password", Map.of("link", resetPasswordUrl));
+    String token = UUID.randomUUID().toString();
+    ResetPassword resetToken;
+
+    Optional<ResetPassword> existingTokenOpt =
+        resetPasswordRepo.findByUserIdAndIsLinkSent(user.getUserId(), false);
+    if (existingTokenOpt.isPresent()) {
+      resetToken = existingTokenOpt.get();
+      if (Duration.between(resetToken.getCreatedAt(), LocalDateTime.now()).toHours() < 1) {
+        throw new GlobalExceptionHandler.ResetPasswordException(
+            "A password reset link has already been sent. Please try again later.");
+      }
+    }
+    resetToken = new ResetPassword();
+    resetToken.setUserId(user.getUserId());
+    resetToken.setResetToken(token);
+    resetToken.setLinkSent(true);
+    resetToken.setModifiedAt(LocalDateTime.now());
+    resetToken.setLinkExpired(false);
+    resetPasswordRepo.save(resetToken);
+
+    awsService.sendEmail(
+        senderEmail,
+        email,
+        "cc_reset_password",
+        Map.of("link", resetPasswordUrl + "?token=" + token));
   }
 
   @Override
-  @Transactional
-  public void changePassword(final ChangePasswordRequest changePasswordRequest, final String token) {
+  public void changePassword(
+      final ChangePasswordRequest changePasswordRequest, final String token) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     log.info("User ID: {}", userId);
     final PasswordHistory passwordHistory =
@@ -163,9 +194,9 @@ public class AuthServiceImpl implements AuthService {
 
     if (changePasswordRequest.getCurrentPassword() != null) {
       if (passwordEncoder.matches(
-          changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword()))
-      {
-        throw new GlobalExceptionHandler.SamePasswordException("New password cannot be the same as the current password");
+          changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
+        throw new GlobalExceptionHandler.SamePasswordException(
+            "New password cannot be the same as the current password");
       } else if (!passwordEncoder.matches(
           changePasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword())) {
         throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
@@ -189,6 +220,38 @@ public class AuthServiceImpl implements AuthService {
     passwordHistory.setModifiedAt(LocalDateTime.now());
 
     passwordHistoryRepository.saveAndFlush(passwordHistory);
+  }
+
+  @Transactional
+  @Override
+  public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
+    final ResetPassword resetToken =
+        resetPasswordRepo
+            .findByResetToken(resetPasswordRequest.getResetToken())
+            .orElseThrow(
+                () ->
+                    new NoSuchElementException(
+                        "Link is Invalid/Expired. Please request a new link"));
+
+    if (resetToken.isLinkExpired()) {
+      throw new GlobalExceptionHandler.ResetPasswordException(
+          "Link is Invalid/Expired. Please request a new link");
+    }
+
+    PasswordHistory passwordHistory =
+        passwordHistoryRepository
+            .findAllByUserId(
+                resetToken.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
+
+    passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
+    passwordHistory.setModifiedAt(LocalDateTime.now());
+    passwordHistoryRepository.saveAndFlush(passwordHistory);
+
+    resetToken.setLinkExpired(true);
+    resetToken.setLinkSent(false);
+    resetPasswordRepo.saveAndFlush(resetToken);
   }
 
   @Transactional

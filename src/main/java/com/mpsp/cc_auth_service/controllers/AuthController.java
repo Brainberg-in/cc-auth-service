@@ -57,12 +57,12 @@ public class AuthController {
         new ApiResponse("A link to reset your password has been sent to your email."));
   }
 
-//  @PostMapping("/reset-password")
-//  public ResponseEntity<ApiResponse> resetPassword(
-//      @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest) {
-//    authService.resetPassword(resetPasswordRequest);
-//    return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
-//  }
+  @PostMapping("/reset-password")
+  public ResponseEntity<ApiResponse> resetPassword(
+      @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest) {
+    authService.resetPassword(resetPasswordRequest);
+    return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
+  }
 
   @PostMapping("/change-password")
   public ResponseEntity<ApiResponse> changePassword(

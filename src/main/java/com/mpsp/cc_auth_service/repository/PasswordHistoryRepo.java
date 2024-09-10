@@ -11,4 +11,5 @@ import org.springframework.stereotype.Repository;
 public interface PasswordHistoryRepo extends JpaRepository<PasswordHistory, Integer> {
 
   Page<PasswordHistory> findAllByUserId(@Param("userId") final int userId, final Pageable pageable);
+
 }

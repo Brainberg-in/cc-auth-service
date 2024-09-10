@@ -13,6 +13,10 @@ public class ResetPasswordRequest {
   @NotBlank(message = "Password is required")
   private String password;
 
+  @Schema(description = "Reset Token")
+  @NotBlank(message = "Reset Token is required")
+  private String resetToken;
+
   @Override
   public String toString() {
     return String.format("ResetPasswordRequest[password=%s]", "********");
