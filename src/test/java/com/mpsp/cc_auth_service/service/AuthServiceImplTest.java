@@ -8,10 +8,12 @@ import com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer;
 import com.mpsp.cc_auth_service.dto.*;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
+import com.mpsp.cc_auth_service.entity.ResetPassword;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
+import com.mpsp.cc_auth_service.repository.ResetPasswordRepo;
 import com.mpsp.cc_auth_service.service.impl.AuthServiceImpl;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
@@ -51,6 +53,8 @@ class AuthServiceImplTest {
   @MockBean private transient OtpService otpService;
 
   @MockBean private transient AwsService awsService;
+
+  @MockBean private transient ResetPasswordRepo resetPasswordRepo;
 
   private User user;
   private PasswordHistory passwordHistory;
@@ -239,4 +243,80 @@ class AuthServiceImplTest {
 
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
   }
+  @Test
+  void sendResetPasswordEmail_Success() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("test@example.com");
+
+    when(userService.findByEmail(anyString())).thenReturn(user);
+    doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
+
+    authService.sendResetPasswordEmail("test@example.com");
+
+    verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
+  }
+
+  @Test
+  void sendResetPasswordEmail_UserNotFound() {
+    when(userService.findByEmail(anyString())).thenReturn(null);
+
+    assertThrows(GlobalExceptionHandler.GenericException.class, () ->
+            authService.sendResetPasswordEmail("test@example.com"));
+  }
+
+  @Test
+  void resetPassword_Success() {
+    ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+    resetPasswordRequest.setPassword("newPassword");
+    resetPasswordRequest.setResetToken("validToken");
+
+    ResetPassword resetPassword = new ResetPassword();
+    resetPassword.setUserId(1);
+    resetPassword.setResetToken("validToken");
+    resetPassword.setLinkExpired(false);
+
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setUserId(1);
+    passwordHistory.setCurrentPassword("encodedPassword");
+
+    when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.of(resetPassword));
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
+
+    authService.resetPassword(resetPasswordRequest);
+
+    verify(passwordHistoryRepository, times(1)).saveAndFlush(any(PasswordHistory.class));
+    verify(resetPasswordRepo, times(1)).saveAndFlush(any(ResetPassword.class));
+  }
+
+  @Test
+  void resetPassword_InvalidToken() {
+    ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+    resetPasswordRequest.setPassword("newPassword");
+    resetPasswordRequest.setResetToken("invalidToken");
+
+    when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.empty());
+
+    assertThrows(GlobalExceptionHandler.GenericException.class, () ->
+            authService.resetPassword(resetPasswordRequest));
+  }
+
+  @Test
+  void resetPassword_ExpiredToken() {
+    ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+    resetPasswordRequest.setPassword("newPassword");
+    resetPasswordRequest.setResetToken("expiredToken");
+
+    ResetPassword resetPassword = new ResetPassword();
+    resetPassword.setUserId(1);
+    resetPassword.setResetToken("expiredToken");
+    resetPassword.setLinkExpired(true);
+
+    when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.of(resetPassword));
+
+    assertThrows(GlobalExceptionHandler.GenericException.class, () ->
+            authService.resetPassword(resetPasswordRequest));
+    }
 }

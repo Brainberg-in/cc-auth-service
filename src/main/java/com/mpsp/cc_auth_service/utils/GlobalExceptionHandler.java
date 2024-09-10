@@ -81,6 +81,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
+
+
   @ExceptionHandler(SesV2Exception.class)
   public ResponseEntity<ErrorResponse> handleSesV2Exception(SesV2Exception e) {
     final ErrorResponse errorResponse = new ErrorResponse("Failed to send email");
@@ -133,6 +135,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
   }
 
+  public static class GenericException extends RuntimeException {
+    public GenericException(String message) {
+      super(message);
+    }
+  }
+
   @ExceptionHandler(OTPExpiredException.class)
   public ResponseEntity<ErrorResponse> handleOtpExpiredException(OTPExpiredException e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
@@ -147,6 +155,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   @ExceptionHandler(OTPVerificationException.class)
   public ResponseEntity<ErrorResponse> handleOtpVerificationException(OTPVerificationException e) {
+    final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(GenericException.class)
+  public ResponseEntity<ErrorResponse> handleGenericException(GenericException e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
