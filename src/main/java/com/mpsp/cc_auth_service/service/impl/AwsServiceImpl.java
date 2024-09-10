@@ -1,6 +1,7 @@
 package com.mpsp.cc_auth_service.service.impl;
 
 import com.mpsp.cc_auth_service.service.AwsService;
+import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.ObjectMapperUtils;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,7 @@ public class AwsServiceImpl implements AwsService {
       client.sendEmail(emailRequest);
     } catch (SesV2Exception e) {
       log.error("Failed to semd {} to {}", templateName, recipient,e);
-      throw e;
+      throw new  GlobalExceptionHandler.SesV2Exception("Failed to send email");
     }
   }
 }

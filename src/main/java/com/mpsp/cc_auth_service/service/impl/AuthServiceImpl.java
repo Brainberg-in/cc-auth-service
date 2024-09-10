@@ -152,27 +152,26 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  @Transactional(readOnly = false)
   public void sendResetPasswordEmail(String email) {
     User user = userService.findByEmail(email);
 
-    if (user == null) {
-      throw new GlobalExceptionHandler.GenericException("User not found");
-    }
-
-    Optional<ResetPassword> existingTokenOpt = resetPasswordRepo.findByUserIdAndLinkSent(user.getUserId());
-    if (existingTokenOpt.isPresent()) {
-      ResetPassword existingToken = existingTokenOpt.get();
-      if (Duration.between(existingToken.getCreatedAt(), LocalDateTime.now()).toHours() < 1) {
-        throw new GlobalExceptionHandler.GenericException("A password reset link has already been sent. Please try again later.");
-      }
-    }
-
     String token = UUID.randomUUID().toString();
-    ResetPassword resetToken = new ResetPassword();
+    ResetPassword resetToken;
+
+    Optional<ResetPassword> existingTokenOpt = resetPasswordRepo.findByUserIdAndIsLinkSent(user.getUserId(), false);
+    if (existingTokenOpt.isPresent()) {
+      resetToken = existingTokenOpt.get();
+      if (Duration.between(resetToken.getCreatedAt(), LocalDateTime.now()).toHours() < 1) {
+        throw new GlobalExceptionHandler.ResetPasswordException("A password reset link has already been sent. Please try again later.");
+      }
+
+    }
+    resetToken = new ResetPassword();
     resetToken.setUserId(user.getUserId());
     resetToken.setResetToken(token);
     resetToken.setLinkSent(true);
+    resetToken.setModifiedAt(LocalDateTime.now());
+    resetToken.setLinkExpired(false);
     resetPasswordRepo.save(resetToken);
 
 
@@ -222,12 +221,9 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
     Optional<ResetPassword> resetToken = resetPasswordRepo.findByResetToken(resetPasswordRequest.getResetToken());
-    if(resetToken.isPresent()){
-      if(resetToken.get().isLinkExpired()){
-        throw new GlobalExceptionHandler.GenericException("Link has expired. Please request a new link.");
-      }
-    } else {
-      throw new GlobalExceptionHandler.GenericException("Invalid or expired token.");
+
+    if((resetToken.isPresent() &&  resetToken.get().isLinkExpired()) || resetToken.isEmpty()) {
+      throw new GlobalExceptionHandler.ResetPasswordException("Link has expired. Please request a new link.");
     }
 
     PasswordHistory passwordHistory = passwordHistoryRepository.findAllByUserId(resetToken.get().getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending())).getContent().get(0);

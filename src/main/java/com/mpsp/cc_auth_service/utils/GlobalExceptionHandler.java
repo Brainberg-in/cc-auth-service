@@ -1,5 +1,6 @@
 package com.mpsp.cc_auth_service.utils;
 
+import com.mpsp.cc_auth_service.entity.ResetPassword;
 import com.mpsp.cc_auth_service.error.ErrorResponse;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -86,7 +87,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(SesV2Exception.class)
   public ResponseEntity<ErrorResponse> handleSesV2Exception(SesV2Exception e) {
     final ErrorResponse errorResponse = new ErrorResponse("Failed to send email");
-    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(NoSuchElementException.class)
@@ -141,6 +142,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
   }
 
+  public static class ResetPasswordException extends RuntimeException {
+    public ResetPasswordException(String message) {
+      super(message);
+    }
+  }
+
+  public static class SesV2Exception extends RuntimeException {
+    public SesV2Exception(String message) {
+      super(message);
+    }
+  }
+
   @ExceptionHandler(OTPExpiredException.class)
   public ResponseEntity<ErrorResponse> handleOtpExpiredException(OTPExpiredException e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
@@ -161,6 +174,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   @ExceptionHandler(GenericException.class)
   public ResponseEntity<ErrorResponse> handleGenericException(GenericException e) {
+    final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(ResetPasswordException.class)
+  public ResponseEntity<ErrorResponse> handleResetPasswordException(ResetPasswordException e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
