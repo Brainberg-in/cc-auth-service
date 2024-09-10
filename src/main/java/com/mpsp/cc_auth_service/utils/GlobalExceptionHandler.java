@@ -1,6 +1,5 @@
 package com.mpsp.cc_auth_service.utils;
 
-import com.mpsp.cc_auth_service.entity.ResetPassword;
 import com.mpsp.cc_auth_service.error.ErrorResponse;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-import software.amazon.awssdk.services.sesv2.model.SesV2Exception;
 
 @RestControllerAdvice
 @Slf4j
