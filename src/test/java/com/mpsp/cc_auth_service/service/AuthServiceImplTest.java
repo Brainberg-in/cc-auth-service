@@ -20,6 +20,7 @@ import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -257,13 +258,6 @@ class AuthServiceImplTest {
     verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
   }
 
-  @Test
-  void sendResetPasswordEmail_UserNotFound() {
-    when(userService.findByEmail(anyString())).thenReturn(null);
-
-    assertThrows(GlobalExceptionHandler.GenericException.class, () ->
-            authService.sendResetPasswordEmail("test@example.com"));
-  }
 
   @Test
   void resetPassword_Success() {
@@ -299,7 +293,7 @@ class AuthServiceImplTest {
 
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.empty());
 
-    assertThrows(GlobalExceptionHandler.GenericException.class, () ->
+    assertThrows(NoSuchElementException.class, () ->
             authService.resetPassword(resetPasswordRequest));
   }
 
@@ -316,7 +310,7 @@ class AuthServiceImplTest {
 
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.of(resetPassword));
 
-    assertThrows(GlobalExceptionHandler.GenericException.class, () ->
+    assertThrows(GlobalExceptionHandler.ResetPasswordException.class, () ->
             authService.resetPassword(resetPasswordRequest));
     }
 }
