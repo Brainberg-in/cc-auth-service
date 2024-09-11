@@ -15,5 +15,5 @@ public interface ResetPasswordRepo extends JpaRepository<ResetPassword, Integer>
 
     Optional<ResetPassword> findByResetToken(String token);
 
-    Optional<ResetPassword> findByUserIdAndIsLinkSent(Integer userId, boolean isLinkSent);
+    Optional<ResetPassword> findByUserId(Integer userId);
 }

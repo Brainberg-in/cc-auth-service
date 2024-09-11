@@ -158,20 +158,21 @@ public class AuthServiceImpl implements AuthService {
     ResetPassword resetToken;
 
     Optional<ResetPassword> existingTokenOpt =
-        resetPasswordRepo.findByUserIdAndIsLinkSent(user.getUserId(), false);
-    if (existingTokenOpt.isPresent()) {
-      resetToken = existingTokenOpt.get();
-      if (Duration.between(resetToken.getCreatedAt(), LocalDateTime.now()).toHours() < 1) {
-        throw new GlobalExceptionHandler.ResetPasswordException(
-            "A password reset link has already been sent. Please try again later.");
-      }
+        resetPasswordRepo.findByUserId(user.getUserId());
+    if (existingTokenOpt.isPresent() && existingTokenOpt.get().isLinkSent() && existingTokenOpt.get().getModifiedAt().isAfter(LocalDateTime.now().minus(Duration.ofMinutes(15)))){
+      throw new GlobalExceptionHandler.ResetPasswordException(
+              "A password reset link has already been sent. Please check your email.");
     }
-    resetToken = new ResetPassword();
-    resetToken.setUserId(user.getUserId());
-    resetToken.setResetToken(token);
-    resetToken.setLinkSent(true);
-    resetToken.setModifiedAt(LocalDateTime.now());
-    resetToken.setLinkExpired(false);
+    if(existingTokenOpt.isEmpty()){
+      resetToken = new ResetPassword();
+    }else{
+      resetToken = existingTokenOpt.get();
+      resetToken.setUserId(user.getUserId());
+      resetToken.setResetToken(token);
+      resetToken.setLinkSent(true);
+      resetToken.setModifiedAt(LocalDateTime.now());
+      resetToken.setLinkExpired(false);
+    }
     resetPasswordRepo.save(resetToken);
 
     awsService.sendEmail(
@@ -244,6 +245,12 @@ public class AuthServiceImpl implements AuthService {
                 resetToken.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
             .getContent()
             .get(0);
+
+    if (passwordEncoder.matches(
+            resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
+      throw new GlobalExceptionHandler.SamePasswordException(
+              "New password cannot be the same as the current password");
+    }
 
     passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
     passwordHistory.setModifiedAt(LocalDateTime.now());
