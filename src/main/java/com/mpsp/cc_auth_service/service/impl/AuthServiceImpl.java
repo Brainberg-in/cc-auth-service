@@ -159,7 +159,7 @@ public class AuthServiceImpl implements AuthService {
 
     Optional<ResetPassword> existingTokenOpt =
         resetPasswordRepo.findByUserId(user.getUserId());
-    if (existingTokenOpt.isPresent() && existingTokenOpt.get().isLinkSent() && existingTokenOpt.get().getModifiedAt().isAfter(LocalDateTime.now().minus(Duration.ofMinutes(15)))){
+    if (existingTokenOpt.isPresent() && existingTokenOpt.get().isLinkSent() && existingTokenOpt.get().getModifiedAt().isAfter(LocalDateTime.now().minus(Duration.ofMinutes(60)))){
       throw new GlobalExceptionHandler.ResetPasswordException(
               "A password reset link has already been sent. Please check your email.");
     }
