@@ -8,12 +8,16 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ChangePasswordRequest extends ResetPasswordRequest{
+public class ChangePasswordRequest{
 
     @Schema(description = "User Current Password")
     @NotBlank(message = " Current Password is required")
     private String currentPassword;
 
+
+    @Schema(description = "User Password")
+    @NotBlank(message = "Password is required")
+    private String password;
 
     @Override
     public String toString() {
