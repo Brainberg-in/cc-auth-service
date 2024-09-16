@@ -85,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
     List<String> roles = new ArrayList<>();
     if (hasMultipleRoles) {
       roles = List.of(pw.getUserRole().split(","));
-      }
+    }
 
 
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {

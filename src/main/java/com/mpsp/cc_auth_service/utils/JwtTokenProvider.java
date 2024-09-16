@@ -90,7 +90,7 @@ public class JwtTokenProvider {
       log.error("Failed to generate token", e);
       throw new RuntimeException(e.getMessage());
     }
-    return jwsObject.serialize();
+    return encryptToken(jwsObject.serialize());
   }
 
 
@@ -186,7 +186,7 @@ public class JwtTokenProvider {
       log.error("Failed to encrypt token", e);
       throw new RuntimeException("Encryption failed");
     }
-
+}
     public String decryptToken(String encryptedToken) {
       try {
         EncryptedJWT encryptedJWT = EncryptedJWT.parse(encryptedToken);
@@ -197,7 +197,7 @@ public class JwtTokenProvider {
         encryptedJWT.decrypt(decrypter);
 
         // Get the signed JWT back from the encrypted payload
-        return encryptedJWT.getJWTClaimsSet().toJSONObject().toJSONString();
+        return ObjectMapperUtils.dataToJson(encryptedJWT.getJWTClaimsSet().toJSONObject());
       } catch (Exception e) {
         log.error("Failed to decrypt token", e);
         throw new RuntimeException("Decryption failed");
@@ -209,6 +209,5 @@ public class JwtTokenProvider {
       KeyGenerator keyGen = KeyGenerator.getInstance("AES");
       keyGen.init(256); // AES-256
       return keyGen.generateKey();
-    }
     }
 }
