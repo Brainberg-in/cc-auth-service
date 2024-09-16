@@ -154,6 +154,7 @@ public class AuthServiceImpl implements AuthService {
   public void sendResetPasswordEmail(String email) {
     User user = userService.findByEmail(email);
 
+    log.info("User found: {}", user);
     String token = UUID.randomUUID().toString();
     ResetPassword resetToken;
 
@@ -163,16 +164,13 @@ public class AuthServiceImpl implements AuthService {
       throw new GlobalExceptionHandler.ResetPasswordException(
               "A password reset link has already been sent. Please check your email.");
     }
-    if(existingTokenOpt.isEmpty()){
-      resetToken = new ResetPassword();
-    }else{
-      resetToken = existingTokenOpt.get();
+      resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
       resetToken.setUserId(user.getUserId());
       resetToken.setResetToken(token);
       resetToken.setLinkSent(true);
       resetToken.setModifiedAt(LocalDateTime.now());
       resetToken.setLinkExpired(false);
-    }
+
     resetPasswordRepo.save(resetToken);
 
     awsService.sendEmail(
