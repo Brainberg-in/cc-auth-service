@@ -7,9 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface PasswordHistoryRepo extends JpaRepository<PasswordHistory, Integer> {
 
   Page<PasswordHistory> findAllByUserId(@Param("userId") final int userId, final Pageable pageable);
+
+  Optional<PasswordHistory> findByUserId(Integer userId);
 
 }
