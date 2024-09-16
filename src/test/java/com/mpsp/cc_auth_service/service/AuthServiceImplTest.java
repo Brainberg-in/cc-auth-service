@@ -66,11 +66,11 @@ class AuthServiceImplTest {
     user = new User();
     user.setUserId(1);
     user.setEmail("test@example.com");
-    /// user.setMfaEnabled(false);
 
     passwordHistory = new PasswordHistory();
     passwordHistory.setUserId(1);
     passwordHistory.setCurrentPassword("encodedPassword");
+    passwordHistory.setUserRole("ROLE_USER"); // Ensure user role is set
 
     refreshToken = new RefreshToken();
     refreshToken.setUserId(1);
@@ -79,13 +79,13 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testLoginSuccess() {
+  void testLoginSuccess_singleRole() {
     when(userService.findByEmail(anyString())).thenReturn(user);
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
-    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-    when(jwtTokenProvider.generateToken(user, false)).thenReturn("jwtToken");
-    when(jwtTokenProvider.generateToken(user, true)).thenReturn("refreshToken");
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.matches(anyString(), eq("encodedPassword"))).thenReturn(true);
+    when(jwtTokenProvider.generateToken(any(User.class), eq(false), anyList())).thenReturn("jwtToken");
+    when(jwtTokenProvider.generateToken(any(User.class), eq(true), anyList())).thenReturn("refreshToken");
 
     final LoginRequest loginRequest = new LoginRequest();
     loginRequest.setEmail("test@example.com");
@@ -96,13 +96,52 @@ class AuthServiceImplTest {
     assertNotNull(response);
     assertEquals("jwtToken", response.getAccessToken());
     assertEquals("refreshToken", response.getRefreshToken());
+    assertEquals("", response.getRoleToken());  // Check for empty string instead of null
+    assertFalse(response.isHasMultipleRoles());
   }
+
+
+
+ @Test
+  void testLoginSuccess_multipleRoles() {
+    User user = new User();
+    user.setUserId(1);
+    user.setEmail("test@example.com");
+    user.setFirstLogin(true);
+    user.setMfaEnabled(false);
+
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setCurrentPassword("encodedPassword");
+    passwordHistory.setUserRole("ADMIN,PRINCIPAL");
+
+    when(userService.findByEmail(anyString())).thenReturn(user);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.matches(anyString(), eq("encodedPassword"))).thenReturn(true);
+    when(jwtTokenProvider.generateToken(any(User.class), eq(false), anyList())).thenReturn("jwtToken");
+    when(jwtTokenProvider.generateToken(any(User.class), eq(true), anyList())).thenReturn("refreshToken");
+    when(jwtTokenProvider.generateRoleToken(any(User.class), eq(false), anyList())).thenReturn("roleToken");
+
+    LoginRequest loginRequest = new LoginRequest();
+    loginRequest.setEmail("test@example.com");
+    loginRequest.setPassword("password");
+
+    LoginResponse response = authService.login(loginRequest);
+
+    assertNotNull(response);
+    assertEquals("jwtToken", response.getAccessToken());
+    assertEquals("refreshToken", response.getRefreshToken());
+    assertEquals("roleToken", response.getRoleToken());
+    assertTrue(response.isHasMultipleRoles());
+  }
+
+
 
   @Test
   void testLoginInvalidPassword() {
     when(userService.findByEmail(anyString())).thenReturn(user);
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
     LoginRequest loginRequest = new LoginRequest();
@@ -110,30 +149,17 @@ class AuthServiceImplTest {
     loginRequest.setPassword("password");
 
     assertThrows(
-        GlobalExceptionHandler.InvalidCredentialsException.class,
-        () -> authService.login(loginRequest));
+            GlobalExceptionHandler.InvalidCredentialsException.class,
+            () -> authService.login(loginRequest));
   }
-
-  //  @Test
-  //  void testLogout() throws ParseException {
-  //    LoginHistory loginHistory = new LoginHistory();
-  //    loginHistory.setUserId(1);
-  //
-  //    when(loginHistoryRepository.findByUserId(anyInt())).thenReturn(loginHistory);
-  //
-  //    authService.logout("toekn");
-  //
-  //    verify(refreshTokenRepository, times(1)).deleteRefreshToken(anyInt());
-  //    verify(loginHistoryRepository, times(1)).saveAndFlush(any(LoginHistory.class));
-  //  }
 
   @Test
   void testRefreshTokenSuccess() throws ParseException {
     when(refreshTokenRepository.findByToken(anyString())).thenReturn(Optional.of(refreshToken));
     when(userService.findById(anyInt())).thenReturn(user);
-    when(jwtTokenProvider.generateToken(user, false)).thenReturn("newJwtToken");
+    when(jwtTokenProvider.generateToken(user, false, List.of("ROLE_USER"))).thenReturn("newJwtToken");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     LoginResponse response = authService.refreshToken("refreshToken");
 
     assertNotNull(response);
