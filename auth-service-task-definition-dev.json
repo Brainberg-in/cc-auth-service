@@ -75,7 +75,7 @@
             "healthCheck": {
                 "command": [
                     "CMD-SHELL",
-                    "wget --spider --tries=1 --no-verbose http://localhost:8080/actuator/health || exit 1"
+                    "wget --spider --no-verbose http://localhost:8080/actuator/health || exit 1"
                 ],
                 "interval": 10,
                 "timeout": 10,
