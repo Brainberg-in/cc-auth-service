@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:57",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:75",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
-            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:6f6d12d056c7600f03970fd2dde831b3bb4c3c1c",
+            "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
@@ -75,12 +75,12 @@
             "healthCheck": {
                 "command": [
                     "CMD-SHELL",
-                    "curl -f http://localhost:8080/actuator/health || exit 1"
+                    "wget --spider --tries=1 --no-verbose http://localhost:8080/actuator/health || exit 1"
                 ],
                 "interval": 10,
                 "timeout": 10,
                 "retries": 3,
-                "startPeriod": 80
+                "startPeriod": 70
             },
             "systemControls": []
         }
@@ -89,7 +89,7 @@
     "taskRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 57,
+    "revision": 75,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -141,7 +141,7 @@
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-09-07T07:13:40.445Z",
+    "registeredAt": "2024-09-17T06:47:15.122Z",
     "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
     "tags": [
         {
