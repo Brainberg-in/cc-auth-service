@@ -13,7 +13,5 @@ public interface AuthService {
 
   void changePassword(ChangePasswordRequest changePasswordRequest, String token);
 
-  void createNewUser(UserCreateRequest userCreateRequest);
-
   void resetPassword(ResetPasswordRequest resetPasswordRequest);
 }

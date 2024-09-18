@@ -17,10 +17,8 @@ import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,22 +70,31 @@ public class AuthServiceImpl implements AuthService {
     }
     log.info("User found: {}", user);
 
-    final PasswordHistory pw =
+    final List<PasswordHistory> passwordHistories =
         passwordHistoryRepository
             .findAllByUserId(
                 user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-            .getContent()
-            .get(0);
-    if (pw == null) {
+            .getContent();
+    if (passwordHistories.isEmpty()) {
       throw new NoSuchElementException("User not found");
     }
+
+    final PasswordHistory pw = passwordHistories.get(0);
+
+    boolean hasMultipleRoles = pw.getUserRole().contains(",");
+    List<String> roles = new ArrayList<>();
+    if (hasMultipleRoles) {
+      roles = List.of(pw.getUserRole().split(","));
+    }
+
+
     if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
       throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
     }
-
     // Generate tokens
-    final String jwtToken = jwtTokenProvider.generateToken(user, false);
-    final String refreshToken = jwtTokenProvider.generateToken(user, true);
+    final String jwtToken = jwtTokenProvider.generateToken(user, false, roles);
+    final String refreshToken = jwtTokenProvider.generateToken(user, true, roles);
+    final String roleToken = hasMultipleRoles?jwtTokenProvider.generateRoleToken(user, false, roles):"";
     saveRefreshToken(user.getUserId(), refreshToken);
 
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
@@ -103,7 +110,7 @@ public class AuthServiceImpl implements AuthService {
       otpService.sendOtp(email);
     }
     return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), pw.getUserRole());
+        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), roleToken, hasMultipleRoles);
   }
 
   @Override
@@ -146,8 +153,8 @@ public class AuthServiceImpl implements AuthService {
 
     // Refresh token only gets generated when the user logs in
     // The refresh token is only used for refreshing the access token.
-    final String newJwtToken = jwtTokenProvider.generateToken(user, false);
-    return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole());
+    final String newJwtToken = jwtTokenProvider.generateToken(user, false, List.of(p.getUserRole().split(",")));
+    return new LoginResponse(newJwtToken, refreshToken, true, false,null,p.getUserRole().contains(","));
   }
 
   @Override
@@ -209,17 +216,7 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  @Override
-  public void createNewUser(UserCreateRequest userCreateRequest) {
-    PasswordHistory passwordHistory = new PasswordHistory();
-    passwordHistory.setUserId(userCreateRequest.getUserId());
-    passwordHistory.setCurrentPassword(passwordEncoder.encode(userCreateRequest.getPassword()));
-    passwordHistory.setUserRole(userCreateRequest.getRole().toString());
-    passwordHistory.setCreatedAt(LocalDateTime.now());
-    passwordHistory.setModifiedAt(LocalDateTime.now());
 
-    passwordHistoryRepository.saveAndFlush(passwordHistory);
-  }
 
   @Transactional
   @Override

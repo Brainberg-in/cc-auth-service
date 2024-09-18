@@ -9,7 +9,7 @@ import lombok.ToString;
 
 @AllArgsConstructor
 @Getter
-@ToString(exclude = {"accessToken", "refreshToken"})
+@ToString(exclude = {"accessToken", "refreshToken","roleToken"})
 public class LoginResponse {
 
   @Schema(name = "accessToken", description = "Bearer Token")
@@ -27,6 +27,9 @@ public class LoginResponse {
   @JsonProperty("isFirstLogin")
   private boolean isFirstLogin;
 
-  @JsonProperty("userRole")
-  private String userRole;
+  @Schema(name = "roleToken", description = "Bearer Token")
+  private String roleToken;
+
+  @JsonProperty("hasMultipleRoles")
+  private boolean hasMultipleRoles;
 }

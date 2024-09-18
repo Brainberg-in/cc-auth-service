@@ -73,11 +73,4 @@ public class AuthController {
     authService.changePassword(changePasswordRequest, token);
     return ResponseEntity.ok(new ApiResponse("Password changed successfully."));
   }
-
-  @PostMapping("/create-user")
-  public ResponseEntity<Void> createNewUser(
-      @RequestBody @Valid final UserCreateRequest userCreateRequest) {
-    authService.createNewUser(userCreateRequest);
-    return ResponseEntity.status(HttpStatus.CREATED).build();
-  }
 }
