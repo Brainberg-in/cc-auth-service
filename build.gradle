@@ -1,7 +1,7 @@
 plugins {
 	id ("jacoco")
 	id("java")
-	id("org.springframework.boot") version "3.3.3"
+	id("org.springframework.boot") version "3.3.4"
 	id("io.spring.dependency-management") version "1.1.6"
 }
 
@@ -28,8 +28,8 @@ repositories {
 ext {
 	set('springCloudVersion', "2023.0.3")
     openapiVersion = '2.6.0'
-    nimubs = '9.41.1'
-	set('sdkVersion',"2.28.1")
+    nimubs = '9.41.2'
+	set('sdkVersion',"2.28.18")
 }
 dependencies {
 	// Spring Boot Starters
