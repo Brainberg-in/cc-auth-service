@@ -89,4 +89,12 @@ public ResponseEntity<Map<Integer, String>> getUserRoles(@RequestBody List<Integ
     Map<Integer, String> userRoles = authService.getUserRoles(userIds);
     return ResponseEntity.ok(userRoles);
 }
+
+
+@GetMapping("/login-history/{userId}")
+public ResponseEntity<List<LoginHistoryResponse>> getLoginHistory(@PathVariable Integer userId) {
+    List<LoginHistoryResponse> loginHistory = authService.getLoginHistory(userId);
+    return ResponseEntity.ok(loginHistory);
+}
+
 }

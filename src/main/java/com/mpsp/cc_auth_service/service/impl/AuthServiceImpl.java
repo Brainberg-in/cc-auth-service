@@ -300,4 +300,25 @@ public class AuthServiceImpl implements AuthService {
       return userRoles;
   }
 
+  @Override
+public List<LoginHistoryResponse> getLoginHistory(Integer userId) {
+  final Page<LoginHistory> loginHistoryPage =
+  loginHistoryRepository.findAllByUserId(
+      userId, PageRequest.of(0, 1, Sort.by("lastLoginTime").descending()));
+  List<LoginHistory> loginHistoryList = loginHistoryPage.getContent();
+    return loginHistoryList.stream()
+            .map(this::convertToLoginHistoryResponse)
+            .collect(Collectors.toList());
+}
+
+private LoginHistoryResponse convertToLoginHistoryResponse(LoginHistory loginHistory) {
+    LoginHistoryResponse response = new LoginHistoryResponse();
+    response.setId(loginHistory.getId());
+    response.setUserId(loginHistory.getUserId());
+    response.setLastLoginTime(loginHistory.getLastLoginTime());
+    response.setLogoutTime(loginHistory.getLogoutTime());
+    response.setIpAddress(loginHistory.getIpAddress());
+    return response;
+}
+
 }

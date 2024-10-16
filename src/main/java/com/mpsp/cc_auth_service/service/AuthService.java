@@ -20,4 +20,6 @@ public interface AuthService {
   void resetPassword(ResetPasswordRequest resetPasswordRequest);
 
   Map<Integer, String> getUserRoles(List<Integer> userIds);
+
+  List<LoginHistoryResponse> getLoginHistory(Integer userId);
 }
