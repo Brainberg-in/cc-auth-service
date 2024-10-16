@@ -17,10 +17,13 @@ import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +61,9 @@ public class AuthServiceImpl implements AuthService {
 
   @Value("${fallback.url.reset.password}")
   private String resetPasswordUrl;
+
+  @Autowired
+  private PasswordHistoryRepo passwordHistoryRepo;
 
   @Override
   @Transactional
@@ -275,4 +281,23 @@ public class AuthServiceImpl implements AuthService {
   private void updateRefreshToken(Integer userId, String newRefreshToken) {
     refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
   }
+
+  @Override
+  public Map<Integer, String> getUserRoles(List<Integer> userIds) {
+      List<Map<String, Object>> latestUserTypes = passwordHistoryRepo.findUserRoleByUserIds(userIds);
+      
+      Map<Integer, String> userRoles = latestUserTypes.stream()
+              .collect(Collectors.toMap(
+                  entry -> ((Number)entry.get("userId")).intValue(),
+                  entry -> (String)entry.get("userRole")
+              ));
+      
+      // Ensure all requested userIds are in the map, even if they don't have a role
+      for (Integer userId : userIds) {
+          userRoles.putIfAbsent(userId, "UNKNOWN");
+      }
+      
+      return userRoles;
+  }
+
 }

@@ -48,6 +48,7 @@ public class SecurityConfig {
                         "/swagger-config/**",
                         "/api/v1/auth/forgot-password",
                         "/api/v1/auth/reset-password",
+                        "/api/v1/auth/user-roles",
                         "/v3/api-docs/**")
                     .permitAll()
                     .requestMatchers("/api/v1/auth/**")
