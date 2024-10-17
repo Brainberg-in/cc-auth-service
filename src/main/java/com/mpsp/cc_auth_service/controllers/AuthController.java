@@ -92,7 +92,7 @@ public ResponseEntity<Map<Integer, String>> getUserRoles(@RequestBody List<Integ
 
 
 @GetMapping("/login-history/{userId}")
-public ResponseEntity<List<LoginHistoryResponse>> getLoginHistory(@PathVariable Integer userId) {
+public ResponseEntity<List<LoginHistoryResponse>> getLoginHistory(@PathVariable("userId") Integer userId) {
     List<LoginHistoryResponse> loginHistory = authService.getLoginHistory(userId);
     return ResponseEntity.ok(loginHistory);
 }

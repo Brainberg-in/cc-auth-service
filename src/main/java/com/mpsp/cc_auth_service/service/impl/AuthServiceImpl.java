@@ -302,9 +302,11 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
 public List<LoginHistoryResponse> getLoginHistory(Integer userId) {
+
+  //only return the last 10 login details. 
   final Page<LoginHistory> loginHistoryPage =
   loginHistoryRepository.findAllByUserId(
-      userId, PageRequest.of(0, 1, Sort.by("lastLoginTime").descending()));
+      userId, PageRequest.of(0, 10, Sort.by("lastLoginTime").descending()));
   List<LoginHistory> loginHistoryList = loginHistoryPage.getContent();
     return loginHistoryList.stream()
             .map(this::convertToLoginHistoryResponse)
