@@ -45,7 +45,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     // refreshing token
     if (GeneratorUtils.checkIfUrlEndsWith(request.getRequestURI(), skipAuthorizationUrls)
         || GeneratorUtils.checkIfUrlsContainUri(request.getRequestURI(), skipTokenCheckPaths)) {
-      log.info("Skipping Authorization check for {}", request.getRequestURI());
+      // log.info("Skipping Authorization check for {}", request.getRequestURI());
       filterChain.doFilter(request, response);
       return;
     }
