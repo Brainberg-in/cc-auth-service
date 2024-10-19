@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:79",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
@@ -52,14 +52,6 @@
                 {
                     "name": "JWT_SECRET",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
-                },
-                {
-                    "name": "SES_KEY",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:ses_keys-ItpYsk:aws_access_key_id::"
-                },
-                {
-                    "name": "SES_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:ses_keys-ItpYsk:aws_secret_access_key::"
                 }
             ],
             "logConfiguration": {
@@ -69,7 +61,8 @@
                     "awslogs-create-group": "true",
                     "awslogs-region": "ap-south-1",
                     "awslogs-stream-prefix": "ecs"
-                }
+                },
+                "secretOptions": []
             },
             "healthCheck": {
                 "command": [
@@ -85,10 +78,10 @@
         }
     ],
     "family": "auth-service-task-definition",
-    "taskRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
+    "taskRoleArn": "arn:aws:iam::567347231314:role/cc-auth-service-role",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 79,
+    "revision": 85,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -140,8 +133,8 @@
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-10-13T16:55:53.473Z",
-    "registeredBy": "arn:aws:iam::567347231314:user/Github_Actions_User",
+    "registeredAt": "2024-10-19T04:55:29.484Z",
+    "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
     "tags": [
         {
             "key": "environment",
