@@ -1,5 +1,7 @@
 package com.mpsp.cc_auth_service.service;
 
+import java.util.List;
+import java.util.Map;
 import com.mpsp.cc_auth_service.dto.*;
 
 public interface AuthService {
@@ -16,4 +18,8 @@ public interface AuthService {
   void createNewUser(UserCreateRequest userCreateRequest);
 
   void resetPassword(ResetPasswordRequest resetPasswordRequest);
+
+  Map<Integer, String> getUserRoles(List<Integer> userIds);
+
+  List<LoginHistoryResponse> getLoginHistory(Integer userId);
 }

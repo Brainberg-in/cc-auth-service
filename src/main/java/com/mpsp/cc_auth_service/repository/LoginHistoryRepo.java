@@ -11,4 +11,8 @@ public interface LoginHistoryRepo extends JpaRepository<LoginHistory, Integer> {
   LoginHistory findByUserId(Integer userId);
 
   Page<LoginHistory> findAllByUserId(final Integer userId, final Pageable pageable);
+
+  
+
+  
 }

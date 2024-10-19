@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -80,4 +82,19 @@ public class AuthController {
     authService.createNewUser(userCreateRequest);
     return ResponseEntity.status(HttpStatus.CREATED).build();
   }
+
+  @PostMapping("/user-roles")
+public ResponseEntity<Map<Integer, String>> getUserRoles(@RequestBody List<Integer> userIds) {
+  System.out.println(userIds + "0");
+    Map<Integer, String> userRoles = authService.getUserRoles(userIds);
+    return ResponseEntity.ok(userRoles);
+}
+
+
+@GetMapping("/login-history/{userId}")
+public ResponseEntity<List<LoginHistoryResponse>> getLoginHistory(@PathVariable("userId") Integer userId) {
+    List<LoginHistoryResponse> loginHistory = authService.getLoginHistory(userId);
+    return ResponseEntity.ok(loginHistory);
+}
+
 }

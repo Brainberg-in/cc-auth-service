@@ -1,155 +1,143 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/mpsp-auth-staging:4",
+  "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/mpsp-auth-staging",
   "containerDefinitions": [
-      {
-          "name": "cc-auth-service",
-          "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
-          "cpu": 0,
-          "portMappings": [
-              {
-                  "name": "cc-auth-service-8080-tcp",
-                  "containerPort": 8080,
-                  "hostPort": 8080,
-                  "protocol": "tcp",
-                  "appProtocol": "http"
-              }
-          ],
-          "essential": true,
-          "environment": [
-              {
-                  "name": "USER_SERVICE_URL",
-                  "value": "http://user.staging-environment-cluster:3000"
-              },
-              {
-                  "name": "DB_NAME",
-                  "value": "auth"
-              },
-              {
-                  "name": "SPRING_PROFILES_ACTIVE",
-                  "value": "staging"
-              }
-          ],
-          "mountPoints": [],
-          "volumesFrom": [],
-          "secrets": [
-              {
-                  "name": "DB_HOST",
-                  "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:host::"
-              },
-              {
-                  "name": "DB_PASSWORD",
-                  "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:password::"
-              },
-              {
-                  "name": "DB_PORT",
-                  "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:port::"
-              },
-              {
-                  "name": "DB_USER",
-                  "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:username::"
-              },
-              {
-                  "name": "JWT_SECRET",
-                  "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
-              },
-              {
-                  "name": "SES_KEY",
-                  "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:ses_keys-ItpYsk:aws_access_key_id::"
-              },
-              {
-                  "name": "SES_SECRET",
-                  "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:ses_keys-ItpYsk:aws_secret_access_key::"
-              }
-          ],
-          "logConfiguration": {
-              "logDriver": "awslogs",
-              "options": {
-                  "awslogs-group": "/ecs/mpsp-auth-staging",
-                  "mode": "non-blocking",
-                  "awslogs-create-group": "true",
-                  "max-buffer-size": "25m",
-                  "awslogs-region": "ap-south-1",
-                  "awslogs-stream-prefix": "ecs"
-              }
-          },
-          "healthCheck": {
-              "command": [
-                  "CMD-SHELL",
-                  "wget --spider --no-verbose http://localhost:8080/actuator/health || exit 1"
-              ],
-              "interval": 10,
-              "timeout": 10,
-              "retries": 3,
-              "startPeriod": 70
-          },
-          "systemControls": []
-      }
+    {
+      "name": "cc-auth-service",
+      "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "name": "cc-auth-service-8080-tcp",
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "USER_SERVICE_URL",
+          "value": "http://user.staging-environment-cluster:3000"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "auth"
+        },
+        {
+          "name": "SPRING_PROFILES_ACTIVE",
+          "value": "staging"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [
+        {
+          "name": "DB_HOST",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:host::"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:password::"
+        },
+        {
+          "name": "DB_PORT",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:port::"
+        },
+        {
+          "name": "DB_USER",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:username::"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mpsp-auth-staging",
+          "mode": "non-blocking",
+          "awslogs-create-group": "true",
+          "max-buffer-size": "25m",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget --spider --no-verbose http://localhost:8080/actuator/health || exit 1"
+        ],
+        "interval": 10,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 70
+      },
+      "systemControls": []
+    }
   ],
   "family": "mpsp-auth-staging",
-  "taskRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
+  "taskRoleArn": "arn:aws:iam::567347231314:role/cc-auth-service-role",
   "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
   "networkMode": "awsvpc",
-  "revision": 4,
+  "revision": 6,
   "volumes": [],
   "status": "ACTIVE",
   "requiresAttributes": [
-      {
-          "name": "ecs.capability.execution-role-awslogs"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.ecr-auth"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.task-iam-role"
-      },
-      {
-          "name": "ecs.capability.container-health-check"
-      },
-      {
-          "name": "ecs.capability.execution-role-ecr-pull"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-      },
-      {
-          "name": "ecs.capability.task-eni"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-      },
-      {
-          "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-      },
-      {
-          "name": "ecs.capability.secrets.asm.environment-variables"
-      }
+    {
+      "name": "ecs.capability.execution-role-awslogs"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.ecr-auth"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.task-iam-role"
+    },
+    {
+      "name": "ecs.capability.container-health-check"
+    },
+    {
+      "name": "ecs.capability.execution-role-ecr-pull"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    },
+    {
+      "name": "ecs.capability.task-eni"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    },
+    {
+      "name": "ecs.capability.secrets.asm.environment-variables"
+    }
   ],
   "placementConstraints": [],
-  "compatibilities": [
-      "EC2",
-      "FARGATE"
-  ],
-  "requiresCompatibilities": [
-      "FARGATE"
-  ],
+  "compatibilities": ["EC2", "FARGATE"],
+  "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
   "runtimePlatform": {
-      "cpuArchitecture": "ARM64",
-      "operatingSystemFamily": "LINUX"
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
   },
-  "registeredAt": "2024-10-17T04:32:03.594Z",
-  "registeredBy": "arn:aws:iam::567347231314:user/Github_Actions_User",
+  "registeredAt": "2024-10-19T06:16:16.192Z",
+  "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
   "tags": [
-      {
-          "key": "environment",
-          "value": "staging"
-      }
+    {
+      "key": "environment",
+      "value": "staging"
+    }
   ]
 }
