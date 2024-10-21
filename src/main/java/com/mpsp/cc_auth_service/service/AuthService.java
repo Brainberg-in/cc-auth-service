@@ -1,8 +1,8 @@
 package com.mpsp.cc_auth_service.service;
 
+import com.mpsp.cc_auth_service.dto.*;
 import java.util.List;
 import java.util.Map;
-import com.mpsp.cc_auth_service.dto.*;
 
 public interface AuthService {
   LoginResponse login(LoginRequest loginRequest);

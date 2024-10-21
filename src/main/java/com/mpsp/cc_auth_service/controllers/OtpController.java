@@ -28,7 +28,6 @@ public class OtpController {
           String token) {
     otpService.verifyOtp(token, verifyOtpRequest.getOtp());
     return ResponseEntity.ok(new ApiResponse("OTP verified successfully"));
-    
   }
 
   @PostMapping("/resendOtp")

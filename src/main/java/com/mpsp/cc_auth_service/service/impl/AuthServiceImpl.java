@@ -17,13 +17,12 @@ import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,8 +61,7 @@ public class AuthServiceImpl implements AuthService {
   @Value("${fallback.url.reset.password}")
   private String resetPasswordUrl;
 
-  @Autowired
-  private PasswordHistoryRepo passwordHistoryRepo;
+  @Autowired private PasswordHistoryRepo passwordHistoryRepo;
 
   @Override
   @Transactional
@@ -164,18 +162,22 @@ public class AuthServiceImpl implements AuthService {
     String token = UUID.randomUUID().toString();
     ResetPassword resetToken;
 
-    Optional<ResetPassword> existingTokenOpt =
-        resetPasswordRepo.findByUserId(user.getUserId());
-    if (existingTokenOpt.isPresent() && existingTokenOpt.get().isLinkSent() && existingTokenOpt.get().getModifiedAt().isAfter(LocalDateTime.now().minus(Duration.ofMinutes(60)))){
+    Optional<ResetPassword> existingTokenOpt = resetPasswordRepo.findByUserId(user.getUserId());
+    if (existingTokenOpt.isPresent()
+        && existingTokenOpt.get().isLinkSent()
+        && existingTokenOpt
+            .get()
+            .getModifiedAt()
+            .isAfter(LocalDateTime.now().minus(Duration.ofMinutes(60)))) {
       throw new GlobalExceptionHandler.ResetPasswordException(
-              "A password reset link has already been sent. Please check your email.");
+          "A password reset link has already been sent. Please check your email.");
     }
-      resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
-      resetToken.setUserId(user.getUserId());
-      resetToken.setResetToken(token);
-      resetToken.setLinkSent(true);
-      resetToken.setModifiedAt(LocalDateTime.now());
-      resetToken.setLinkExpired(false);
+    resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
+    resetToken.setUserId(user.getUserId());
+    resetToken.setResetToken(token);
+    resetToken.setLinkSent(true);
+    resetToken.setModifiedAt(LocalDateTime.now());
+    resetToken.setLinkExpired(false);
 
     resetPasswordRepo.save(resetToken);
 
@@ -251,9 +253,9 @@ public class AuthServiceImpl implements AuthService {
             .get(0);
 
     if (passwordEncoder.matches(
-            resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
+        resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
       throw new GlobalExceptionHandler.SamePasswordException(
-              "New password cannot be the same as the current password");
+          "New password cannot be the same as the current password");
     }
 
     passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
@@ -284,36 +286,37 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   public Map<Integer, String> getUserRoles(List<Integer> userIds) {
-      List<Map<String, Object>> latestUserTypes = passwordHistoryRepo.findUserRoleByUserIds(userIds);
-      
-      Map<Integer, String> userRoles = latestUserTypes.stream()
-              .collect(Collectors.toMap(
-                  entry -> ((Number)entry.get("userId")).intValue(),
-                  entry -> (String)entry.get("userRole")
-              ));
-      
-      // Ensure all requested userIds are in the map, even if they don't have a role
-      for (Integer userId : userIds) {
-          userRoles.putIfAbsent(userId, "UNKNOWN");
-      }
-      
-      return userRoles;
+    List<Map<String, Object>> latestUserTypes = passwordHistoryRepo.findUserRoleByUserIds(userIds);
+
+    Map<Integer, String> userRoles =
+        latestUserTypes.stream()
+            .collect(
+                Collectors.toMap(
+                    entry -> ((Number) entry.get("userId")).intValue(),
+                    entry -> (String) entry.get("userRole")));
+
+    // Ensure all requested userIds are in the map, even if they don't have a role
+    for (Integer userId : userIds) {
+      userRoles.putIfAbsent(userId, "UNKNOWN");
+    }
+
+    return userRoles;
   }
 
   @Override
-public List<LoginHistoryResponse> getLoginHistory(Integer userId) {
+  public List<LoginHistoryResponse> getLoginHistory(Integer userId) {
 
-  //only return the last 10 login details. 
-  final Page<LoginHistory> loginHistoryPage =
-  loginHistoryRepository.findAllByUserId(
-      userId, PageRequest.of(0, 10, Sort.by("lastLoginTime").descending()));
-  List<LoginHistory> loginHistoryList = loginHistoryPage.getContent();
+    // only return the last 10 login details.
+    final Page<LoginHistory> loginHistoryPage =
+        loginHistoryRepository.findAllByUserId(
+            userId, PageRequest.of(0, 10, Sort.by("lastLoginTime").descending()));
+    List<LoginHistory> loginHistoryList = loginHistoryPage.getContent();
     return loginHistoryList.stream()
-            .map(this::convertToLoginHistoryResponse)
-            .collect(Collectors.toList());
-}
+        .map(this::convertToLoginHistoryResponse)
+        .collect(Collectors.toList());
+  }
 
-private LoginHistoryResponse convertToLoginHistoryResponse(LoginHistory loginHistory) {
+  private LoginHistoryResponse convertToLoginHistoryResponse(LoginHistory loginHistory) {
     LoginHistoryResponse response = new LoginHistoryResponse();
     response.setId(loginHistory.getId());
     response.setUserId(loginHistory.getUserId());
@@ -321,6 +324,5 @@ private LoginHistoryResponse convertToLoginHistoryResponse(LoginHistory loginHis
     response.setLogoutTime(loginHistory.getLogoutTime());
     response.setIpAddress(loginHistory.getIpAddress());
     return response;
-}
-
+  }
 }

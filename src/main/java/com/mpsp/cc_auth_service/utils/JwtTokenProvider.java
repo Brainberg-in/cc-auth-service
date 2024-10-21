@@ -37,8 +37,8 @@ public class JwtTokenProvider {
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder()
             .subject(String.valueOf(user.getUserId()))
-            //TODO check how this works for a student. Else workaround this problem. 
-            .claim(AppConstants.USER_EMAIL, user.getEmail()) 
+            // TODO check how this works for a student. Else workaround this problem.
+            .claim(AppConstants.USER_EMAIL, user.getEmail())
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
             .issueTime(new Date())
             .expirationTime(

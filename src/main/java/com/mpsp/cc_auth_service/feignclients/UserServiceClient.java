@@ -3,7 +3,6 @@ package com.mpsp.cc_auth_service.feignclients;
 import com.mpsp.cc_auth_service.constants.UserStatus;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.UsersData;
-
 import java.util.NoSuchElementException;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
