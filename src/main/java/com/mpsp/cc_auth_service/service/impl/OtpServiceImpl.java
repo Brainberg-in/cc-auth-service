@@ -7,10 +7,9 @@ import com.mpsp.cc_auth_service.repository.OtpGenRepo;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GeneratorUtils;
-import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.OTPExpiredException;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.OTPVerificationException;
-
+import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -69,26 +68,27 @@ public class OtpServiceImpl implements OtpService {
   }
 
   @Override
-public boolean verifyOtp(final String token, final String otp) {
+  public boolean verifyOtp(final String token, final String otp) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
 
     if (userId == 0) {
-        throw new NoSuchElementException("User not found");
+      throw new NoSuchElementException("User not found");
     }
 
     return otpGenRepo
         .findByUserId(userId)
-        .map(otpGen -> {
-            if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
+        .map(
+            otpGen -> {
+              if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
                 throw new OTPExpiredException("OTP expired");
-            }
-            if (!otpGen.getOtp().equals(otp)) {
+              }
+              if (!otpGen.getOtp().equals(otp)) {
                 throw new OTPVerificationException("OTP verification failed");
-            }
-            return true;
-        })
+              }
+              return true;
+            })
         .orElseThrow(() -> new NoSuchElementException("OTP not found for user"));
-}
+  }
 
   @Override
   @Transactional

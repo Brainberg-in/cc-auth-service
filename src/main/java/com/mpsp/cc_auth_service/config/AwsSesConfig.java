@@ -10,8 +10,6 @@ public class AwsSesConfig {
 
   @Bean
   public SesV2Client amazonSimpleEmailService() {
-    return SesV2Client.builder()
-            .region(Region.AP_SOUTH_1)
-            .build();
-}
+    return SesV2Client.builder().region(Region.AP_SOUTH_1).build();
+  }
 }

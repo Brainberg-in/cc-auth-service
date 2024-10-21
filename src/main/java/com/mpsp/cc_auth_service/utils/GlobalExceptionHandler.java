@@ -80,8 +80,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
-
-
   @ExceptionHandler(SesV2Exception.class)
   public ResponseEntity<ErrorResponse> handleSesV2Exception(SesV2Exception e) {
     final ErrorResponse errorResponse = new ErrorResponse("Failed to send email");
@@ -159,7 +157,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   @ExceptionHandler(SamePasswordException.class)
-  public ResponseEntity<ErrorResponse> handleSamePasswordException(SamePasswordException e){
+  public ResponseEntity<ErrorResponse> handleSamePasswordException(SamePasswordException e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
@@ -181,5 +179,4 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
-  
 }

@@ -21,8 +21,7 @@ public class AwsServiceImpl implements AwsService {
       final String recipient,
       final String templateName,
       final Map<String, String> objectMap) {
-    final Destination destination =
-        Destination.builder().toAddresses(recipient).build();
+    final Destination destination = Destination.builder().toAddresses(recipient).build();
 
     final EmailContent emailContent =
         EmailContent.builder()
@@ -45,8 +44,8 @@ public class AwsServiceImpl implements AwsService {
       log.info("Attempting to send an email of template {} through Amazon SES", templateName);
       client.sendEmail(emailRequest);
     } catch (SesV2Exception e) {
-      log.error("Failed to semd {} to {}", templateName, recipient,e);
-      throw new  GlobalExceptionHandler.SesV2Exception("Failed to send email");
+      log.error("Failed to semd {} to {}", templateName, recipient, e);
+      throw new GlobalExceptionHandler.SesV2Exception("Failed to send email");
     }
   }
 }
