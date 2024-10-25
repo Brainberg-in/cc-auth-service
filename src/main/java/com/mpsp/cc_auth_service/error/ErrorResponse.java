@@ -9,7 +9,7 @@ import lombok.Data;
 public class ErrorResponse {
   private final String error;
   private String details;
-  private String remainingAttempts;
+  private Integer remainingAttempts;
 
   public ErrorResponse(String error) {
     this.error = error;
@@ -20,7 +20,7 @@ public class ErrorResponse {
     this.details = details;
   }
 
-  public ErrorResponse(String error, String details, String remainingAttempts) {
+  public ErrorResponse(String error, String details, Integer remainingAttempts) {
     this.error = error;
     this.details = details;
     this.remainingAttempts = remainingAttempts;

@@ -153,14 +153,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   // Custom exception for invalid password
   public static class InvalidPasswordException extends RuntimeException {
-    private String attempts;
+    private Integer attempts;
 
-    public InvalidPasswordException(String message, String attempts) {
+    public InvalidPasswordException(String message, Integer attempts) {
       super(message);
       this.attempts = attempts;
     }
 
-    public String getAttempts() {
+    public Integer getAttempts() {
       return attempts;
     }
   }
@@ -215,7 +215,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(InvalidUserStatus.class)
   public ResponseEntity<ErrorResponse> handleInvalidUserStatusException(InvalidUserStatus e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
-    return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
   }
 
 }

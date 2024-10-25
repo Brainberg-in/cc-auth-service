@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.mpsp.cc_auth_service.constants.UserStatus;
 
@@ -53,7 +54,7 @@ public class PasswordHistory {
   @Column(name = "failed_login_attempts")
   private int failedLoginAttempts;
 
-  @CreationTimestamp
+  @UpdateTimestamp
   @Column(name = "failed_attempt_time")
   private LocalDateTime failedAttemptTime;
 

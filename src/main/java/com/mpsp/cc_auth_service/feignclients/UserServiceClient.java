@@ -31,15 +31,27 @@ public interface UserServiceClient {
     }
     if (users.getMetadata().getTotalUsers() == 1) {
 
-      if (users.getData().get(0).getStatus() == UserStatus.LOCKED) {
-        throw new InvalidUserStatus("User is locked");
+      User user = users.getData().get(0);
+      UserStatus status = user.getStatus();
+
+      if (status == null) {
+        logger.error("User {} has null status", user.getUserId());
+        throw new InvalidUserStatus("Invalid user status");
       }
 
-      if (users.getData().get(0).getStatus() == UserStatus.DELETED) {
-        throw new InvalidUserStatus("User is deleted");
+      switch (status) {
+        case LOCKED:
+          logger.info("Access attempted for locked user {}", user.getUserId());
+          throw new InvalidUserStatus("User is locked");
+        case DELETED:
+          logger.info("Access attempted for deleted user {}", user.getUserId());
+          throw new InvalidUserStatus("User is deleted");
+        case ACTIVE:
+          return user;
+        default:
+          logger.warn("User {} has unexpected status: {}", user.getUserId(), status);
+          throw new InvalidUserStatus("User status is not active");
       }
-
-      return users.getData().get(0);
     }
 
     return users.getData().stream()

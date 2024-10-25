@@ -18,7 +18,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import com.mpsp.cc_auth_service.constants.UserStatus;
 import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
@@ -41,9 +40,8 @@ import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
-import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
-import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidCredentialsException;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
+import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,7 +49,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-  private static final int PASSWORD_ATTEMPTS = 5;
+  @Value("${max.login.attempts}")
+  private int PASSWORD_ATTEMPTS;
 
   @Autowired
   private transient UserServiceClient userService;
@@ -89,19 +88,8 @@ public class AuthServiceImpl implements AuthService {
   @Autowired
   private PasswordHistoryRepo passwordHistoryRepo;
 
-  @Transactional(noRollbackFor = InvalidPasswordException.class)
-  public void incrementFailedLoginAttempts(int userId, int attempts) {
-    try {
-      passwordHistoryRepository.incrementFailedLoginAttemptsInDb(userId, attempts);
-      throw new InvalidPasswordException("Invalid Credentials", String.valueOf(PASSWORD_ATTEMPTS - attempts));
-    } catch (Exception e) {
-      log.error("Failed to increment login attempts: " + e.getMessage(), e);
-      throw new InvalidPasswordException(e.getMessage(), String.valueOf(PASSWORD_ATTEMPTS - attempts));
-    }
-  }
-
   @Override
-  @Transactional(noRollbackFor = InvalidPasswordException.class)
+  @Transactional
   public LoginResponse login(final LoginRequest loginRequest) {
     try {
       final String email = loginRequest.getEmail();
@@ -119,14 +107,14 @@ public class AuthServiceImpl implements AuthService {
               user.getUserId(),
               PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
           .getContent()
-          .get(0);
-
-      if (pw == null) {
-        throw new NoSuchElementException("User not found");
-      }
+          .stream()
+          .findFirst()
+          .orElseThrow(() -> new NoSuchElementException("User not found"));
 
       if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
         handleFailedLoginAttempt(user, pw);
+        throw new InvalidPasswordException("Invalid Credentials",
+            PASSWORD_ATTEMPTS - pw.getFailedLoginAttempts() + 1);
       }
 
       return handleSuccessfulLogin(user, pw);
@@ -150,18 +138,18 @@ public class AuthServiceImpl implements AuthService {
       Map<String, String> userDataMap = new HashMap<>();
       userDataMap.put("status", user.getStatus().toString());
       userService.updateUserStatus(user.getUserId(), userDataMap);
-      incrementFailedLoginAttempts(pw.getUserId(), newAttempts);
+      passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
 
     } else if (newAttempts > PASSWORD_ATTEMPTS) {
       newAttempts = 1;
-      incrementFailedLoginAttempts(pw.getUserId(), newAttempts);
+      passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
 
     } else {
-      incrementFailedLoginAttempts(pw.getUserId(), newAttempts);
+      passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
     }
 
     throw new GlobalExceptionHandler.InvalidCredentialsException(
-        "No of attempts left " + (5 - newAttempts));
+        "No of attempts left " + (PASSWORD_ATTEMPTS - newAttempts));
   }
 
   private LoginResponse handleSuccessfulLogin(User user, PasswordHistory pw) {
@@ -178,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
     // Reset failed_login_attempts on successful login
     if (pw.getFailedLoginAttempts() != 0) {
       pw.setFailedLoginAttempts(0);
-      passwordHistoryRepository.resetFailedLoginAttempts(pw.getUserId());
+      passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), 0);
     }
 
     return new LoginResponse(

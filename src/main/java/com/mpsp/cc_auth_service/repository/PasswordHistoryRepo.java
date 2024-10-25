@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 
@@ -23,10 +25,7 @@ public interface PasswordHistoryRepo extends JpaRepository<PasswordHistory, Inte
   List<Map<String, Object>> findUserRoleByUserIds(@Param("userIds") List<Integer> userIds);
 
   @Modifying
-  @Query(value = "UPDATE password_history ph SET ph.failed_login_attempts = 0 WHERE ph.user_id = :userId LIMIT 1", nativeQuery = true)
-  void resetFailedLoginAttempts(@Param("userId") int userId);
-
-  @Modifying
-  @Query(value = "UPDATE password_history ph SET ph.failed_login_attempts = :attempts WHERE ph.user_id = :userId LIMIT 1", nativeQuery = true)
-  void incrementFailedLoginAttemptsInDb(@Param("userId") int userId, @Param("attempts") int attempts);
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Query("UPDATE PasswordHistory ph SET ph.failedLoginAttempts = :attempts WHERE ph.userId = :userId")
+  void updateFailedLoginAttempts(@Param("userId") int userId, @Param("attempts") int attempts);
 }
