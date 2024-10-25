@@ -89,57 +89,6 @@ public class AuthServiceImpl implements AuthService {
   @Autowired
   private PasswordHistoryRepo passwordHistoryRepo;
 
-  // @Override
-  // @Transactional
-  // public LoginResponse login(final LoginRequest loginRequest) {
-  // final String email = loginRequest.getEmail();
-  // final String password = loginRequest.getPassword();
-
-  // // Validate user and password
-  // final User user = userService.findByEmail(email);
-  // if (user == null) {
-  // throw new NoSuchElementException("User not found");
-  // }
-  // log.info("User found: {}", user);
-
-  // final PasswordHistory pw = passwordHistoryRepository
-  // .findAllByUserId(
-  // user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-  // .getContent()
-  // .get(0);
-  // if (pw == null) {
-  // throw new NoSuchElementException("User not found");
-  // }
-
-  // if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
-
-  // throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid
-  // password");
-  // }
-  // // Generate tokens
-  // final String jwtToken = jwtTokenProvider.generateToken(user, false);
-  // final String refreshToken = jwtTokenProvider.generateToken(user, true);
-  // saveRefreshToken(user.getUserId(), refreshToken);
-
-  // loginHistoryRepository.save(new LoginHistory(user.getUserId(),
-  // LocalDateTime.now()));
-
-  // if (user.isFirstLogin()) {
-  // try {
-  // user.setFirstLogin(false);
-  // userService.updateUser(user.getUserId(), user);
-  // } catch (Exception e) {
-  // log.error("Error updating user", e);
-  // }
-  // }
-  // if (user.isMfaEnabled()) {
-  // otpService.sendOtp(email);
-  // }
-  // return new LoginResponse(
-  // jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(),
-  // pw.getUserRole());
-  // }
-
   @Transactional(noRollbackFor = InvalidPasswordException.class)
   public void incrementFailedLoginAttempts(int userId, int attempts) {
     try {
