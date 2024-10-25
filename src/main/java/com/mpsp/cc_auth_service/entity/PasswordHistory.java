@@ -2,6 +2,17 @@ package com.mpsp.cc_auth_service.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import com.mpsp.cc_auth_service.constants.UserStatus;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,7 +22,7 @@ import lombok.ToString;
 @Table(name = "password_history")
 @Getter
 @Setter
-@ToString(exclude = {"currentPassword", "ipAddress"})
+@ToString(exclude = { "currentPassword", "ipAddress" })
 @NoArgsConstructor
 public class PasswordHistory {
   @Id
@@ -39,8 +50,16 @@ public class PasswordHistory {
   @Column(name = "user_role")
   private String userRole;
 
+  @Column(name = "failed_login_attempts")
+  private int failedLoginAttempts;
+
+  @CreationTimestamp
+  @Column(name = "failed_attempt_time")
+  private LocalDateTime failedAttemptTime;
+
   public PasswordHistory(final Integer userId, final String currentPassword) {
     this.userId = userId;
     this.currentPassword = currentPassword;
   }
+
 }

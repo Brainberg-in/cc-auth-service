@@ -110,7 +110,7 @@ class AuthServiceImplTest {
     loginRequest.setPassword("password");
 
     assertThrows(
-        GlobalExceptionHandler.InvalidCredentialsException.class,
+        GlobalExceptionHandler.InvalidPasswordException.class,
         () -> authService.login(loginRequest));
   }
 
