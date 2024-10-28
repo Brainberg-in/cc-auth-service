@@ -1,8 +1,9 @@
 package com.mpsp.cc_auth_service.utils;
 
+import com.mpsp.cc_auth_service.error.ErrorResponse;
 import java.util.List;
 import java.util.NoSuchElementException;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,10 +18,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import com.mpsp.cc_auth_service.error.ErrorResponse;
-
-import lombok.extern.slf4j.Slf4j;
-
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -33,9 +30,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       final HttpStatusCode status,
       final WebRequest request) {
     log.error("MethodArgumentNotValidException occurred", ex);
-    final List<String> message = ex.getBindingResult().getFieldErrors().stream()
-        .map(DefaultMessageSourceResolvable::getDefaultMessage)
-        .toList();
+    final List<String> message =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(DefaultMessageSourceResolvable::getDefaultMessage)
+            .toList();
     return ResponseEntity.badRequest().body(new ErrorResponse(message.get(0)));
   }
 
@@ -77,7 +75,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
     log.error("Unexpected error occurred", ex);
-    final ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+    final ErrorResponse errorResponse =
+        new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
     return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
@@ -170,7 +169,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public InvalidUserStatus(String message) {
       super(message);
     }
-
   }
 
   @ExceptionHandler(OTPExpiredException.class)
@@ -211,11 +209,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
 
-  //Handle invalid user status exception
+  // Handle invalid user status exception
   @ExceptionHandler(InvalidUserStatus.class)
   public ResponseEntity<ErrorResponse> handleInvalidUserStatusException(InvalidUserStatus e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
   }
-
 }
