@@ -12,25 +12,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.text.ParseException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-
 import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
@@ -47,46 +28,48 @@ import com.mpsp.cc_auth_service.repository.ResetPasswordRepo;
 import com.mpsp.cc_auth_service.service.impl.AuthServiceImpl;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { AuthServiceImpl.class })
-@SpringBootTest
-@TestPropertySource(properties = {
-    "max.login.attempts=5",
-    "aws.ses.sender=noreply@example.com",
-    "fallback.url.reset.password=https://example.com/reset-password"
-})
+@ContextConfiguration(classes = {AuthServiceImpl.class})
+@TestPropertySource(
+    locations = {"classpath:application.properties", "classpath:application-dev.properties"})
 class AuthServiceImplTest {
 
-  @Autowired
-  private transient AuthServiceImpl authService;
+  @Autowired private transient AuthServiceImpl authService;
 
-  @MockBean
-  private transient UserServiceClient userService;
+  @MockBean private transient UserServiceClient userService;
 
-  @MockBean
-  private transient PasswordEncoder passwordEncoder;
+  @MockBean private transient PasswordEncoder passwordEncoder;
 
-  @MockBean
-  private transient JwtTokenProvider jwtTokenProvider;
+  @MockBean private transient JwtTokenProvider jwtTokenProvider;
 
-  @MockBean
-  private transient LoginHistoryRepo loginHistoryRepository;
+  @MockBean private transient LoginHistoryRepo loginHistoryRepository;
 
-  @MockBean
-  private transient PasswordHistoryRepo passwordHistoryRepository;
+  @MockBean private transient PasswordHistoryRepo passwordHistoryRepository;
 
-  @MockBean
-  private transient RefreshTokenRepo refreshTokenRepository;
+  @MockBean private transient RefreshTokenRepo refreshTokenRepository;
 
-  @MockBean
-  private transient OtpService otpService;
+  @MockBean private transient OtpService otpService;
 
-  @MockBean
-  private transient AwsService awsService;
+  @MockBean private transient AwsService awsService;
 
-  @MockBean
-  private transient ResetPasswordRepo resetPasswordRepo;
+  @MockBean private transient ResetPasswordRepo resetPasswordRepo;
 
   private User user;
   private PasswordHistory passwordHistory;
@@ -211,9 +194,11 @@ class AuthServiceImplTest {
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
-    when(passwordEncoder.matches(changePasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword()))
+    when(passwordEncoder.matches(
+            changePasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword()))
         .thenReturn(true);
-    when(passwordEncoder.matches(changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword()))
+    when(passwordEncoder.matches(
+            changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword()))
         .thenReturn(false);
     authService.changePassword(changePasswordRequest, "validToken");
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
@@ -234,7 +219,8 @@ class AuthServiceImplTest {
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
-    assertThrows(GlobalExceptionHandler.InvalidCredentialsException.class,
+    assertThrows(
+        GlobalExceptionHandler.InvalidCredentialsException.class,
         () -> authService.changePassword(changePasswordRequest, "validToken"));
   }
 
@@ -253,7 +239,8 @@ class AuthServiceImplTest {
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
 
-    assertThrows(GlobalExceptionHandler.SamePasswordException.class,
+    assertThrows(
+        GlobalExceptionHandler.SamePasswordException.class,
         () -> authService.changePassword(changePasswordRequest, "validToken"));
   }
 
@@ -324,7 +311,8 @@ class AuthServiceImplTest {
 
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.empty());
 
-    assertThrows(NoSuchElementException.class, () -> authService.resetPassword(resetPasswordRequest));
+    assertThrows(
+        NoSuchElementException.class, () -> authService.resetPassword(resetPasswordRequest));
   }
 
   @Test
@@ -340,7 +328,8 @@ class AuthServiceImplTest {
 
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.of(resetPassword));
 
-    assertThrows(GlobalExceptionHandler.ResetPasswordException.class,
+    assertThrows(
+        GlobalExceptionHandler.ResetPasswordException.class,
         () -> authService.resetPassword(resetPasswordRequest));
   }
 }

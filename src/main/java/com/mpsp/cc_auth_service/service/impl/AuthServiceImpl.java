@@ -133,11 +133,12 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
     }
 
-    throw new GlobalExceptionHandler.InvalidPasswordException("No of attempts left " + (PASSWORD_ATTEMPTS - newAttempts),
+    throw new GlobalExceptionHandler.InvalidPasswordException(
+        String.format("No of attempts left %d", (PASSWORD_ATTEMPTS - newAttempts)),
         PASSWORD_ATTEMPTS - newAttempts);
   }
 
-  private LoginResponse handleSuccessfulLogin(User user, PasswordHistory pw) {
+  private LoginResponse handleSuccessfulLogin(final User user, final PasswordHistory pw) {
     // Generate tokens
     final String jwtToken = jwtTokenProvider.generateToken(user, false);
     final String refreshToken = jwtTokenProvider.generateToken(user, true);
@@ -158,7 +159,7 @@ public class AuthServiceImpl implements AuthService {
         jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), pw.getUserRole());
   }
 
-  private void handleFirstLoginIfNeeded(User user) {
+  private void handleFirstLoginIfNeeded(final User user) {
     if (user.isFirstLogin()) {
       try {
         user.setFirstLogin(false);
@@ -169,7 +170,7 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  private void handleMfaIfEnabled(User user) {
+  private void handleMfaIfEnabled(final User user) {
     if (user.isMfaEnabled()) {
       otpService.sendOtp(user.getEmail());
     }
@@ -220,12 +221,11 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public void sendResetPasswordEmail(String email) {
-    User user = userService.findByEmail(email);
+  public void sendResetPasswordEmail(final String email) {
+    final User user = userService.findByEmail(email);
 
     log.info("User found: {}", user);
-    String token = UUID.randomUUID().toString();
-    ResetPassword resetToken;
+    final String token = UUID.randomUUID().toString();
 
     Optional<ResetPassword> existingTokenOpt = resetPasswordRepo.findByUserId(user.getUserId());
     if (existingTokenOpt.isPresent()
@@ -237,7 +237,7 @@ public class AuthServiceImpl implements AuthService {
       throw new GlobalExceptionHandler.ResetPasswordException(
           "A password reset link has already been sent. Please check your email.");
     }
-    resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
+    final ResetPassword resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
     resetToken.setUserId(user.getUserId());
     resetToken.setResetToken(token);
     resetToken.setLinkSent(true);
@@ -283,7 +283,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public void createNewUser(UserCreateRequest userCreateRequest) {
+  public void createNewUser(final UserCreateRequest userCreateRequest) {
     PasswordHistory passwordHistory = new PasswordHistory();
     passwordHistory.setUserId(userCreateRequest.getUserId());
     passwordHistory.setCurrentPassword(passwordEncoder.encode(userCreateRequest.getPassword()));
@@ -296,7 +296,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Transactional
   @Override
-  public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
+  public void resetPassword(final ResetPasswordRequest resetPasswordRequest) {
     final ResetPassword resetToken =
         resetPasswordRepo
             .findByResetToken(resetPasswordRequest.getResetToken())
@@ -310,7 +310,7 @@ public class AuthServiceImpl implements AuthService {
           "Link is Invalid/Expired. Please request a new link");
     }
 
-    PasswordHistory passwordHistory =
+    final PasswordHistory passwordHistory =
         passwordHistoryRepository
             .findAllByUserId(
                 resetToken.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
@@ -345,7 +345,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Transactional
-  private void updateRefreshToken(Integer userId, String newRefreshToken) {
+  private void updateRefreshToken(final Integer userId, final String newRefreshToken) {
     refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
   }
 
@@ -369,7 +369,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public List<LoginHistoryResponse> getLoginHistory(Integer userId) {
+  public List<LoginHistoryResponse> getLoginHistory(final Integer userId) {
 
     // only return the last 10 login details.
     final Page<LoginHistory> loginHistoryPage =
