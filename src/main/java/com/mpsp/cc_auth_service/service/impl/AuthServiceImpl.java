@@ -119,8 +119,6 @@ public class AuthServiceImpl implements AuthService {
 
       return handleSuccessfulLogin(user, pw);
 
-    } catch (GlobalExceptionHandler.InvalidCredentialsException e) {
-      throw e;
     } catch (Exception e) {
       log.error("Unexpected error during login", e);
       throw e;
@@ -148,8 +146,8 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
     }
 
-    throw new GlobalExceptionHandler.InvalidCredentialsException(
-        "No of attempts left " + (PASSWORD_ATTEMPTS - newAttempts));
+    throw new GlobalExceptionHandler.InvalidPasswordException("No of attempts left " + (PASSWORD_ATTEMPTS - newAttempts),
+        PASSWORD_ATTEMPTS - newAttempts);
   }
 
   private LoginResponse handleSuccessfulLogin(User user, PasswordHistory pw) {

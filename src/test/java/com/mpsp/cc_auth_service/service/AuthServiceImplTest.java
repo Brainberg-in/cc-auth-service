@@ -1,11 +1,41 @@
 package com.mpsp.cc_auth_service.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer;
-import com.mpsp.cc_auth_service.dto.*;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
+import com.mpsp.cc_auth_service.dto.LoginRequest;
+import com.mpsp.cc_auth_service.dto.LoginResponse;
+import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
+import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
 import com.mpsp.cc_auth_service.entity.ResetPassword;
@@ -17,45 +47,46 @@ import com.mpsp.cc_auth_service.repository.ResetPasswordRepo;
 import com.mpsp.cc_auth_service.service.impl.AuthServiceImpl;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
-import java.text.ParseException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {AuthServiceImpl.class})
+@ContextConfiguration(classes = { AuthServiceImpl.class })
+@SpringBootTest
+@TestPropertySource(properties = {
+    "max.login.attempts=5",
+    "aws.ses.sender=noreply@example.com",
+    "fallback.url.reset.password=https://example.com/reset-password"
+})
 class AuthServiceImplTest {
 
-  @Autowired private transient AuthServiceImpl authService;
+  @Autowired
+  private transient AuthServiceImpl authService;
 
-  @MockBean private transient UserServiceClient userService;
+  @MockBean
+  private transient UserServiceClient userService;
 
-  @MockBean private transient PasswordEncoder passwordEncoder;
+  @MockBean
+  private transient PasswordEncoder passwordEncoder;
 
-  @MockBean private transient JwtTokenProvider jwtTokenProvider;
+  @MockBean
+  private transient JwtTokenProvider jwtTokenProvider;
 
-  @MockBean private transient LoginHistoryRepo loginHistoryRepository;
+  @MockBean
+  private transient LoginHistoryRepo loginHistoryRepository;
 
-  @MockBean private transient PasswordHistoryRepo passwordHistoryRepository;
+  @MockBean
+  private transient PasswordHistoryRepo passwordHistoryRepository;
 
-  @MockBean private transient RefreshTokenRepo refreshTokenRepository;
+  @MockBean
+  private transient RefreshTokenRepo refreshTokenRepository;
 
-  @MockBean private transient OtpService otpService;
+  @MockBean
+  private transient OtpService otpService;
 
-  @MockBean private transient AwsService awsService;
+  @MockBean
+  private transient AwsService awsService;
 
-  @MockBean private transient ResetPasswordRepo resetPasswordRepo;
+  @MockBean
+  private transient ResetPasswordRepo resetPasswordRepo;
 
   private User user;
   private PasswordHistory passwordHistory;
@@ -114,18 +145,19 @@ class AuthServiceImplTest {
         () -> authService.login(loginRequest));
   }
 
-  //  @Test
-  //  void testLogout() throws ParseException {
-  //    LoginHistory loginHistory = new LoginHistory();
-  //    loginHistory.setUserId(1);
+  // @Test
+  // void testLogout() throws ParseException {
+  // LoginHistory loginHistory = new LoginHistory();
+  // loginHistory.setUserId(1);
   //
-  //    when(loginHistoryRepository.findByUserId(anyInt())).thenReturn(loginHistory);
+  // when(loginHistoryRepository.findByUserId(anyInt())).thenReturn(loginHistory);
   //
-  //    authService.logout("toekn");
+  // authService.logout("toekn");
   //
-  //    verify(refreshTokenRepository, times(1)).deleteRefreshToken(anyInt());
-  //    verify(loginHistoryRepository, times(1)).saveAndFlush(any(LoginHistory.class));
-  //  }
+  // verify(refreshTokenRepository, times(1)).deleteRefreshToken(anyInt());
+  // verify(loginHistoryRepository,
+  // times(1)).saveAndFlush(any(LoginHistory.class));
+  // }
 
   @Test
   void testRefreshTokenSuccess() throws ParseException {
@@ -167,7 +199,6 @@ class AuthServiceImplTest {
     verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
   }
 
-
   @Test
   void changePassword_Success() throws ParseException {
     // Create a request with the current and new password
@@ -179,11 +210,11 @@ class AuthServiceImplTest {
     passwordHistory.setCurrentPassword("encodedCurrentPassword");
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(changePasswordRequest.getCurrentPassword(), passwordHistory.getCurrentPassword()))
-            .thenReturn(true);
+        .thenReturn(true);
     when(passwordEncoder.matches(changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword()))
-            .thenReturn(false);
+        .thenReturn(false);
     authService.changePassword(changePasswordRequest, "validToken");
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
   }
@@ -200,11 +231,11 @@ class AuthServiceImplTest {
 
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
-    assertThrows(GlobalExceptionHandler.InvalidCredentialsException.class, () ->
-            authService.changePassword(changePasswordRequest, "validToken"));
+    assertThrows(GlobalExceptionHandler.InvalidCredentialsException.class,
+        () -> authService.changePassword(changePasswordRequest, "validToken"));
   }
 
   @Test
@@ -219,11 +250,11 @@ class AuthServiceImplTest {
 
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
 
-    assertThrows(GlobalExceptionHandler.SamePasswordException.class, () ->
-            authService.changePassword(changePasswordRequest, "validToken"));
+    assertThrows(GlobalExceptionHandler.SamePasswordException.class,
+        () -> authService.changePassword(changePasswordRequest, "validToken"));
   }
 
   @Test
@@ -237,13 +268,14 @@ class AuthServiceImplTest {
 
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
 
     authService.changePassword(changePasswordRequest, "validToken");
 
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
   }
+
   @Test
   void sendResetPasswordEmail_Success() {
     User user = new User();
@@ -257,7 +289,6 @@ class AuthServiceImplTest {
 
     verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
   }
-
 
   @Test
   void resetPassword_Success() {
@@ -276,7 +307,7 @@ class AuthServiceImplTest {
 
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.of(resetPassword));
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-            .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
 
     authService.resetPassword(resetPasswordRequest);
@@ -293,8 +324,7 @@ class AuthServiceImplTest {
 
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.empty());
 
-    assertThrows(NoSuchElementException.class, () ->
-            authService.resetPassword(resetPasswordRequest));
+    assertThrows(NoSuchElementException.class, () -> authService.resetPassword(resetPasswordRequest));
   }
 
   @Test
@@ -310,7 +340,7 @@ class AuthServiceImplTest {
 
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.of(resetPassword));
 
-    assertThrows(GlobalExceptionHandler.ResetPasswordException.class, () ->
-            authService.resetPassword(resetPasswordRequest));
-    }
+    assertThrows(GlobalExceptionHandler.ResetPasswordException.class,
+        () -> authService.resetPassword(resetPasswordRequest));
+  }
 }

@@ -206,7 +206,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   // Handle Invalid Password Exception
   @ExceptionHandler(InvalidPasswordException.class)
   public ResponseEntity<ErrorResponse> handleInvalidPasswordAttempt(InvalidPasswordException ex) {
-    final ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), "Invalid Credentials",
+    final ErrorResponse errorResponse = new ErrorResponse("Invalid Credentials",ex.getMessage(),
         ex.attempts);
     return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
   }
