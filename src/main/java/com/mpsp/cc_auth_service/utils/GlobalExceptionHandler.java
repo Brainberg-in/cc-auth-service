@@ -150,6 +150,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
   }
 
+  // Custom exception for invalid password
+  public static class InvalidPasswordException extends RuntimeException {
+    private Integer attempts;
+
+    public InvalidPasswordException(String message, Integer attempts) {
+      super(message);
+      this.attempts = attempts;
+    }
+
+    public Integer getAttempts() {
+      return attempts;
+    }
+  }
+
+  // Custom exception for invalid password
+  public static class InvalidUserStatus extends RuntimeException {
+    public InvalidUserStatus(String message) {
+      super(message);
+    }
+  }
+
   @ExceptionHandler(OTPExpiredException.class)
   public ResponseEntity<ErrorResponse> handleOtpExpiredException(OTPExpiredException e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
@@ -178,5 +199,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<ErrorResponse> handleResetPasswordException(ResetPasswordException e) {
     final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  // Handle Invalid Password Exception
+  @ExceptionHandler(InvalidPasswordException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidPasswordAttempt(InvalidPasswordException ex) {
+    final ErrorResponse errorResponse =
+        new ErrorResponse("Invalid Credentials", ex.getMessage(), ex.attempts);
+    return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+  }
+
+  // Handle invalid user status exception
+  @ExceptionHandler(InvalidUserStatus.class)
+  public ResponseEntity<ErrorResponse> handleInvalidUserStatusException(InvalidUserStatus e) {
+    final ErrorResponse errorResponse = new ErrorResponse(e.getMessage());
+    return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
   }
 }

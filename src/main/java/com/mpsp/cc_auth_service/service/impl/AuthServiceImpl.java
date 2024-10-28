@@ -1,6 +1,13 @@
 package com.mpsp.cc_auth_service.service.impl;
 
-import com.mpsp.cc_auth_service.dto.*;
+import com.mpsp.cc_auth_service.constants.UserStatus;
+import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
+import com.mpsp.cc_auth_service.dto.LoginHistoryResponse;
+import com.mpsp.cc_auth_service.dto.LoginRequest;
+import com.mpsp.cc_auth_service.dto.LoginResponse;
+import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
+import com.mpsp.cc_auth_service.dto.User;
+import com.mpsp.cc_auth_service.dto.UserCreateRequest;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
@@ -14,9 +21,11 @@ import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.AwsService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
+import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -36,6 +45,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
+
+  @Value("${max.login.attempts}")
+  private int PASSWORD_ATTEMPTS;
 
   @Autowired private transient UserServiceClient userService;
 
@@ -66,48 +78,102 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public LoginResponse login(final LoginRequest loginRequest) {
-    final String email = loginRequest.getEmail();
-    final String password = loginRequest.getPassword();
+    try {
+      final String email = loginRequest.getEmail();
+      final String password = loginRequest.getPassword();
 
-    // Validate user and password
-    final User user = userService.findByEmail(email);
-    if (user == null) {
-      throw new NoSuchElementException("User not found");
-    }
-    log.info("User found: {}", user);
+      // Validate user and password
+      final User user = userService.findByEmail(email);
+      if (user == null) {
+        throw new NoSuchElementException("User not found");
+      }
+      log.info("User found: {}", user);
 
-    final PasswordHistory pw =
-        passwordHistoryRepository
-            .findAllByUserId(
-                user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-            .getContent()
-            .get(0);
-    if (pw == null) {
-      throw new NoSuchElementException("User not found");
+      final PasswordHistory pw =
+          passwordHistoryRepository
+              .findAllByUserId(
+                  user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+              .getContent()
+              .stream()
+              .findFirst()
+              .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+      if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
+        handleFailedLoginAttempt(user, pw);
+        throw new InvalidPasswordException(
+            "Invalid Credentials", PASSWORD_ATTEMPTS - pw.getFailedLoginAttempts() + 1);
+      }
+
+      return handleSuccessfulLogin(user, pw);
+
+    } catch (Exception e) {
+      log.error("Unexpected error during login", e);
+      throw e;
     }
-    if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
-      throw new GlobalExceptionHandler.InvalidCredentialsException("Invalid password");
+  }
+
+  private void handleFailedLoginAttempt(User user, PasswordHistory pw) {
+    int newAttempts = pw.getFailedLoginAttempts() + 1;
+
+    if (newAttempts == PASSWORD_ATTEMPTS) {
+      user.setStatus(UserStatus.LOCKED);
+      log.info("User data user{}", user);
+      // userService.updateUser(user.getUserId(), user);
+
+      Map<String, String> userDataMap = new HashMap<>();
+      userDataMap.put("status", user.getStatus().toString());
+      userService.updateUserStatus(user.getUserId(), userDataMap);
+      passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
+
+    } else if (newAttempts > PASSWORD_ATTEMPTS) {
+      newAttempts = 1;
+      passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
+
+    } else {
+      passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
     }
 
+    throw new GlobalExceptionHandler.InvalidPasswordException(
+        String.format("No of attempts left %d", (PASSWORD_ATTEMPTS - newAttempts)),
+        PASSWORD_ATTEMPTS - newAttempts);
+  }
+
+  private LoginResponse handleSuccessfulLogin(final User user, final PasswordHistory pw) {
     // Generate tokens
     final String jwtToken = jwtTokenProvider.generateToken(user, false);
     final String refreshToken = jwtTokenProvider.generateToken(user, true);
     saveRefreshToken(user.getUserId(), refreshToken);
 
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
+
+    handleFirstLoginIfNeeded(user);
+    handleMfaIfEnabled(user);
+
+    // Reset failed_login_attempts on successful login
+    if (pw.getFailedLoginAttempts() != 0) {
+      pw.setFailedLoginAttempts(0);
+      passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), 0);
+    }
+
+    return new LoginResponse(
+        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), pw.getUserRole());
+  }
+
+  private void handleFirstLoginIfNeeded(final User user) {
     if (user.isFirstLogin()) {
       try {
         user.setFirstLogin(false);
         userService.updateUser(user.getUserId(), user);
       } catch (Exception e) {
-        log.error("Error updating user", e);
+        log.error("Error updating first login status", e);
       }
     }
+  }
+
+  private void handleMfaIfEnabled(final User user) {
     if (user.isMfaEnabled()) {
-      otpService.sendOtp(email);
+      otpService.sendOtp(user.getEmail());
     }
-    return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), pw.getUserRole());
   }
 
   @Override
@@ -155,12 +221,11 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public void sendResetPasswordEmail(String email) {
-    User user = userService.findByEmail(email);
+  public void sendResetPasswordEmail(final String email) {
+    final User user = userService.findByEmail(email);
 
     log.info("User found: {}", user);
-    String token = UUID.randomUUID().toString();
-    ResetPassword resetToken;
+    final String token = UUID.randomUUID().toString();
 
     Optional<ResetPassword> existingTokenOpt = resetPasswordRepo.findByUserId(user.getUserId());
     if (existingTokenOpt.isPresent()
@@ -172,7 +237,7 @@ public class AuthServiceImpl implements AuthService {
       throw new GlobalExceptionHandler.ResetPasswordException(
           "A password reset link has already been sent. Please check your email.");
     }
-    resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
+    final ResetPassword resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
     resetToken.setUserId(user.getUserId());
     resetToken.setResetToken(token);
     resetToken.setLinkSent(true);
@@ -218,7 +283,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public void createNewUser(UserCreateRequest userCreateRequest) {
+  public void createNewUser(final UserCreateRequest userCreateRequest) {
     PasswordHistory passwordHistory = new PasswordHistory();
     passwordHistory.setUserId(userCreateRequest.getUserId());
     passwordHistory.setCurrentPassword(passwordEncoder.encode(userCreateRequest.getPassword()));
@@ -231,7 +296,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Transactional
   @Override
-  public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
+  public void resetPassword(final ResetPasswordRequest resetPasswordRequest) {
     final ResetPassword resetToken =
         resetPasswordRepo
             .findByResetToken(resetPasswordRequest.getResetToken())
@@ -245,7 +310,7 @@ public class AuthServiceImpl implements AuthService {
           "Link is Invalid/Expired. Please request a new link");
     }
 
-    PasswordHistory passwordHistory =
+    final PasswordHistory passwordHistory =
         passwordHistoryRepository
             .findAllByUserId(
                 resetToken.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
@@ -280,7 +345,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Transactional
-  private void updateRefreshToken(Integer userId, String newRefreshToken) {
+  private void updateRefreshToken(final Integer userId, final String newRefreshToken) {
     refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
   }
 
@@ -304,7 +369,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public List<LoginHistoryResponse> getLoginHistory(Integer userId) {
+  public List<LoginHistoryResponse> getLoginHistory(final Integer userId) {
 
     // only return the last 10 login details.
     final Page<LoginHistory> loginHistoryPage =

@@ -8,13 +8,20 @@ import lombok.Data;
 public class ErrorResponse {
   private final String error;
   private String details;
+  private Integer remainingAttempts;
 
-  public ErrorResponse(String error) {
+  public ErrorResponse(final String error) {
     this.error = error;
   }
 
-  public ErrorResponse(String error, String details) {
+  public ErrorResponse(final String error, String details) {
     this.error = error;
     this.details = details;
+  }
+
+  public ErrorResponse(final String error, final String details, final Integer remainingAttempts) {
+    this.error = error;
+    this.details = details;
+    this.remainingAttempts = remainingAttempts;
   }
 }
