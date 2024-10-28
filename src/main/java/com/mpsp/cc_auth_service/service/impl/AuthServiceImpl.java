@@ -1,24 +1,5 @@
 package com.mpsp.cc_auth_service.service.impl;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.mpsp.cc_auth_service.constants.UserStatus;
 import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
 import com.mpsp.cc_auth_service.dto.LoginHistoryResponse;
@@ -42,8 +23,24 @@ import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
-
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -52,32 +49,23 @@ public class AuthServiceImpl implements AuthService {
   @Value("${max.login.attempts}")
   private int PASSWORD_ATTEMPTS;
 
-  @Autowired
-  private transient UserServiceClient userService;
+  @Autowired private transient UserServiceClient userService;
 
-  @Autowired
-  private transient PasswordEncoder passwordEncoder;
+  @Autowired private transient PasswordEncoder passwordEncoder;
 
-  @Autowired
-  private transient JwtTokenProvider jwtTokenProvider;
+  @Autowired private transient JwtTokenProvider jwtTokenProvider;
 
-  @Autowired
-  private transient LoginHistoryRepo loginHistoryRepository;
+  @Autowired private transient LoginHistoryRepo loginHistoryRepository;
 
-  @Autowired
-  private transient PasswordHistoryRepo passwordHistoryRepository;
+  @Autowired private transient PasswordHistoryRepo passwordHistoryRepository;
 
-  @Autowired
-  private transient RefreshTokenRepo refreshTokenRepository;
+  @Autowired private transient RefreshTokenRepo refreshTokenRepository;
 
-  @Autowired
-  private transient OtpService otpService;
+  @Autowired private transient OtpService otpService;
 
-  @Autowired
-  private transient AwsService awsService;
+  @Autowired private transient AwsService awsService;
 
-  @Autowired
-  private transient ResetPasswordRepo resetPasswordRepo;
+  @Autowired private transient ResetPasswordRepo resetPasswordRepo;
 
   @Value("${aws.ses.sender}")
   private String senderEmail;
@@ -85,8 +73,7 @@ public class AuthServiceImpl implements AuthService {
   @Value("${fallback.url.reset.password}")
   private String resetPasswordUrl;
 
-  @Autowired
-  private PasswordHistoryRepo passwordHistoryRepo;
+  @Autowired private PasswordHistoryRepo passwordHistoryRepo;
 
   @Override
   @Transactional
@@ -102,19 +89,19 @@ public class AuthServiceImpl implements AuthService {
       }
       log.info("User found: {}", user);
 
-      final PasswordHistory pw = passwordHistoryRepository
-          .findAllByUserId(
-              user.getUserId(),
-              PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-          .getContent()
-          .stream()
-          .findFirst()
-          .orElseThrow(() -> new NoSuchElementException("User not found"));
+      final PasswordHistory pw =
+          passwordHistoryRepository
+              .findAllByUserId(
+                  user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+              .getContent()
+              .stream()
+              .findFirst()
+              .orElseThrow(() -> new NoSuchElementException("User not found"));
 
       if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
         handleFailedLoginAttempt(user, pw);
-        throw new InvalidPasswordException("Invalid Credentials",
-            PASSWORD_ATTEMPTS - pw.getFailedLoginAttempts() + 1);
+        throw new InvalidPasswordException(
+            "Invalid Credentials", PASSWORD_ATTEMPTS - pw.getFailedLoginAttempts() + 1);
       }
 
       return handleSuccessfulLogin(user, pw);
@@ -170,11 +157,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     return new LoginResponse(
-        jwtToken,
-        refreshToken,
-        user.isMfaEnabled(),
-        user.isFirstLogin(),
-        pw.getUserRole());
+        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), pw.getUserRole());
   }
 
   private void handleFirstLoginIfNeeded(User user) {
@@ -200,8 +183,9 @@ public class AuthServiceImpl implements AuthService {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     refreshTokenRepository.deleteRefreshToken(userId);
 
-    final Page<LoginHistory> loginHistoryPage = loginHistoryRepository.findAllByUserId(
-        userId, PageRequest.of(0, 1, Sort.by("lastLoginTime").descending()));
+    final Page<LoginHistory> loginHistoryPage =
+        loginHistoryRepository.findAllByUserId(
+            userId, PageRequest.of(0, 1, Sort.by("lastLoginTime").descending()));
     if (!loginHistoryPage.isEmpty()) {
       final LoginHistory loginHistory = loginHistoryPage.getContent().get(0);
       loginHistory.setLogoutTime(LocalDateTime.now());
@@ -212,29 +196,29 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   @Override
   public LoginResponse refreshToken(final String refreshToken) {
-    RefreshToken storedToken = refreshTokenRepository
-        .findByToken(refreshToken)
-        .orElseThrow(
-            () -> new GlobalExceptionHandler.RefreshTokenException("Invalid refresh token"));
+    RefreshToken storedToken =
+        refreshTokenRepository
+            .findByToken(refreshToken)
+            .orElseThrow(
+                () -> new GlobalExceptionHandler.RefreshTokenException("Invalid refresh token"));
 
-    jwtTokenProvider.verifyToken(refreshToken,
-        storedToken.getUserId().toString(), true);
+    jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
 
     // Generate new JWT token
     log.info("User ID: {}", storedToken.getUserId());
     final User user = userService.findById(storedToken.getUserId());
 
-    final PasswordHistory p = passwordHistoryRepository
-        .findAllByUserId(
-            user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-        .getContent()
-        .get(0);
+    final PasswordHistory p =
+        passwordHistoryRepository
+            .findAllByUserId(
+                user.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
 
     // Refresh token only gets generated when the user logs in
     // The refresh token is only used for refreshing the access token.
     final String newJwtToken = jwtTokenProvider.generateToken(user, false);
-    return new LoginResponse(newJwtToken, refreshToken, true, false,
-        p.getUserRole());
+    return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole());
   }
 
   @Override
@@ -276,10 +260,11 @@ public class AuthServiceImpl implements AuthService {
       final ChangePasswordRequest changePasswordRequest, final String token) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     log.info("User ID: {}", userId);
-    final PasswordHistory passwordHistory = passwordHistoryRepository
-        .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-        .getContent()
-        .get(0);
+    final PasswordHistory passwordHistory =
+        passwordHistoryRepository
+            .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
 
     if (changePasswordRequest.getCurrentPassword() != null) {
       if (passwordEncoder.matches(
@@ -314,22 +299,25 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   @Override
   public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
-    final ResetPassword resetToken = resetPasswordRepo
-        .findByResetToken(resetPasswordRequest.getResetToken())
-        .orElseThrow(
-            () -> new NoSuchElementException(
-                "Link is Invalid/Expired. Please request a new link"));
+    final ResetPassword resetToken =
+        resetPasswordRepo
+            .findByResetToken(resetPasswordRequest.getResetToken())
+            .orElseThrow(
+                () ->
+                    new NoSuchElementException(
+                        "Link is Invalid/Expired. Please request a new link"));
 
     if (resetToken.isLinkExpired()) {
       throw new GlobalExceptionHandler.ResetPasswordException(
           "Link is Invalid/Expired. Please request a new link");
     }
 
-    PasswordHistory passwordHistory = passwordHistoryRepository
-        .findAllByUserId(
-            resetToken.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-        .getContent()
-        .get(0);
+    PasswordHistory passwordHistory =
+        passwordHistoryRepository
+            .findAllByUserId(
+                resetToken.getUserId(), PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
 
     if (passwordEncoder.matches(
         resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
@@ -348,7 +336,8 @@ public class AuthServiceImpl implements AuthService {
 
   @Transactional
   private void saveRefreshToken(final Integer userId, final String refreshToken) {
-    final RefreshToken token = refreshTokenRepository.findByToken(refreshToken).orElse(new RefreshToken());
+    final RefreshToken token =
+        refreshTokenRepository.findByToken(refreshToken).orElse(new RefreshToken());
 
     token.setUserId(userId);
     token.setToken(refreshToken);
@@ -366,11 +355,12 @@ public class AuthServiceImpl implements AuthService {
   public Map<Integer, String> getUserRoles(List<Integer> userIds) {
     List<Map<String, Object>> latestUserTypes = passwordHistoryRepo.findUserRoleByUserIds(userIds);
 
-    Map<Integer, String> userRoles = latestUserTypes.stream()
-        .collect(
-            Collectors.toMap(
-                entry -> ((Number) entry.get("userId")).intValue(),
-                entry -> (String) entry.get("userRole")));
+    Map<Integer, String> userRoles =
+        latestUserTypes.stream()
+            .collect(
+                Collectors.toMap(
+                    entry -> ((Number) entry.get("userId")).intValue(),
+                    entry -> (String) entry.get("userRole")));
 
     // Ensure all requested userIds are in the map, even if they don't have a role
     for (Integer userId : userIds) {
@@ -384,8 +374,9 @@ public class AuthServiceImpl implements AuthService {
   public List<LoginHistoryResponse> getLoginHistory(Integer userId) {
 
     // only return the last 10 login details.
-    final Page<LoginHistory> loginHistoryPage = loginHistoryRepository.findAllByUserId(
-        userId, PageRequest.of(0, 10, Sort.by("lastLoginTime").descending()));
+    final Page<LoginHistory> loginHistoryPage =
+        loginHistoryRepository.findAllByUserId(
+            userId, PageRequest.of(0, 10, Sort.by("lastLoginTime").descending()));
     List<LoginHistory> loginHistoryList = loginHistoryPage.getContent();
     return loginHistoryList.stream()
         .map(this::convertToLoginHistoryResponse)

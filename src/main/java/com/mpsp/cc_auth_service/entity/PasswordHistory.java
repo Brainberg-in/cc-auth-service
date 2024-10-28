@@ -1,29 +1,24 @@
 package com.mpsp.cc_auth_service.entity;
 
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import com.mpsp.cc_auth_service.constants.UserStatus;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "password_history")
 @Getter
 @Setter
-@ToString(exclude = { "currentPassword", "ipAddress" })
+@ToString(exclude = {"currentPassword", "ipAddress"})
 @NoArgsConstructor
 public class PasswordHistory {
   @Id
@@ -42,9 +37,11 @@ public class PasswordHistory {
   @Column(name = "ip_address")
   private String ipAddress;
 
-  @Column(name = "created_at")
+  @CreationTimestamp
+  @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 
+  @UpdateTimestamp
   @Column(name = "modified_at")
   private LocalDateTime modifiedAt;
 
@@ -62,5 +59,4 @@ public class PasswordHistory {
     this.userId = userId;
     this.currentPassword = currentPassword;
   }
-
 }
