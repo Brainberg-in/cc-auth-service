@@ -30,7 +30,7 @@ public class JwtTokenProvider {
   @Value("${jwt.refresh.expiration}")
   private long refreshTokenExpiration;
 
-  @Value("${base.url}")
+  @Value("${jwt.iss}")
   private String issuer;
 
   @Value("${jwt.aud}")
