@@ -19,8 +19,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class JwtTokenProvider {
-
-  private final String issuer = "traitfit";
   private final JWSAlgorithm algorithm = JWSAlgorithm.HS256;
 
   @Value("${jwt.secret}")
@@ -31,6 +29,12 @@ public class JwtTokenProvider {
 
   @Value("${jwt.refresh.expiration}")
   private long refreshTokenExpiration;
+
+  @Value("${base.url}")
+  private String issuer;
+
+  @Value("${jwt.aud}")
+  private String aud;
 
   public String generateToken(final User user, final boolean isRefreshToken) {
 
@@ -46,6 +50,7 @@ public class JwtTokenProvider {
                     System.currentTimeMillis()
                         + (isRefreshToken ? jwtExpiration : refreshTokenExpiration)))
             .issuer(issuer)
+            .audience(aud)
             .build();
     final Payload payload = new Payload(claims.toJSONObject());
     final JWSObject jwsObject = new JWSObject(new JWSHeader(algorithm), payload);
