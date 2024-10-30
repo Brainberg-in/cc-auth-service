@@ -15,14 +15,11 @@ import com.mpsp.cc_auth_service.repository.OtpGenRepo;
 import com.mpsp.cc_auth_service.service.impl.OtpServiceImpl;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -91,7 +88,7 @@ public class OtpServiceImplTest {
   //    }
 
   @Test
-public void testResendOtp_UserFound() {
+  public void testResendOtp_UserFound() {
     final User user = new User();
     user.setUserId(1);
     user.setEmail("dummy@example.com");
@@ -101,7 +98,7 @@ public void testResendOtp_UserFound() {
     when(jwtTokenProvider.getUserEmail(dummyToken)).thenReturn("dummy@example.com");
 
     when(userService.findByEmail("dummy@example.com")).thenReturn(user);
-    
+
     final OtpGen otpGen = new OtpGen();
     otpGen.setModifiedAt(LocalDateTime.now());
     otpGen.setOtp("1234");
@@ -114,7 +111,8 @@ public void testResendOtp_UserFound() {
     // Verify interactions
     verify(jwtTokenProvider).getUserEmail(dummyToken);
     verify(userService).findByEmail("dummy@example.com");
-    verify(awsService).sendEmail(anyString(), eq("dummy@example.com"), eq("login_cc_otp"), anyMap());
+    verify(awsService)
+        .sendEmail(anyString(), eq("dummy@example.com"), eq("login_cc_otp"), anyMap());
     verify(otpGenRepo).saveAndFlush(any(OtpGen.class));
-}
+  }
 }
