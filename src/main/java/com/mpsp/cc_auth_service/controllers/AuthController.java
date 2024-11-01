@@ -7,15 +7,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import java.text.ParseException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseCookie.ResponseCookieBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,28 +27,7 @@ public class AuthController {
 
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(@RequestBody @Valid final LoginRequest loginRequest) {
-    final LoginResponse loginResponse = authService.login(loginRequest);
-    ResponseCookieBuilder cookie =
-        ResponseCookie.from("cookieName", "cookieValue")
-            .httpOnly(false) // optional, sets the cookie as HTTP-only
-            .secure(false) // optional, sets the cookie as secure (HTTPS only)
-            .maxAge(Duration.ofHours(1)) // optional, sets the cookie's expiration time
-            .sameSite("none")
-            .domain("mpsp-fe.sit.trait.fit")
-            .path("/"); // optional,
-
-    ResponseCookieBuilder accessToken =
-        ResponseCookie.from("accessToken", loginResponse.getAccessToken())
-            .httpOnly(false) // optional, sets the cookie as HTTP-only
-            .secure(true) // optional, sets the cookie as secure (HTTPS only)
-            .maxAge(Duration.ofHours(1)) // optional, sets the cookie's expiration time
-            .sameSite("none")
-            .domain("mpsp-api.sit.trait.fit")
-            .path("/");
-    return ResponseEntity.status(HttpStatus.OK)
-        .header(HttpHeaders.SET_COOKIE, cookie.build().toString())
-        .header(HttpHeaders.SET_COOKIE, accessToken.build().toString())
-        .body(loginResponse);
+    return ResponseEntity.ok(authService.login(loginRequest));
   }
 
   @PostMapping("/logout")
