@@ -33,7 +33,7 @@ public class AuthController {
     cookie.setHttpOnly(true); // Prevents access via JavaScript
     cookie.setSecure(true); // Send only over HTTPS
     cookie.setPath("/"); // Make available across all routes
-    cookie.setDomain("mpsp-api.sit.trait.fit"); // Set domain, if necessary
+    cookie.setDomain("sit.trait.fit"); // Set domain, if necessary
 
     cookie.setMaxAge(60 * 60);
 
