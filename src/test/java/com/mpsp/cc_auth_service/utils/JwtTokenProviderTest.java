@@ -33,7 +33,8 @@ public class JwtTokenProviderTest {
   @Test
   public void testGenerateToken() {
     when(user.getUserId()).thenReturn(1);
-    String token = jwtTokenProvider.generateToken(user, false);
+    final String token = jwtTokenProvider.generateToken(user, false, "");
+    // System.out.println(token);
     assertNotNull(token);
   }
 
@@ -54,7 +55,7 @@ public class JwtTokenProviderTest {
   @Test
   void testVerifyToken() {
     when(user.getUserId()).thenReturn(1);
-    String token = jwtTokenProvider.generateToken(user, false);
+    String token = jwtTokenProvider.generateToken(user, false, "");
     System.out.println(token);
     assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false));
   }
@@ -62,7 +63,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGetSubject() throws ParseException {
     when(user.getUserId()).thenReturn(1);
-    String token = jwtTokenProvider.generateToken(user, false);
+    String token = jwtTokenProvider.generateToken(user, false, "");
     String subject = jwtTokenProvider.getSubject(token);
     assertEquals("1", subject);
   }

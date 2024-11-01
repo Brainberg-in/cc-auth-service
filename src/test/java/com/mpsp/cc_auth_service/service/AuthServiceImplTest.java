@@ -85,7 +85,7 @@ class AuthServiceImplTest {
     passwordHistory = new PasswordHistory();
     passwordHistory.setUserId(1);
     passwordHistory.setCurrentPassword("encodedPassword");
-
+    passwordHistory.setUserRole("");
     refreshToken = new RefreshToken();
     refreshToken.setUserId(1);
     refreshToken.setToken("refreshToken");
@@ -98,8 +98,9 @@ class AuthServiceImplTest {
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-    when(jwtTokenProvider.generateToken(user, false)).thenReturn("jwtToken");
-    when(jwtTokenProvider.generateToken(user, true)).thenReturn("refreshToken");
+
+    when(jwtTokenProvider.generateToken(user, false, "")).thenReturn("jwtToken");
+    when(jwtTokenProvider.generateToken(user, true, "")).thenReturn("refreshToken");
 
     final LoginRequest loginRequest = new LoginRequest();
     loginRequest.setEmail("test@example.com");
@@ -146,7 +147,7 @@ class AuthServiceImplTest {
   void testRefreshTokenSuccess() throws ParseException {
     when(refreshTokenRepository.findByToken(anyString())).thenReturn(Optional.of(refreshToken));
     when(userService.findById(anyInt())).thenReturn(user);
-    when(jwtTokenProvider.generateToken(user, false)).thenReturn("newJwtToken");
+    when(jwtTokenProvider.generateToken(user, false, "")).thenReturn("newJwtToken");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     LoginResponse response = authService.refreshToken("refreshToken");
