@@ -32,8 +32,7 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
 
-    http.cors(c -> c.configurationSource(request -> corsConfiguration()))
-        .sessionManagement(
+    http.sessionManagement(
             (session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .csrf(AbstractHttpConfigurer::disable) // Disable CSRF protection
         .authorizeHttpRequests(
@@ -70,6 +69,7 @@ public class SecurityConfig {
 
   private CorsConfiguration corsConfiguration() {
     final CorsConfiguration corsConfiguration = new CorsConfiguration();
+
     corsConfiguration.setAllowedHeaders(List.of("*"));
     corsConfiguration.setAllowedOrigins(Arrays.asList(allowedOrigins));
     corsConfiguration.setAllowedMethods(List.of("GET", "POST", "OPTIONS", "PUT"));
