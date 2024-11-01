@@ -40,8 +40,17 @@ public class AuthController {
             .domain("mpsp-fe.sit.trait.fit")
             .path("/"); // optional,
 
+    ResponseCookieBuilder accessToken =
+        ResponseCookie.from("accessToken", loginResponse.getAccessToken())
+            .httpOnly(false) // optional, sets the cookie as HTTP-only
+            .secure(true) // optional, sets the cookie as secure (HTTPS only)
+            .maxAge(Duration.ofHours(1)) // optional, sets the cookie's expiration time
+            .sameSite("none")
+            .domain("mpsp-api.sit.trait.fit")
+            .path("/");
     return ResponseEntity.status(HttpStatus.OK)
         .header(HttpHeaders.SET_COOKIE, cookie.build().toString())
+        .header(HttpHeaders.SET_COOKIE, accessToken.build().toString())
         .body(loginResponse);
   }
 
