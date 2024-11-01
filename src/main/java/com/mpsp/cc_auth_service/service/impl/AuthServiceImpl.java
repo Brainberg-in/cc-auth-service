@@ -140,8 +140,8 @@ public class AuthServiceImpl implements AuthService {
 
   private LoginResponse handleSuccessfulLogin(final User user, final PasswordHistory pw) {
     // Generate tokens
-    final String jwtToken = jwtTokenProvider.generateToken(user, false);
-    final String refreshToken = jwtTokenProvider.generateToken(user, true);
+    final String jwtToken = jwtTokenProvider.generateToken(user, false, pw.getUserRole());
+    final String refreshToken = jwtTokenProvider.generateToken(user, true, pw.getUserRole());
     saveRefreshToken(user.getUserId(), refreshToken);
 
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
@@ -195,7 +195,7 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   @Override
   public LoginResponse refreshToken(final String refreshToken) {
-    RefreshToken storedToken =
+    final RefreshToken storedToken =
         refreshTokenRepository
             .findByToken(refreshToken)
             .orElseThrow(
@@ -216,7 +216,7 @@ public class AuthServiceImpl implements AuthService {
 
     // Refresh token only gets generated when the user logs in
     // The refresh token is only used for refreshing the access token.
-    final String newJwtToken = jwtTokenProvider.generateToken(user, false);
+    final String newJwtToken = jwtTokenProvider.generateToken(user, false, p.getUserRole());
     return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole());
   }
 

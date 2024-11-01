@@ -3,6 +3,7 @@ package com.mpsp.cc_auth_service.controllers;
 import com.mpsp.cc_auth_service.constants.AppConstants;
 import com.mpsp.cc_auth_service.dto.*;
 import com.mpsp.cc_auth_service.service.AuthService;
+import jakarta.servlet.http.Cookie;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -27,7 +28,18 @@ public class AuthController {
 
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(@RequestBody @Valid final LoginRequest loginRequest) {
-    return ResponseEntity.ok(authService.login(loginRequest));
+    final LoginResponse loginResponse = authService.login(loginRequest);
+    final Cookie cookie = new Cookie("sessionId", "yourSessionIdValue");
+    cookie.setHttpOnly(true); // Prevents access via JavaScript
+    cookie.setSecure(true); // Send only over HTTPS
+    cookie.setPath("/"); // Make available across all routes
+    cookie.setDomain("mpsp-api.sit.trait.fit"); // Set domain, if necessary
+
+    cookie.setMaxAge(60 * 60);
+
+    return ResponseEntity.status(HttpStatus.OK)
+        .header(HttpHeaders.SET_COOKIE, cookie.toString())
+        .body(loginResponse);
   }
 
   @PostMapping("/logout")

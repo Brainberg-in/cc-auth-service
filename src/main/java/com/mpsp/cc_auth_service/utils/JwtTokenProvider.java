@@ -36,13 +36,15 @@ public class JwtTokenProvider {
   @Value("${jwt.aud}")
   private String aud;
 
-  public String generateToken(final User user, final boolean isRefreshToken) {
+  public String generateToken(
+      final User user, final boolean isRefreshToken, final String userRole) {
 
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder()
             .subject(String.valueOf(user.getUserId()))
             // TODO check how this works for a student. Else workaround this problem.
             .claim(AppConstants.USER_EMAIL, user.getEmail())
+            .claim("userRole", userRole)
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
             .issueTime(new Date())
             .expirationTime(
