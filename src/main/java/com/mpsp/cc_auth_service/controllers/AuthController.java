@@ -37,7 +37,8 @@ public class AuthController {
             .secure(false) // optional, sets the cookie as secure (HTTPS only)
             .maxAge(Duration.ofHours(1)) // optional, sets the cookie's expiration time
             .sameSite("none")
-            .domain("trait.fit"); // optional,
+            .domain("mpsp-fe.sit.trait.fit")
+            .path("/"); // optional,
 
     return ResponseEntity.status(HttpStatus.OK)
         .header(HttpHeaders.SET_COOKIE, cookie.build().toString())
