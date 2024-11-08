@@ -44,7 +44,7 @@ public class JwtTokenProvider {
             .subject(String.valueOf(user.getUserId()))
             // TODO check how this works for a student. Else workaround this problem.
             .claim(AppConstants.USER_EMAIL, user.getEmail())
-            .claim("userRole", userRole)
+            .claim(AppConstants.USER_ROLE, userRole)
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
             .issueTime(new Date())
             .expirationTime(
@@ -122,7 +122,7 @@ public class JwtTokenProvider {
     }
   }
 
-  public String getUserEmail(final String token) {
+  public String getClaim(final String token, final String claim) {
     try {
       final JWSObject jwsObject =
           JWSObject.parse(
@@ -131,10 +131,14 @@ public class JwtTokenProvider {
                   : token);
 
       final JWTClaimsSet claims = JWTClaimsSet.parse(jwsObject.getPayload().toJSONObject());
-      return claims.getClaim(AppConstants.USER_EMAIL).toString();
+      return claims.getClaim(claim).toString();
     } catch (ParseException e) {
-      log.error("Failed to parse {}", token, e);
+      log.error("Failed to parse {} {}", claim, token, e);
       throw new GlobalExceptionHandler.RefreshTokenException("Invalid token");
     }
+  }
+
+  public String getUserEmail(final String token) {
+    return getClaim(token, AppConstants.USER_EMAIL);
   }
 }

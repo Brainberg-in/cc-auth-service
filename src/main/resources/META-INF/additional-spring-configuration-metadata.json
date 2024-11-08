@@ -6,6 +6,11 @@
       "description": "User service url to be used for fetching user details"
     },
     {
+      "name": "school.service.url",
+      "type": "java.lang.String",
+      "description": "School service url to be used for fetching school details"
+    },
+    {
       "name": "fallback.url.reset.password",
       "type": "java.lang.String",
       "description": "Fallback url to be used for reset password"
