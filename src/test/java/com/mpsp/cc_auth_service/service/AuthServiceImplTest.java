@@ -378,7 +378,7 @@ class AuthServiceImplTest {
     when(passwordHistoryRepository.findAllByUserId(
             1, PageRequest.of(0, 1, Sort.by("logoutTime").descending())))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
-
+    when(userDetails.getUser()).thenReturn(user);
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
     final ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
     resetPasswordRequest.setPassword("newPassword");
@@ -392,6 +392,7 @@ class AuthServiceImplTest {
 
   @Test
   void test_resetPasswordByAdmin_whenScoolDoesMatch() {
+    when(userDetails.getUser()).thenReturn(user);
     when(jwtTokenProvider.getSubject(Mockito.anyString())).thenReturn("1");
     when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
         .thenReturn(UserRole.PRINCIPAL.name());
