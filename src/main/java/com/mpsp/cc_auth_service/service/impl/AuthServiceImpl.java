@@ -347,11 +347,12 @@ public class AuthServiceImpl implements AuthService {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     final UserRole userRole =
         UserRole.valueOf(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE));
+
+    final UserDetails behalfUserDetails =
+        userService.getUserDetails(
+            resetPasswordRequest.getBehalfOf(),
+            String.join("", resetPasswordRequest.getBehalfOfUserRole().toLowerCase(), "s"));
     if (UserRole.PRINCIPAL.equals(userRole)) {
-      final UserDetails behalfUserDetails =
-          userService.getUserDetails(
-              resetPasswordRequest.getBehalfOf(),
-              String.join("", resetPasswordRequest.getBehalfOfUserRole().toLowerCase(), "s"));
       final SchoolDetails schoolDetails =
           schoolService.getSchoolDetails(behalfUserDetails.getSchoolId(), true);
       if (schoolDetails.getPrincipalUserId() != userId) {
@@ -363,7 +364,7 @@ public class AuthServiceImpl implements AuthService {
     final PasswordHistory passwordHistory =
         passwordHistoryRepository
             .findAllByUserId(
-                resetPasswordRequest.getBehalfOf(),
+                behalfUserDetails.getUser().getUserId(),
                 PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
             .getContent()
             .get(0);

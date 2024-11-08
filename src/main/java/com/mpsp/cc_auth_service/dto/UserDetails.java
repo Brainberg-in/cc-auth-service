@@ -12,6 +12,11 @@ import lombok.Setter;
  * school-specific user information between services.
  */
 public class UserDetails {
+  private int studentId;
+  private int teacherId;
+
   /** The unique identifier of the school associated with the user. */
   private int schoolId;
+
+  private User user;
 }
