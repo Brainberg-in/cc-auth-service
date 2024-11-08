@@ -28,6 +28,10 @@
                 {
                     "name": "SPRING_PROFILES_ACTIVE",
                     "value": "dev"
+                },
+                {
+                    "name": "SCHOOL_SERVICE_URL",
+                    "value": "http://school.dev-environment-cluster:4000"
                 }
             ],
             "mountPoints": [],
@@ -139,6 +143,10 @@
         {
             "key": "environment",
             "value": "dev"
+        },
+        {
+            "key": "application",
+            "value": "mpsp"
         }
     ]
 }
