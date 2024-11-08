@@ -1,5 +1,6 @@
 package com.mpsp.cc_auth_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mpsp.cc_auth_service.constants.Gender;
 import com.mpsp.cc_auth_service.constants.UserStatus;
@@ -23,6 +24,7 @@ import lombok.*;
       "dateOfBirth"
     })
 // User class
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User {
   private Integer userId;
   private String fullName;

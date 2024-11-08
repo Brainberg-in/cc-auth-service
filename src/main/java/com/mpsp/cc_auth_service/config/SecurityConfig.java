@@ -39,7 +39,7 @@ public class SecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-config/**",
                         "/api/v1/auth/forgot-password",
-                        "/api/v1/auth/reset-password",
+                        "/api/v1/auth/reset-password/self",
                         "/api/v1/auth/user-roles",
                         "/api/v1/auth/login-history/**",
                         "/v3/api-docs/**")

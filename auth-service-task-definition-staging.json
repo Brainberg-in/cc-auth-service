@@ -27,6 +27,10 @@
         {
           "name": "SPRING_PROFILES_ACTIVE",
           "value": "staging"
+        },
+        {
+          "name": "SCHOOL_SERVICE_URL",
+          "value": "http://school.staging-environment-cluster:4000"
         }
       ],
       "mountPoints": [],
@@ -124,8 +128,13 @@
     }
   ],
   "placementConstraints": [],
-  "compatibilities": ["EC2", "FARGATE"],
-  "requiresCompatibilities": ["FARGATE"],
+  "compatibilities": [
+    "EC2",
+    "FARGATE"
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
   "cpu": "512",
   "memory": "1024",
   "runtimePlatform": {
@@ -138,6 +147,10 @@
     {
       "key": "environment",
       "value": "staging"
+    },
+    {
+      "key": "application",
+      "value": "mpsp"
     }
   ]
 }

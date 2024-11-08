@@ -2,6 +2,7 @@ package com.mpsp.cc_auth_service.feignclients;
 
 import com.mpsp.cc_auth_service.constants.UserStatus;
 import com.mpsp.cc_auth_service.dto.User;
+import com.mpsp.cc_auth_service.dto.UserDetails;
 import com.mpsp.cc_auth_service.dto.UsersData;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidUserStatus;
 import java.util.Map;
@@ -69,4 +70,8 @@ public interface UserServiceClient {
   @PutMapping(value = "/api/v1/users/{id}")
   void updateUserStatus(
       @PathVariable(name = "id") final Integer id, @RequestBody final Map<String, String> body);
+
+  @GetMapping(value = "/api/v1/{role}/{id}")
+  UserDetails getUserDetails(
+      @PathVariable(name = "id") final Integer id, @PathVariable(name = "role") final String role);
 }
