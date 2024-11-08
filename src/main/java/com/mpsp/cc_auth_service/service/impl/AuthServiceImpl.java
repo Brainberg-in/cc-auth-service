@@ -1,17 +1,22 @@
 package com.mpsp.cc_auth_service.service.impl;
 
+import com.mpsp.cc_auth_service.constants.AppConstants;
+import com.mpsp.cc_auth_service.constants.UserRole;
 import com.mpsp.cc_auth_service.constants.UserStatus;
 import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
 import com.mpsp.cc_auth_service.dto.LoginHistoryResponse;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
+import com.mpsp.cc_auth_service.dto.SchoolDetails;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.UserCreateRequest;
+import com.mpsp.cc_auth_service.dto.UserDetails;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
 import com.mpsp.cc_auth_service.entity.ResetPassword;
+import com.mpsp.cc_auth_service.feignclients.SchoolServiceClient;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.LoginHistoryRepo;
 import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
@@ -46,9 +51,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-  @Value("${max.login.attempts}")
-  private int PASSWORD_ATTEMPTS;
-
   @Autowired private transient UserServiceClient userService;
 
   @Autowired private transient PasswordEncoder passwordEncoder;
@@ -67,13 +69,18 @@ public class AuthServiceImpl implements AuthService {
 
   @Autowired private transient ResetPasswordRepo resetPasswordRepo;
 
+  @Autowired private transient PasswordHistoryRepo passwordHistoryRepo;
+
+  @Autowired private transient SchoolServiceClient schoolService;
+
   @Value("${aws.ses.sender}")
   private String senderEmail;
 
   @Value("${fallback.url.reset.password}")
   private String resetPasswordUrl;
 
-  @Autowired private PasswordHistoryRepo passwordHistoryRepo;
+  @Value("${max.login.attempts}")
+  private int PASSWORD_ATTEMPTS;
 
   @Override
   @Transactional
@@ -227,7 +234,8 @@ public class AuthServiceImpl implements AuthService {
     log.info("User found: {}", user);
     final String token = UUID.randomUUID().toString();
 
-    Optional<ResetPassword> existingTokenOpt = resetPasswordRepo.findByUserId(user.getUserId());
+    final Optional<ResetPassword> existingTokenOpt =
+        resetPasswordRepo.findByUserId(user.getUserId());
     if (existingTokenOpt.isPresent()
         && existingTokenOpt.get().isLinkSent()
         && existingTokenOpt
@@ -296,7 +304,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Transactional
   @Override
-  public void resetPassword(final ResetPasswordRequest resetPasswordRequest) {
+  public void resetPasswordSelf(final ResetPasswordRequest resetPasswordRequest) {
     final ResetPassword resetToken =
         resetPasswordRepo
             .findByResetToken(resetPasswordRequest.getResetToken())
@@ -332,6 +340,43 @@ public class AuthServiceImpl implements AuthService {
     resetPasswordRepo.saveAndFlush(resetToken);
   }
 
+  @Override
+  @Transactional
+  public void resetPasswordByAdmin(
+      final ResetPasswordRequest resetPasswordRequest, final String token) {
+    final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+    final UserRole userRole =
+        UserRole.valueOf(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE));
+    if (UserRole.PRINCIPAL.equals(userRole)) {
+      final UserDetails behalfUserDetails =
+          userService.getUserDetails(
+              resetPasswordRequest.getBehalfOf(),
+              String.join("", resetPasswordRequest.getBehalfOfUserRole().toLowerCase(), "s"));
+      final SchoolDetails schoolDetails =
+          schoolService.getSchoolDetails(behalfUserDetails.getSchoolId(), true);
+      if (schoolDetails.getPrincipalUserId() != userId) {
+        throw new GlobalExceptionHandler.ResetPasswordException(
+            "Only the principal can reset the password");
+      }
+    }
+
+    final PasswordHistory passwordHistory =
+        passwordHistoryRepository
+            .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .getContent()
+            .get(0);
+
+    if (passwordEncoder.matches(
+        resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
+      throw new GlobalExceptionHandler.SamePasswordException(
+          "New password cannot be the same as the current password");
+    }
+
+    passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
+    passwordHistory.setModifiedAt(LocalDateTime.now());
+    passwordHistoryRepository.saveAndFlush(passwordHistory);
+  }
+
   @Transactional
   private void saveRefreshToken(final Integer userId, final String refreshToken) {
     final RefreshToken token =
@@ -349,11 +394,13 @@ public class AuthServiceImpl implements AuthService {
     refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
   }
 
+  @Transactional(readOnly = true)
   @Override
-  public Map<Integer, String> getUserRoles(List<Integer> userIds) {
-    List<Map<String, Object>> latestUserTypes = passwordHistoryRepo.findUserRoleByUserIds(userIds);
+  public Map<Integer, String> getUserRoles(final List<Integer> userIds) {
+    final List<Map<String, Object>> latestUserTypes =
+        passwordHistoryRepo.findUserRoleByUserIds(userIds);
 
-    Map<Integer, String> userRoles =
+    final Map<Integer, String> userRoles =
         latestUserTypes.stream()
             .collect(
                 Collectors.toMap(
@@ -369,6 +416,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<LoginHistoryResponse> getLoginHistory(final Integer userId) {
 
     // only return the last 10 login details.

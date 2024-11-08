@@ -2,6 +2,8 @@ package com.mpsp.cc_auth_service.controllers;
 
 import com.mpsp.cc_auth_service.constants.AppConstants;
 import com.mpsp.cc_auth_service.dto.*;
+import com.mpsp.cc_auth_service.dto.validations.ResetPasswordByAdmin;
+import com.mpsp.cc_auth_service.dto.validations.ResetPasswordSelf;
 import com.mpsp.cc_auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -61,8 +63,19 @@ public class AuthController {
 
   @PostMapping("/reset-password")
   public ResponseEntity<ApiResponse> resetPassword(
-      @RequestBody @Valid final ResetPasswordRequest resetPasswordRequest) {
-    authService.resetPassword(resetPasswordRequest);
+      @RequestBody @Validated(ResetPasswordByAdmin.class)
+          final ResetPasswordRequest resetPasswordRequest,
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION) final String token) {
+
+    authService.resetPasswordByAdmin(resetPasswordRequest, token);
+    return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
+  }
+
+  @PostMapping("/reset-password/self")
+  public ResponseEntity<ApiResponse> resetPasswordSelf(
+      @RequestBody @Validated(ResetPasswordSelf.class)
+          final ResetPasswordRequest resetPasswordRequest) {
+    authService.resetPasswordSelf(resetPasswordRequest);
     return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
   }
 

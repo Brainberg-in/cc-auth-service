@@ -17,7 +17,9 @@ public interface AuthService {
 
   void createNewUser(UserCreateRequest userCreateRequest);
 
-  void resetPassword(ResetPasswordRequest resetPasswordRequest);
+  void resetPasswordSelf(ResetPasswordRequest resetPasswordRequest);
+
+  void resetPasswordByAdmin(ResetPasswordRequest resetPasswordRequest, String token);
 
   Map<Integer, String> getUserRoles(List<Integer> userIds);
 

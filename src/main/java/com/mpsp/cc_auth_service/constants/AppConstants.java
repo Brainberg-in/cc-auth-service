@@ -4,6 +4,6 @@ public class AppConstants {
 
   public static String IS_REFRESHTOKEN = "isRefreshToken";
   public static String USER_EMAIL = "email";
-
+  public static String USER_ROLE = "userRole";
   public static String BEARER = "Bearer ";
 }

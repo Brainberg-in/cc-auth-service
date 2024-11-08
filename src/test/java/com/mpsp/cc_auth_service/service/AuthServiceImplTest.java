@@ -298,7 +298,7 @@ class AuthServiceImplTest {
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
 
-    authService.resetPassword(resetPasswordRequest);
+    authService.resetPasswordSelf(resetPasswordRequest);
 
     verify(passwordHistoryRepository, times(1)).saveAndFlush(any(PasswordHistory.class));
     verify(resetPasswordRepo, times(1)).saveAndFlush(any(ResetPassword.class));
@@ -313,7 +313,7 @@ class AuthServiceImplTest {
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.empty());
 
     assertThrows(
-        NoSuchElementException.class, () -> authService.resetPassword(resetPasswordRequest));
+        NoSuchElementException.class, () -> authService.resetPasswordSelf(resetPasswordRequest));
   }
 
   @Test
@@ -331,6 +331,6 @@ class AuthServiceImplTest {
 
     assertThrows(
         GlobalExceptionHandler.ResetPasswordException.class,
-        () -> authService.resetPassword(resetPasswordRequest));
+        () -> authService.resetPasswordSelf(resetPasswordRequest));
   }
 }
