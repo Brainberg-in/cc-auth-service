@@ -65,7 +65,9 @@ public class AuthController {
   public ResponseEntity<ApiResponse> resetPassword(
       @RequestBody @Validated(ResetPasswordByAdmin.class)
           final ResetPasswordRequest resetPasswordRequest,
-      @RequestHeader(name = HttpHeaders.AUTHORIZATION) final String token) {
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+          @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization Token")
+          final String token) {
 
     authService.resetPasswordByAdmin(resetPasswordRequest, token);
     return ResponseEntity.ok(new ApiResponse("Password reset successfully."));

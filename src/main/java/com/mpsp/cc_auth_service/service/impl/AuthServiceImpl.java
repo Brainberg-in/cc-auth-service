@@ -362,7 +362,9 @@ public class AuthServiceImpl implements AuthService {
 
     final PasswordHistory passwordHistory =
         passwordHistoryRepository
-            .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+            .findAllByUserId(
+                resetPasswordRequest.getBehalfOf(),
+                PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
             .getContent()
             .get(0);
 
