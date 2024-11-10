@@ -21,6 +21,7 @@ import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.dto.SchoolDetails;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.UserDetails;
+import com.mpsp.cc_auth_service.dto.UserIdAndRole;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
 import com.mpsp.cc_auth_service.entity.ResetPassword;
@@ -357,9 +358,8 @@ class AuthServiceImplTest {
     when(schoolDetails.getPrincipalUserId()).thenReturn(2);
 
     final ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
-    resetPasswordRequest.setPassword("newPassword");
-    resetPasswordRequest.setBehalfOf(1);
-    resetPasswordRequest.setBehalfOfUserRole("STUDENT");
+
+    resetPasswordRequest.setBehalfOf(List.of(new UserIdAndRole(1, "STUDENT")));
 
     assertThrows(
         GlobalExceptionHandler.ResetPasswordException.class,
@@ -382,8 +382,7 @@ class AuthServiceImplTest {
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
     final ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
     resetPasswordRequest.setPassword("newPassword");
-    resetPasswordRequest.setBehalfOf(1);
-    resetPasswordRequest.setBehalfOfUserRole("STUDENT");
+    resetPasswordRequest.setBehalfOf(List.of(new UserIdAndRole(1, "STUDENT")));
 
     assertThrows(
         GlobalExceptionHandler.SamePasswordException.class,
@@ -408,8 +407,7 @@ class AuthServiceImplTest {
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
     final ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
     resetPasswordRequest.setPassword("newPassword");
-    resetPasswordRequest.setBehalfOf(1);
-    resetPasswordRequest.setBehalfOfUserRole("STUDENT");
+    resetPasswordRequest.setBehalfOf(List.of(new UserIdAndRole(1, "STUDENT")));
     authService.resetPasswordByAdmin(resetPasswordRequest, "token");
     Mockito.verify(passwordHistoryRepository, times(1)).saveAndFlush(any(PasswordHistory.class));
   }
