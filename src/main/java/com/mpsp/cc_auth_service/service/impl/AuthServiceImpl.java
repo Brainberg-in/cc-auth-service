@@ -366,6 +366,7 @@ public class AuthServiceImpl implements AuthService {
         failureReasons.put(
             userIdAndRole.getUserId(),
             String.format("User status is %s", behalfUserDetails.getUser().getStatus()));
+        continue;
       }
       if (UserRole.PRINCIPAL.equals(userRole)) {
         final SchoolDetails schoolDetails =
@@ -373,6 +374,7 @@ public class AuthServiceImpl implements AuthService {
         if (schoolDetails.getPrincipalUserId() != userId) {
           failureReasons.put(
               userIdAndRole.getUserId(), "User does not belong to the principal school");
+          continue;
         }
       }
       final List<PasswordHistory> passwordHistoryList =
@@ -384,15 +386,16 @@ public class AuthServiceImpl implements AuthService {
       if (passwordHistoryList.isEmpty()) {
         failureReasons.put(
             userIdAndRole.getUserId(), "Cannot find any password history for the user");
-      }
-      final PasswordHistory passwordHistory = passwordHistoryList.get(0);
+      } else {
+        final PasswordHistory passwordHistory = passwordHistoryList.get(0);
 
-      passwordHistory.setCurrentPassword(
-          passwordEncoder.encode(
-              String.join(
-                  "@", behalfUserDetails.getUser().getFullName().replaceAll(" ", ""), "123")));
-      passwordHistory.setModifiedAt(LocalDateTime.now());
-      tobeSavedPasswordHistoryList.add(passwordHistory);
+        passwordHistory.setCurrentPassword(
+            passwordEncoder.encode(
+                String.join(
+                    "@", behalfUserDetails.getUser().getFullName().replaceAll(" ", ""), "123")));
+        passwordHistory.setModifiedAt(LocalDateTime.now());
+        tobeSavedPasswordHistoryList.add(passwordHistory);
+      }
     }
     if (!tobeSavedPasswordHistoryList.isEmpty()) {
       passwordHistoryRepository.saveAll(tobeSavedPasswordHistoryList);
