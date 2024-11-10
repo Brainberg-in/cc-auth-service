@@ -7,6 +7,7 @@ import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
 import com.mpsp.cc_auth_service.dto.LoginHistoryResponse;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
+import com.mpsp.cc_auth_service.dto.ResetPasswordByAdminResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.dto.SchoolDetails;
 import com.mpsp.cc_auth_service.dto.User;
@@ -342,15 +343,15 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void resetPasswordByAdmin(
+  public ResetPasswordByAdminResponse resetPasswordByAdmin(
       final ResetPasswordRequest resetPasswordRequest, final String token) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     final UserRole userRole =
         UserRole.valueOf(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE));
 
-    if (!userRole.equals(UserRole.PRINCIPAL)
-        || !userRole.equals(UserRole.HELPDESKADMIN)
-        || !userRole.equals(UserRole.HELPDESKUSER)) {
+    if (!(userRole.equals(UserRole.PRINCIPAL)
+        || userRole.equals(UserRole.HELPDESKADMIN)
+        || userRole.equals(UserRole.HELPDESKUSER))) {
       throw new GlobalExceptionHandler.InvalidUserStatus("Forbidden");
     }
     final Map<Integer, String> failureReasons = new HashMap<>();
@@ -381,8 +382,8 @@ public class AuthServiceImpl implements AuthService {
                   PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
               .getContent();
       if (passwordHistoryList.isEmpty()) {
-        throw new GlobalExceptionHandler.ResetPasswordException(
-            "Cannot find any password history for the user");
+        failureReasons.put(
+            userIdAndRole.getUserId(), "Cannot find any password history for the user");
       }
       final PasswordHistory passwordHistory = passwordHistoryList.get(0);
 
@@ -396,6 +397,8 @@ public class AuthServiceImpl implements AuthService {
     if (!tobeSavedPasswordHistoryList.isEmpty()) {
       passwordHistoryRepository.saveAll(tobeSavedPasswordHistoryList);
     }
+
+    return new ResetPasswordByAdminResponse(failureReasons, "Password reset successfully.");
   }
 
   @Transactional
