@@ -357,15 +357,17 @@ public class AuthServiceImpl implements AuthService {
     final Map<Integer, String> failureReasons = new HashMap<>();
     final List<PasswordHistory> tobeSavedPasswordHistoryList = new ArrayList<>();
     for (UserIdAndRole userIdAndRole : resetPasswordRequest.getBehalfOf()) {
+      if (userIdAndRole.getUserRole() == null) {
+        failureReasons.put(userIdAndRole.getUserId(), "User role is required");
+        continue;
+      }
       final UserDetails behalfUserDetails =
           userService.getUserDetails(
               userIdAndRole.getUserId(),
               String.join("", userIdAndRole.getUserRole().toLowerCase(), "s"));
 
       if (!behalfUserDetails.getUser().getStatus().equals(UserStatus.ACTIVE)) {
-        failureReasons.put(
-            userIdAndRole.getUserId(),
-            String.format("User status is %s", behalfUserDetails.getUser().getStatus()));
+        failureReasons.put(userIdAndRole.getUserId(), "User status is not 'ACTIVE'");
         continue;
       }
       if (UserRole.PRINCIPAL.equals(userRole)) {
@@ -399,9 +401,10 @@ public class AuthServiceImpl implements AuthService {
     }
     if (!tobeSavedPasswordHistoryList.isEmpty()) {
       passwordHistoryRepository.saveAll(tobeSavedPasswordHistoryList);
+      return new ResetPasswordByAdminResponse(failureReasons, "Password reset successfully.");
     }
-
-    return new ResetPasswordByAdminResponse(failureReasons, "Password reset successfully.");
+    throw new GlobalExceptionHandler.ResetPasswordException(
+        "There is no history of password for the given users. Hence cannot reset the password");
   }
 
   @Transactional
