@@ -30,6 +30,17 @@ public class OtpController {
     return ResponseEntity.ok(new ApiResponse("OTP verified successfully"));
   }
 
+  @PostMapping("/validateMobileOtp")
+  public ResponseEntity<ApiResponse> verifyMobileOtp(
+      @RequestBody @Valid VerifyOtpRequest verifyOtpRequest,
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+          @NotBlank(message = "Authorization Token is required")
+          @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
+          String token) {
+    otpService.verifyMobileOtp(token, verifyOtpRequest.getOtp());
+    return ResponseEntity.ok(new ApiResponse("OTP verified successfully"));
+  }
+
   @PostMapping("/resendOtp")
   public ResponseEntity<ApiResponse> resendOtp(
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
@@ -38,5 +49,15 @@ public class OtpController {
           String token) {
     otpService.resendOtp(token);
     return ResponseEntity.ok(new ApiResponse("OTP resent successfully"));
+  }
+
+  @PostMapping("/sendVerificationOtp")
+  public ResponseEntity<ApiResponse> sendVerificationOtp(
+    @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+        @NotBlank(message = "Authorization Token is required")
+        @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
+        String token) {
+    otpService.sendVerificationOtp(token);
+    return ResponseEntity.ok(new ApiResponse("OTP sent successfully"));
   }
 }

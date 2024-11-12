@@ -55,6 +55,10 @@ dependencies {
 	// AWS SDK for SESv2
 	implementation 'software.amazon.awssdk:sesv2'
 
+	// AWS SDK for SNS
+	implementation 'software.amazon.awssdk:sns'
+	// implementation 'software.amazon.awssdk:sns:2.20.10'
+
 	// Lombok
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")

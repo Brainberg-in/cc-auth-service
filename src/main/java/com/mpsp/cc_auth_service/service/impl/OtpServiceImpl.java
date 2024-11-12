@@ -58,6 +58,27 @@ public class OtpServiceImpl implements OtpService {
     return otp;
   }
 
+  private String generateMobileOTP(final int userId) {
+    final String otp = GeneratorUtils.generateOTP(4);
+    otpGenRepo
+        .findByUserId(userId)
+        .ifPresentOrElse(
+            otpGen -> {
+              otpGen.setModifiedAt(LocalDateTime.now());
+              otpGen.setMobilOtp(otp);
+              otpGenRepo.saveAndFlush(otpGen);
+            },
+            () -> {
+              final OtpGen otpGen = new OtpGen();
+              otpGen.setUserId(userId);
+              otpGen.setMobilOtp(otp);
+              otpGen.setCreatedAt(LocalDateTime.now());
+              otpGen.setModifiedAt(LocalDateTime.now());
+              otpGenRepo.saveAndFlush(otpGen);
+            });
+    return otp;
+  }
+
   @Override
   @Transactional
   public String sendOtp(final String email) {
@@ -65,6 +86,21 @@ public class OtpServiceImpl implements OtpService {
     final String otp = generateOTP(user.getUserId());
     awsService.sendEmail(senderEmail, email, "login_cc_otp", Map.of("otp", otp));
     return otp;
+  }
+
+  @Override
+  @Transactional
+  public void sendVerificationOtp(String token) {
+    final String userEmail = jwtTokenProvider.getUserEmail(token);
+    if (userEmail == null) {
+      throw new IllegalArgumentException("User does not have a registered email");
+    }
+    final User user = userService.findByEmail(userEmail);
+    final String mobile = user.getMobile();
+    final String otp = generateOTP(user.getUserId());
+    final String mobileOtp = generateMobileOTP(user.getUserId());
+    awsService.sendEmail(senderEmail, userEmail, "login_cc_otp", Map.of("otp", otp));
+    awsService.sendSms(senderEmail, mobile, mobileOtp);
   }
 
   @Override
@@ -83,6 +119,29 @@ public class OtpServiceImpl implements OtpService {
                 throw new OTPExpiredException("OTP expired");
               }
               if (!otpGen.getOtp().equals(otp)) {
+                throw new OTPVerificationException("OTP verification failed");
+              }
+              return true;
+            })
+        .orElseThrow(() -> new NoSuchElementException("OTP not found for user"));
+  }
+
+  @Override
+  public boolean verifyMobileOtp(final String token, final String otp) {
+    final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+
+    if (userId == 0) {
+      throw new NoSuchElementException("User not found");
+    }
+
+    return otpGenRepo
+        .findByUserId(userId)
+        .map(
+            otpGen -> {
+              if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
+                throw new OTPExpiredException("OTP expired");
+              }
+              if (!otpGen.getMobilOtp().equals(otp)) {
                 throw new OTPVerificationException("OTP verification failed");
               }
               return true;

@@ -8,5 +8,9 @@ public interface OtpService {
 
   boolean verifyOtp(String email, String otp);
 
+  boolean verifyMobileOtp(String token, String otp);
+
   void resendOtp(String email);
+
+  void sendVerificationOtp(String email);
 }
