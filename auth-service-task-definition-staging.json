@@ -31,6 +31,10 @@
         {
           "name": "SCHOOL_SERVICE_URL",
           "value": "http://school.staging-environment-cluster:4000"
+        },
+        {
+            "name": "NOTIFICATION_SERVICE_URL",
+            "value": "http://notification.dev-environment-cluster:3000"
         }
       ],
       "mountPoints": [],
