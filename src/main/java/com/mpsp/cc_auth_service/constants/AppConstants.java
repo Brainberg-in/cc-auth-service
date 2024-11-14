@@ -6,4 +6,5 @@ public class AppConstants {
   public static final String USER_EMAIL = "email";
   public static final String USER_ROLE = "userRole";
   public static final String BEARER = "Bearer ";
+  public static final String USER_STATUS = "userStatus";
 }

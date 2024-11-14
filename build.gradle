@@ -52,12 +52,6 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-common:${openapiVersion}"
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openapiVersion}"
 
-	// AWS SDK for SESv2
-	implementation 'software.amazon.awssdk:sesv2'
-
-	// AWS SDK for SNS
-	implementation 'software.amazon.awssdk:sns'
-
 	// Lombok
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")

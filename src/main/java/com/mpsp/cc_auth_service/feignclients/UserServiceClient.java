@@ -44,7 +44,7 @@ public interface UserServiceClient {
         case DELETED:
           logger.info("Access attempted for deleted user {}", user.getUserId());
           throw new InvalidUserStatus("User is deleted");
-        case ACTIVE:
+        case ACTIVE, INACTIVE:
           return user;
         default:
           logger.warn("User {} has unexpected status: {}", user.getUserId(), status);

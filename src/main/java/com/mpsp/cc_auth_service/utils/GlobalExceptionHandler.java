@@ -86,12 +86,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
-  @ExceptionHandler(SnsException.class)
-  public ResponseEntity<ErrorResponse> handleSnsException(SnsException e) {
-    final ErrorResponse errorResponse = new ErrorResponse("Failed to send sms");
-    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-  }
-
   @ExceptionHandler(NoSuchElementException.class)
   public ResponseEntity<ErrorResponse> handleNoSuchElementException(NoSuchElementException e) {
     log.error("NoSuchElementException occurred", e);
@@ -152,12 +146,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   public static class SesV2Exception extends RuntimeException {
     public SesV2Exception(String message) {
-      super(message);
-    }
-  }
-
-  public static class SnsException extends RuntimeException {
-    public SnsException(String message) {
       super(message);
     }
   }

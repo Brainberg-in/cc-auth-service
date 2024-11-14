@@ -1,16 +1,18 @@
 package com.mpsp.cc_auth_service.service.impl;
 
+import com.mpsp.cc_auth_service.dto.SendOtp;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.entity.OtpGen;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.OtpGenRepo;
-import com.mpsp.cc_auth_service.service.AwsService;
+import com.mpsp.cc_auth_service.service.NotificationService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GeneratorUtils;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.OTPExpiredException;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.OTPVerificationException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +29,9 @@ public class OtpServiceImpl implements OtpService {
 
   @Autowired private transient OtpGenRepo otpGenRepo;
 
-  @Autowired private transient AwsService awsService;
-
   @Autowired private transient JwtTokenProvider jwtTokenProvider;
+
+  @Autowired private transient NotificationService notificationService;
 
   @Value("${spring.profiles.active}")
   private String activeProfile;
@@ -84,23 +86,37 @@ public class OtpServiceImpl implements OtpService {
   public String sendOtp(final String email) {
     final User user = userService.findByEmail(email);
     final String otp = generateOTP(user.getUserId());
-    awsService.sendEmail(senderEmail, email, "login_cc_otp", Map.of("otp", otp));
+
+    notificationService.sendNotification("email", "login_cc_otp", email, "", Map.of("otp", otp));
     return otp;
   }
 
   @Override
   @Transactional
-  public void sendVerificationOtp(String token) {
+  public void sendVerificationOtp(String token, SendOtp sendOtp) {
     final String userEmail = jwtTokenProvider.getUserEmail(token);
     if (userEmail == null) {
       throw new IllegalArgumentException("User does not have a registered email");
     }
     final User user = userService.findByEmail(userEmail);
     final String mobile = user.getMobile();
-    final String otp = generateOTP(user.getUserId());
-    final String mobileOtp = generateMobileOTP(user.getUserId());
-    awsService.sendEmail(senderEmail, userEmail, "login_cc_otp", Map.of("otp", otp));
-    awsService.sendSms(senderEmail, mobile, mobileOtp);
+
+    Map<String, String> dataMap = new HashMap<>();
+
+    if (sendOtp.getMode().equals("sms")) {
+      final String mobileOtp = generateMobileOTP(user.getUserId());
+      dataMap.put("smsOtp", mobileOtp);
+    } else if (sendOtp.getMode().equals("email")) {
+      final String otp = generateOTP(user.getUserId());
+      dataMap.put("emailOtp", otp);
+    } else if (sendOtp.getMode().equals("both")) {
+      final String otp = generateOTP(user.getUserId());
+      final String mobileOtp = generateMobileOTP(user.getUserId());
+      dataMap.put("smsOtp", mobileOtp);
+      dataMap.put("emailOtp", otp);
+    }
+    
+    notificationService.sendNotification(sendOtp.getMode(), "verification_otp", userEmail, mobile, dataMap);
   }
 
   @Override
@@ -159,7 +175,6 @@ public class OtpServiceImpl implements OtpService {
 
     final User user = userService.findByEmail(userEmail);
 
-    awsService.sendEmail(
-        senderEmail, userEmail, "login_cc_otp", Map.of("otp", generateOTP(user.getUserId())));
+    notificationService.sendNotification("email", "login_cc_otp", userEmail, "", Map.of("otp", generateOTP(user.getUserId())));
   }
 }
