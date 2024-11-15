@@ -1,5 +1,6 @@
 package com.mpsp.cc_auth_service.service.impl;
 
+import com.mpsp.cc_auth_service.constants.UserStatus;
 import com.mpsp.cc_auth_service.dto.SendOtp;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.VerifyOtp;
@@ -164,9 +165,28 @@ public class OtpServiceImpl implements OtpService {
               if (verifyOtp.getMode().equals("sms") && !otpGen.getMobilOtp().equals(verifyOtp.getOtp())) {
                 throw new OTPVerificationException("OTP verification failed");
               }
+              if(verifyOtp.getPurpose().equals("verification")) {
+                VerifyUser(userId, verifyOtp.getMode());
+              }
               return true;
             })
         .orElseThrow(() -> new NoSuchElementException("OTP not found for user"));
+  }
+
+  private void VerifyUser(int userId, String mode) {
+    User userDetails = userService.findById(userId);
+
+    if (mode.equals("email")) {
+      userDetails.setEmailVerified(true);
+      userService.updateUser(userId, userDetails);
+    } else if (mode.equals("sms")) {
+      userDetails.setMobileVerified(true);
+      userService.updateUser(userId, userDetails);
+    }
+    if (userDetails.isEmailVerified() && userDetails.isMobileVerified()) {
+      userDetails.setStatus(UserStatus.ACTIVE);
+      userService.updateUser(userId, userDetails);
+    }
   }
 
   @Override
