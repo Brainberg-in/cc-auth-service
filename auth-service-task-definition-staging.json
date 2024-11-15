@@ -34,7 +34,7 @@
         },
         {
             "name": "NOTIFICATION_SERVICE_URL",
-            "value": "http://notification.dev-environment-cluster:3000"
+            "value": "http://notification.staging-environment-cluster:3000"
         }
       ],
       "mountPoints": [],
