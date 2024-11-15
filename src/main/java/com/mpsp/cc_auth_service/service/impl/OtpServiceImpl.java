@@ -2,6 +2,7 @@ package com.mpsp.cc_auth_service.service.impl;
 
 import com.mpsp.cc_auth_service.dto.SendOtp;
 import com.mpsp.cc_auth_service.dto.User;
+import com.mpsp.cc_auth_service.dto.VerifyOtp;
 import com.mpsp.cc_auth_service.entity.OtpGen;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.OtpGenRepo;
@@ -143,7 +144,7 @@ public class OtpServiceImpl implements OtpService {
   }
 
   @Override
-  public boolean verifyMobileOtp(final String token, final String otp) {
+  public boolean validate(final String token, final VerifyOtp verifyOtp) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
 
     if (userId == 0) {
@@ -157,7 +158,10 @@ public class OtpServiceImpl implements OtpService {
               if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
                 throw new OTPExpiredException("OTP expired");
               }
-              if (!otpGen.getMobilOtp().equals(otp)) {
+              if (verifyOtp.getMode().equals("email") && !otpGen.getOtp().equals(verifyOtp.getOtp())) {
+                throw new OTPVerificationException("OTP verification failed");
+              }
+              if (verifyOtp.getMode().equals("sms") && !otpGen.getMobilOtp().equals(verifyOtp.getOtp())) {
                 throw new OTPVerificationException("OTP verification failed");
               }
               return true;

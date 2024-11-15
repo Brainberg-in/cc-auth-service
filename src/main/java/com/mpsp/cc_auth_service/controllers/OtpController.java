@@ -2,6 +2,7 @@ package com.mpsp.cc_auth_service.controllers;
 
 import com.mpsp.cc_auth_service.dto.ApiResponse;
 import com.mpsp.cc_auth_service.dto.SendOtp;
+import com.mpsp.cc_auth_service.dto.VerifyOtp;
 import com.mpsp.cc_auth_service.dto.VerifyOtpRequest;
 import com.mpsp.cc_auth_service.service.OtpService;
 import jakarta.validation.Valid;
@@ -32,13 +33,13 @@ public class OtpController {
   }
 
   @PostMapping("/validate")
-  public ResponseEntity<ApiResponse> verifyMobileOtp(
-      @RequestBody @Valid VerifyOtpRequest verifyOtpRequest,
+  public ResponseEntity<ApiResponse> validate(
+      @RequestBody @Valid VerifyOtp verifyOtpRequest,
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
           @NotBlank(message = "Authorization Token is required")
           @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
           String token) {
-    otpService.verifyMobileOtp(token, verifyOtpRequest.getOtp());
+    otpService.validate(token, verifyOtpRequest);
     return ResponseEntity.ok(new ApiResponse("OTP verified successfully"));
   }
 
