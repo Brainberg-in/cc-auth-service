@@ -62,27 +62,6 @@ public class OtpServiceImpl implements OtpService {
     return otp;
   }
 
-  private String generateMobileOTP(final int userId) {
-    final String otp = GeneratorUtils.generateOTP(4);
-    otpGenRepo
-        .findByUserId(userId)
-        .ifPresentOrElse(
-            otpGen -> {
-              otpGen.setModifiedAt(LocalDateTime.now());
-              otpGen.setMobilOtp(otp);
-              otpGenRepo.saveAndFlush(otpGen);
-            },
-            () -> {
-              final OtpGen otpGen = new OtpGen();
-              otpGen.setUserId(userId);
-              otpGen.setMobilOtp(otp);
-              otpGen.setCreatedAt(LocalDateTime.now());
-              otpGen.setModifiedAt(LocalDateTime.now());
-              otpGenRepo.saveAndFlush(otpGen);
-            });
-    return otp;
-  }
-
   @Override
   @Transactional
   public String sendOtp(final String email) {
@@ -105,18 +84,8 @@ public class OtpServiceImpl implements OtpService {
 
     Map<String, String> dataMap = new HashMap<>();
 
-    if (sendOtp.getMode().equals("sms")) {
-      final String mobileOtp = generateMobileOTP(user.getUserId());
-      dataMap.put("smsOtp", mobileOtp);
-    } else if (sendOtp.getMode().equals("email")) {
-      final String otp = generateOTP(user.getUserId());
-      dataMap.put("emailOtp", otp);
-    } else if (sendOtp.getMode().equals("both")) {
-      final String otp = generateOTP(user.getUserId());
-      final String mobileOtp = generateMobileOTP(user.getUserId());
-      dataMap.put("smsOtp", mobileOtp);
-      dataMap.put("emailOtp", otp);
-    }
+    final String otp = generateOTP(user.getUserId());
+    dataMap.put("otp", otp);
     
     notificationService.sendNotification(sendOtp.getMode(), "verification_otp", userEmail, mobile, dataMap);
   }
@@ -159,10 +128,7 @@ public class OtpServiceImpl implements OtpService {
               if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
                 throw new OTPExpiredException("OTP expired");
               }
-              if (verifyOtp.getMode().equals("email") && !otpGen.getOtp().equals(verifyOtp.getOtp())) {
-                throw new OTPVerificationException("OTP verification failed");
-              }
-              if (verifyOtp.getMode().equals("sms") && !otpGen.getMobilOtp().equals(verifyOtp.getOtp())) {
+              if (!otpGen.getOtp().equals(verifyOtp.getOtp())) {
                 throw new OTPVerificationException("OTP verification failed");
               }
               if(verifyOtp.getPurpose().equals("verification")) {
