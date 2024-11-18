@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SendOtp {
-    @Pattern(regexp = "sms|email|both", message = "Invalid mode")
+    @Pattern(regexp = "sms|email", message = "Invalid mode")
     private String mode;
 
     @Pattern(regexp = "login|register|forgotPassword|changePassword|verifyEmail|verifyMobile", message = "Invalid purpose")
