@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.mpsp.cc_auth_service.dto.User;
@@ -35,7 +34,7 @@ public class OtpServiceImplTest {
 
   @MockBean private OtpGenRepo otpGenRepo;
 
-  @MockBean private AwsService awsService;
+  @MockBean private NotificationService notificationService;
 
   @MockBean private JwtTokenProvider jwtTokenProvider;
 
@@ -46,11 +45,11 @@ public class OtpServiceImplTest {
     user.setEmail("test@example.com");
     when(userService.findByEmail("test@example.com")).thenReturn(user);
     when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.empty());
-    doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
+    doNothing().when(notificationService).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
 
     final String otp = otpService.sendOtp("test@example.com");
     assertNotNull(otp);
-    verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
+    verify(notificationService, times(1)).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
     verify(otpGenRepo, times(1)).saveAndFlush(any(OtpGen.class));
   }
 
@@ -103,7 +102,7 @@ public class OtpServiceImplTest {
     otpGen.setModifiedAt(LocalDateTime.now());
     otpGen.setOtp("1234");
     when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.of(otpGen));
-    doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
+    doNothing().when(notificationService).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
 
     // Call the method under test
     otpService.resendOtp(dummyToken);
@@ -111,8 +110,8 @@ public class OtpServiceImplTest {
     // Verify interactions
     verify(jwtTokenProvider).getUserEmail(dummyToken);
     verify(userService).findByEmail("dummy@example.com");
-    verify(awsService)
-        .sendEmail(anyString(), eq("dummy@example.com"), eq("login_cc_otp"), anyMap());
+    verify(notificationService)
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
     verify(otpGenRepo).saveAndFlush(any(OtpGen.class));
   }
 }

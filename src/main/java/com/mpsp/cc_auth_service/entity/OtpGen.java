@@ -35,4 +35,7 @@ public class OtpGen {
 
   @Column(name = "otp")
   private String otp;
+
+  @Column(name = "mobile_otp")
+  private String mobilOtp;
 }

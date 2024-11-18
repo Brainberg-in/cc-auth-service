@@ -25,7 +25,7 @@ import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.repository.ResetPasswordRepo;
 import com.mpsp.cc_auth_service.service.AuthService;
-import com.mpsp.cc_auth_service.service.AwsService;
+import com.mpsp.cc_auth_service.service.NotificationService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
@@ -68,11 +68,11 @@ public class AuthServiceImpl implements AuthService {
 
   @Autowired private transient OtpService otpService;
 
-  @Autowired private transient AwsService awsService;
-
   @Autowired private transient ResetPasswordRepo resetPasswordRepo;
 
   @Autowired private transient SchoolServiceClient schoolService;
+
+  @Autowired private transient NotificationService notificationService;
 
   @Value("${aws.ses.sender}")
   private String senderEmail;
@@ -255,11 +255,7 @@ public class AuthServiceImpl implements AuthService {
 
     resetPasswordRepo.save(resetToken);
 
-    awsService.sendEmail(
-        senderEmail,
-        email,
-        "cc_reset_password",
-        Map.of("link", resetPasswordUrl + "?token=" + token));
+    notificationService.sendNotification("email", "cc_reset_password", email, "", Map.of("link", resetPasswordUrl + "?token=" + token));
   }
 
   @Override

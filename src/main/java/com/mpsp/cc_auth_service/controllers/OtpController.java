@@ -1,6 +1,8 @@
 package com.mpsp.cc_auth_service.controllers;
 
 import com.mpsp.cc_auth_service.dto.ApiResponse;
+import com.mpsp.cc_auth_service.dto.SendOtp;
+import com.mpsp.cc_auth_service.dto.VerifyOtp;
 import com.mpsp.cc_auth_service.dto.VerifyOtpRequest;
 import com.mpsp.cc_auth_service.service.OtpService;
 import jakarta.validation.Valid;
@@ -30,6 +32,17 @@ public class OtpController {
     return ResponseEntity.ok(new ApiResponse("OTP verified successfully"));
   }
 
+  @PostMapping("/validate")
+  public ResponseEntity<ApiResponse> validate(
+      @RequestBody @Valid VerifyOtp verifyOtpRequest,
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+          @NotBlank(message = "Authorization Token is required")
+          @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
+          String token) {
+    otpService.validate(token, verifyOtpRequest);
+    return ResponseEntity.ok(new ApiResponse("OTP verified successfully"));
+  }
+
   @PostMapping("/resendOtp")
   public ResponseEntity<ApiResponse> resendOtp(
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
@@ -38,5 +51,15 @@ public class OtpController {
           String token) {
     otpService.resendOtp(token);
     return ResponseEntity.ok(new ApiResponse("OTP resent successfully"));
+  }
+
+  @PostMapping("/send")
+  public ResponseEntity<ApiResponse> sendVerificationOtp(
+    @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+        @NotBlank(message = "Authorization Token is required")
+        @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
+        String token, @RequestBody @Valid SendOtp sendOtp) {
+    otpService.sendVerificationOtp(token, sendOtp);
+    return ResponseEntity.ok(new ApiResponse("OTP sent successfully"));
   }
 }

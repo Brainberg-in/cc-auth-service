@@ -72,7 +72,7 @@ class AuthServiceImplTest {
 
   @MockBean private transient OtpService otpService;
 
-  @MockBean private transient AwsService awsService;
+  @MockBean private transient NotificationService notificationService;
 
   @MockBean private transient ResetPasswordRepo resetPasswordRepo;
 
@@ -186,11 +186,11 @@ class AuthServiceImplTest {
     User user = new User();
     user.setUserId(1);
     when(userService.findByEmail(anyString())).thenReturn(user);
-    doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
+    doNothing().when(notificationService).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
 
     authService.sendResetPasswordEmail("test@example.com");
 
-    verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
+    verify(notificationService, times(1)).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
   }
 
   @Test
@@ -281,11 +281,11 @@ class AuthServiceImplTest {
     user.setEmail("test@example.com");
 
     when(userService.findByEmail(anyString())).thenReturn(user);
-    doNothing().when(awsService).sendEmail(anyString(), anyString(), anyString(), anyMap());
+    doNothing().when(notificationService).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
 
     authService.sendResetPasswordEmail("test@example.com");
 
-    verify(awsService, times(1)).sendEmail(anyString(), anyString(), anyString(), anyMap());
+    verify(notificationService, times(1)).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
   }
 
   @Test
