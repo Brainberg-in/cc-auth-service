@@ -7,11 +7,13 @@ import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
 import com.mpsp.cc_auth_service.dto.LoginHistoryResponse;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
 import com.mpsp.cc_auth_service.dto.LoginResponse;
+import com.mpsp.cc_auth_service.dto.ResetPasswordByAdminResponse;
 import com.mpsp.cc_auth_service.dto.ResetPasswordRequest;
 import com.mpsp.cc_auth_service.dto.SchoolDetails;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.UserCreateRequest;
 import com.mpsp.cc_auth_service.dto.UserDetails;
+import com.mpsp.cc_auth_service.dto.UserIdAndRole;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
@@ -23,13 +25,14 @@ import com.mpsp.cc_auth_service.repository.PasswordHistoryRepo;
 import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.repository.ResetPasswordRepo;
 import com.mpsp.cc_auth_service.service.AuthService;
-import com.mpsp.cc_auth_service.service.AwsService;
+import com.mpsp.cc_auth_service.service.NotificationService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,13 +68,11 @@ public class AuthServiceImpl implements AuthService {
 
   @Autowired private transient OtpService otpService;
 
-  @Autowired private transient AwsService awsService;
-
   @Autowired private transient ResetPasswordRepo resetPasswordRepo;
 
-  @Autowired private transient PasswordHistoryRepo passwordHistoryRepo;
-
   @Autowired private transient SchoolServiceClient schoolService;
+
+  @Autowired private transient NotificationService notificationService;
 
   @Value("${aws.ses.sender}")
   private String senderEmail;
@@ -254,11 +255,7 @@ public class AuthServiceImpl implements AuthService {
 
     resetPasswordRepo.save(resetToken);
 
-    awsService.sendEmail(
-        senderEmail,
-        email,
-        "cc_reset_password",
-        Map.of("link", resetPasswordUrl + "?token=" + token));
+    notificationService.sendNotification("email", "cc_reset_password", email, "", Map.of("link", resetPasswordUrl + "?token=" + token));
   }
 
   @Override
@@ -342,42 +339,68 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public void resetPasswordByAdmin(
+  public ResetPasswordByAdminResponse resetPasswordByAdmin(
       final ResetPasswordRequest resetPasswordRequest, final String token) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
     final UserRole userRole =
         UserRole.valueOf(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE));
 
-    final UserDetails behalfUserDetails =
-        userService.getUserDetails(
-            resetPasswordRequest.getBehalfOf(),
-            String.join("", resetPasswordRequest.getBehalfOfUserRole().toLowerCase(), "s"));
-    if (UserRole.PRINCIPAL.equals(userRole)) {
-      final SchoolDetails schoolDetails =
-          schoolService.getSchoolDetails(behalfUserDetails.getSchoolId(), true);
-      if (schoolDetails.getPrincipalUserId() != userId) {
-        throw new GlobalExceptionHandler.ResetPasswordException(
-            "Only the principal can reset the password");
+    if (!(userRole.equals(UserRole.PRINCIPAL)
+        || userRole.equals(UserRole.HELPDESKADMIN)
+        || userRole.equals(UserRole.HELPDESKUSER))) {
+      throw new GlobalExceptionHandler.InvalidUserStatus("Forbidden");
+    }
+    final Map<Integer, String> failureReasons = new HashMap<>();
+    final List<PasswordHistory> tobeSavedPasswordHistoryList = new ArrayList<>();
+    for (UserIdAndRole userIdAndRole : resetPasswordRequest.getBehalfOf()) {
+      if (userIdAndRole.getUserRole() == null) {
+        failureReasons.put(userIdAndRole.getUserId(), "User role is required");
+        continue;
+      }
+      final UserDetails behalfUserDetails =
+          userService.getUserDetails(
+              userIdAndRole.getUserId(),
+              String.join("", userIdAndRole.getUserRole().toLowerCase(), "s"));
+
+      if (!behalfUserDetails.getUser().getStatus().equals(UserStatus.ACTIVE)) {
+        failureReasons.put(userIdAndRole.getUserId(), "User status is not 'ACTIVE'");
+        continue;
+      }
+      if (UserRole.PRINCIPAL.equals(userRole)) {
+        final SchoolDetails schoolDetails =
+            schoolService.getSchoolDetails(behalfUserDetails.getSchoolId(), true);
+        if (schoolDetails.getPrincipalUserId() != userId) {
+          failureReasons.put(
+              userIdAndRole.getUserId(), "User does not belong to the principal school");
+          continue;
+        }
+      }
+      final List<PasswordHistory> passwordHistoryList =
+          passwordHistoryRepository
+              .findAllByUserId(
+                  behalfUserDetails.getUser().getUserId(),
+                  PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
+              .getContent();
+      if (passwordHistoryList.isEmpty()) {
+        failureReasons.put(
+            userIdAndRole.getUserId(), "Cannot find any password history for the user");
+      } else {
+        final PasswordHistory passwordHistory = passwordHistoryList.get(0);
+
+        passwordHistory.setCurrentPassword(
+            passwordEncoder.encode(
+                String.join(
+                    "@", behalfUserDetails.getUser().getFullName().replaceAll(" ", ""), "123")));
+        passwordHistory.setModifiedAt(LocalDateTime.now());
+        tobeSavedPasswordHistoryList.add(passwordHistory);
       }
     }
-
-    final PasswordHistory passwordHistory =
-        passwordHistoryRepository
-            .findAllByUserId(
-                behalfUserDetails.getUser().getUserId(),
-                PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
-            .getContent()
-            .get(0);
-
-    if (passwordEncoder.matches(
-        resetPasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
-      throw new GlobalExceptionHandler.SamePasswordException(
-          "New password cannot be the same as the current password");
+    if (!tobeSavedPasswordHistoryList.isEmpty()) {
+      passwordHistoryRepository.saveAll(tobeSavedPasswordHistoryList);
+      return new ResetPasswordByAdminResponse(failureReasons, "Password reset successfully.");
     }
-
-    passwordHistory.setCurrentPassword(passwordEncoder.encode(resetPasswordRequest.getPassword()));
-    passwordHistory.setModifiedAt(LocalDateTime.now());
-    passwordHistoryRepository.saveAndFlush(passwordHistory);
+    throw new GlobalExceptionHandler.ResetPasswordException(
+        "There is no history of password for the given users. Hence cannot reset the password");
   }
 
   @Transactional
@@ -401,7 +424,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public Map<Integer, String> getUserRoles(final List<Integer> userIds) {
     final List<Map<String, Object>> latestUserTypes =
-        passwordHistoryRepo.findUserRoleByUserIds(userIds);
+        passwordHistoryRepository.findUserRoleByUserIds(userIds);
 
     final Map<Integer, String> userRoles =
         latestUserTypes.stream()

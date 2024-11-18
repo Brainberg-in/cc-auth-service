@@ -46,6 +46,7 @@ public class JwtTokenProvider {
             .claim(AppConstants.USER_EMAIL, user.getEmail())
             .claim(AppConstants.USER_ROLE, userRole)
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
+            .claim(AppConstants.USER_STATUS, user.getStatus())
             .issueTime(new Date())
             .expirationTime(
                 new Date(

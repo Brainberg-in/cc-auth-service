@@ -11,6 +11,11 @@
       "description": "School service url to be used for fetching school details"
     },
     {
+      "name": "notification.service.url",
+      "type": "java.lang.String",
+      "description": "Notification service url to be used for send notifications"
+    },
+    {
       "name": "fallback.url.reset.password",
       "type": "java.lang.String",
       "description": "Fallback url to be used for reset password"

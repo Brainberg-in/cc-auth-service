@@ -43,6 +43,12 @@ public class User {
   private Long createdBy;
   private Long updatedBy;
 
+  @JsonProperty("isEmailVerified")
+  private boolean isEmailVerified;
+
+  @JsonProperty("isMobileVerified")
+  private boolean isMobileVerified;  
+
   @JsonProperty("isMfaEnabled")
   private boolean isMfaEnabled;
 

@@ -32,6 +32,10 @@
                 {
                     "name": "SCHOOL_SERVICE_URL",
                     "value": "http://school.dev-environment-cluster:4000"
+                },
+                {
+                    "name": "NOTIFICATION_SERVICE_URL",
+                    "value": "http://notification.dev-environment-cluster:3000"
                 }
             ],
             "mountPoints": [],

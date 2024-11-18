@@ -62,15 +62,14 @@ public class AuthController {
   }
 
   @PostMapping("/reset-password")
-  public ResponseEntity<ApiResponse> resetPassword(
+  public ResponseEntity<ResetPasswordByAdminResponse> resetPassword(
       @RequestBody @Validated(ResetPasswordByAdmin.class)
           final ResetPasswordRequest resetPasswordRequest,
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
           @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization Token")
           final String token) {
 
-    authService.resetPasswordByAdmin(resetPasswordRequest, token);
-    return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
+    return ResponseEntity.ok(authService.resetPasswordByAdmin(resetPasswordRequest, token));
   }
 
   @PostMapping("/reset-password/self")
