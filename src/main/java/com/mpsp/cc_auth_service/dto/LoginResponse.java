@@ -29,4 +29,7 @@ public class LoginResponse {
 
   @JsonProperty("userRole")
   private String userRole;
+
+  @JsonProperty("resetToken")
+  private String resetToken;
 }
