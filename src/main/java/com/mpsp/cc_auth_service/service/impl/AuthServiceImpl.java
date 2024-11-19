@@ -155,6 +155,7 @@ public class AuthServiceImpl implements AuthService {
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
 
     final boolean isFirstLogin = user.isFirstLogin();
+    final String resetToken = generateResetToken(user);
     handleFirstLoginIfNeeded(user);
     handleMfaIfEnabled(user);
 
@@ -165,7 +166,28 @@ public class AuthServiceImpl implements AuthService {
     }
 
     return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), isFirstLogin, pw.getUserRole());
+        jwtToken, refreshToken, user.isMfaEnabled(), isFirstLogin, pw.getUserRole(), resetToken);
+  }
+
+  private String generateResetToken(final User user) {
+    if (!user.isFirstLogin()) {
+      return "";
+    }
+    final String token = UUID.randomUUID().toString();
+
+    final Optional<ResetPassword> existingTokenOpt =
+        resetPasswordRepo.findByUserId(user.getUserId());
+
+    final ResetPassword resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
+    resetToken.setUserId(user.getUserId());
+    resetToken.setResetToken(token);
+    resetToken.setLinkSent(false);
+    resetToken.setModifiedAt(LocalDateTime.now());
+    resetToken.setLinkExpired(false);
+
+    resetPasswordRepo.save(resetToken);
+
+    return resetToken.getResetToken();
   }
 
   private void handleFirstLoginIfNeeded(final User user) {
@@ -226,7 +248,7 @@ public class AuthServiceImpl implements AuthService {
     // Refresh token only gets generated when the user logs in
     // The refresh token is only used for refreshing the access token.
     final String newJwtToken = jwtTokenProvider.generateToken(user, false, p.getUserRole());
-    return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole());
+    return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole(), "");
   }
 
   @Override
