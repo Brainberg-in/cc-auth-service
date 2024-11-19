@@ -154,6 +154,7 @@ public class AuthServiceImpl implements AuthService {
 
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
 
+    final boolean isFirstLogin = user.isFirstLogin();
     handleFirstLoginIfNeeded(user);
     handleMfaIfEnabled(user);
 
@@ -164,7 +165,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), user.isFirstLogin(), pw.getUserRole());
+        jwtToken, refreshToken, user.isMfaEnabled(), isFirstLogin, pw.getUserRole());
   }
 
   private void handleFirstLoginIfNeeded(final User user) {
