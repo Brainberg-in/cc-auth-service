@@ -278,7 +278,12 @@ public class AuthServiceImpl implements AuthService {
 
     resetPasswordRepo.save(resetToken);
 
-    notificationService.sendNotification("email", "cc_reset_password", email, "", Map.of("link", resetPasswordUrl + "?token=" + token));
+    notificationService.sendNotification(
+        "email",
+        "cc_reset_password",
+        email,
+        "",
+        Map.of("link", resetPasswordUrl + "?token=" + token));
   }
 
   @Override
@@ -381,9 +386,11 @@ public class AuthServiceImpl implements AuthService {
         continue;
       }
       final UserDetails behalfUserDetails =
-          userService.getUserDetails(
-              userIdAndRole.getUserId(),
-              String.join("", userIdAndRole.getUserRole().toLowerCase(), "s"));
+          userService
+              .getUserDetails(
+                  userIdAndRole.getUserId(),
+                  String.join("", userIdAndRole.getUserRole().toLowerCase(), "s"))
+              .orElseThrow();
 
       if (!behalfUserDetails.getUser().getStatus().equals(UserStatus.ACTIVE)) {
         failureReasons.put(userIdAndRole.getUserId(), "User status is not 'ACTIVE'");
