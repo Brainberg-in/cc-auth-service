@@ -7,6 +7,7 @@ import com.mpsp.cc_auth_service.dto.UsersData;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidUserStatus;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -72,6 +73,6 @@ public interface UserServiceClient {
       @PathVariable(name = "id") final Integer id, @RequestBody final Map<String, String> body);
 
   @GetMapping(value = "/api/v1/{role}/{id}")
-  UserDetails getUserDetails(
+  Optional<UserDetails> getUserDetails(
       @PathVariable(name = "id") final Integer id, @PathVariable(name = "role") final String role);
 }
