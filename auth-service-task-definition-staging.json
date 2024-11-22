@@ -5,8 +5,8 @@
     {
       "name": "cc-auth-service",
       "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
-      "cpu": 512,
-      "memory": 1024,
+      "cpu": 256,
+      "memory": 512,
       "essential": true,
       "portMappings": [
         {
@@ -81,8 +81,8 @@
     {
       "name": "newrelic-infra",
       "image": "newrelic/nri-ecs:1.12.2",
-      "cpu": 64,
-      "memory": 128,
+      "cpu": 512,
+      "memory": 1024,
       "essential": false,
       "environment": [
         {
@@ -131,8 +131,8 @@
   "requiresCompatibilities": [
     "FARGATE"
   ],
-  "cpu": "576",
-  "memory": "1152",
+  "cpu": "",
+  "memory": "512",
   "tags": [
     {
       "key": "environment",
