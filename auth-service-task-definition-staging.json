@@ -1,20 +1,20 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/mpsp-auth-staging",
+  "family": "mpsp-auth-staging",
+  "networkMode": "awsvpc",
   "containerDefinitions": [
     {
       "name": "cc-auth-service",
       "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
-      "cpu": 0,
+      "cpu": 512,
+      "memory": 1024,
+      "essential": true,
       "portMappings": [
         {
-          "name": "cc-auth-service-8080-tcp",
           "containerPort": 8080,
           "hostPort": 8080,
-          "protocol": "tcp",
-          "appProtocol": "http"
+          "protocol": "tcp"
         }
       ],
-      "essential": true,
       "environment": [
         {
           "name": "USER_SERVICE_URL",
@@ -33,12 +33,10 @@
           "value": "http://school.staging-environment-cluster:4000"
         },
         {
-            "name": "NOTIFICATION_SERVICE_URL",
-            "value": "http://notification.staging-environment-cluster:3000"
+          "name": "NOTIFICATION_SERVICE_URL",
+          "value": "http://notification.staging-environment-cluster:3000"
         }
       ],
-      "mountPoints": [],
-      "volumesFrom": [],
       "secrets": [
         {
           "name": "DB_HOST",
@@ -65,13 +63,9 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/mpsp-auth-staging",
-          "mode": "non-blocking",
-          "awslogs-create-group": "true",
-          "max-buffer-size": "25m",
           "awslogs-region": "ap-south-1",
           "awslogs-stream-prefix": "ecs"
-        },
-        "secretOptions": []
+        }
       },
       "healthCheck": {
         "command": [
@@ -82,71 +76,63 @@
         "timeout": 10,
         "retries": 3,
         "startPeriod": 70
-      },
-      "systemControls": []
+      }
+    },
+    {
+      "name": "newrelic-infra",
+      "image": "newrelic/nri-ecs:1.12.2",
+      "cpu": 64,
+      "memory": 128,
+      "essential": false,
+      "environment": [
+        {
+          "name": "NRIA_OVERRIDE_HOST_ROOT",
+          "value": ""
+        },
+        {
+          "name": "NRIA_IS_FORWARD_ONLY",
+          "value": "true"
+        },
+        {
+          "name": "FARGATE",
+          "value": "true"
+        },
+        {
+          "name": "NRIA_PASSTHROUGH_ENVIRONMENT",
+          "value": "ECS_CONTAINER_METADATA_URI,ECS_CONTAINER_METADATA_URI_V4,FARGATE"
+        },
+        {
+          "name": "NRIA_DISPLAY_NAME",
+          "value": "auth-staging"
+        },
+        {
+          "name": "NRIA_VERBOSE",
+          "value": "1"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "NRIA_LICENSE_KEY",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:NEW_RELIC_LICENSE_KEY-eemLJ8:LicenseKey::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/newrelic",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "newrelic"
+        }
+      }
     }
   ],
-  "family": "mpsp-auth-staging",
-  "taskRoleArn": "arn:aws:iam::567347231314:role/cc-auth-service-role",
   "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
-  "networkMode": "awsvpc",
-  "revision": 6,
-  "volumes": [],
-  "status": "ACTIVE",
-  "requiresAttributes": [
-    {
-      "name": "ecs.capability.execution-role-awslogs"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.ecr-auth"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.task-iam-role"
-    },
-    {
-      "name": "ecs.capability.container-health-check"
-    },
-    {
-      "name": "ecs.capability.execution-role-ecr-pull"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-    },
-    {
-      "name": "ecs.capability.task-eni"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-    },
-    {
-      "name": "ecs.capability.secrets.asm.environment-variables"
-    }
-  ],
-  "placementConstraints": [],
-  "compatibilities": [
-    "EC2",
-    "FARGATE"
-  ],
+  "taskRoleArn": "arn:aws:iam::567347231314:role/cc-auth-service-role",
   "requiresCompatibilities": [
     "FARGATE"
   ],
   "cpu": "512",
   "memory": "1024",
-  "runtimePlatform": {
-    "cpuArchitecture": "ARM64",
-    "operatingSystemFamily": "LINUX"
-  },
-  "registeredAt": "2024-10-19T06:16:16.192Z",
-  "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
   "tags": [
     {
       "key": "environment",
@@ -156,5 +142,9 @@
       "key": "application",
       "value": "mpsp"
     }
-  ]
+  ],
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  }
 }
