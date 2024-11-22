@@ -131,8 +131,8 @@
   "requiresCompatibilities": [
     "FARGATE"
   ],
-  "cpu": "512",
-  "memory": "1024",
+  "cpu": "576",
+  "memory": "1152",
   "tags": [
     {
       "key": "environment",
