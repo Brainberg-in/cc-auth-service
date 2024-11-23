@@ -109,7 +109,7 @@
       ],
       "secrets": [
         {
-          "valueFrom": "<SYSTEM_MANAGER_LICENSE_PARAMETER_NAME>",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:NEW_RELIC_LICENSE_KEY-eemLJ8:LicenseKey::",
           "name": "NRIA_LICENSE_KEY"
         }
       ],
