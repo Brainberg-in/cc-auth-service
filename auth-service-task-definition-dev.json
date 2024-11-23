@@ -16,6 +16,14 @@
                 }
             ],
             "essential": true,
+            "entryPoint": [
+                "java",
+                "-XX:+UnlockExperimentalVMOptions",
+                "-XX:+UseContainerSupport",
+                "-Djava.security.egd=file:/dev/./urandom",
+                "-jar",
+                "/app/cc-auth-service-0.0.1-SNAPSHOT.jar"
+            ],
             "environment": [
                 {
                     "name": "USER_SERVICE_URL",
