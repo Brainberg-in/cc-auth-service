@@ -1,9 +1,9 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/mpsp-auth-staging:29",
+  "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/mpsp-auth-staging",
   "containerDefinitions": [
     {
       "name": "cc-auth-service",
-      "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:8f35ef2708eba23f7be5146292b652b59bc45ab4",
+      "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
       "cpu": 0,
       "portMappings": [
         {
