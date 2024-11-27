@@ -283,7 +283,7 @@ public class AuthServiceImpl implements AuthService {
         "cc_reset_password",
         email,
         "",
-        Map.of("link", resetPasswordUrl + "?token=" + token));
+        Map.of("link", resetPasswordUrl + "?token=" + token, "username", user.getFullName() + ""));
   }
 
   @Override
