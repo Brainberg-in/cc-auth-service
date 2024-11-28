@@ -48,7 +48,7 @@
         },
         {
           "name": "FRONTEND_URL",
-          "value": "https://mpsp-fe.sit.trait.fit/"
+          "value": "https://mpsp-fe.sit.trait.fit"
         }
       ],
       "mountPoints": [],
