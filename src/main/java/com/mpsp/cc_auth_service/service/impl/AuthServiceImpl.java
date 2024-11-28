@@ -83,6 +83,9 @@ public class AuthServiceImpl implements AuthService {
   @Value("${max.login.attempts}")
   private int PASSWORD_ATTEMPTS;
 
+  @Value("${frontend.url}")
+  private String frontendUrl;
+
   @Override
   @Transactional
   public LoginResponse login(final LoginRequest loginRequest) {
@@ -283,7 +286,7 @@ public class AuthServiceImpl implements AuthService {
         "cc_reset_password",
         email,
         "",
-        Map.of("link", resetPasswordUrl + "?token=" + token, "username", user.getFullName() + ""));
+        Map.of("link", resetPasswordUrl + "?token=" + token, "username", user.getFullName() + "", "email", email, "portal", frontendUrl));
   }
 
   @Override
@@ -313,6 +316,14 @@ public class AuthServiceImpl implements AuthService {
       passwordHistory.setUserId(userId);
       passwordHistoryRepository.save(passwordHistory);
     }
+
+    final User user = userService.findById(userId);
+    notificationService.sendNotification(
+      "email",
+      "password_update",
+      user.getEmail() + "",
+      "",
+      Map.of("email", user.getEmail() + "", "username", user.getFullName() + "", "portal", frontendUrl));
   }
 
   @Override
