@@ -211,6 +211,7 @@ class AuthServiceImplTest {
     when(passwordEncoder.matches(
             changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword()))
         .thenReturn(false);
+    when(userService.findById(anyInt())).thenReturn(user);
     authService.changePassword(changePasswordRequest, "validToken");
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
   }
@@ -268,6 +269,7 @@ class AuthServiceImplTest {
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
+    when(userService.findById(anyInt())).thenReturn(user);
 
     authService.changePassword(changePasswordRequest, "validToken");
 

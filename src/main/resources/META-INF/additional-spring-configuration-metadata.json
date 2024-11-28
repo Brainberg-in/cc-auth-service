@@ -16,6 +16,11 @@
       "description": "Notification service url to be used for send notifications"
     },
     {
+      "name": "frontend.url",
+      "type": "java.lang.String",
+      "description": "Frontend url to be used as params in email templates"
+    },
+    {
       "name": "fallback.url.reset.password",
       "type": "java.lang.String",
       "description": "Fallback url to be used for reset password"
