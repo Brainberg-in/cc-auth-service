@@ -41,8 +41,12 @@ public class OtpServiceImpl implements OtpService {
   @Value("${aws.ses.sender}")
   private String senderEmail;
 
+  @Value("${service.env}")
+  private String serviceEnv;
+
   private String generateOTP(final int userId) {
-    final String otp = GeneratorUtils.generateOTP(4);
+    final String otp = activeProfile.equals("dev") || activeProfile.equals("staging") ? "1234"
+        : GeneratorUtils.generateOTP(4);
     otpGenRepo
         .findByUserId(userId)
         .ifPresentOrElse(
@@ -78,6 +82,9 @@ public class OtpServiceImpl implements OtpService {
     final String userEmail = jwtTokenProvider.getUserEmail(token);
     if (userEmail == null) {
       throw new IllegalArgumentException("User does not have a registered email");
+    }
+    if (sendOtp.getMode().equals("sms") && (activeProfile.equals("dev") || activeProfile.equals("staging"))) {
+      return;
     }
     final User user = userService.findByEmail(userEmail);
     final String mobile = user.getMobile();
