@@ -45,7 +45,7 @@ public class OtpServiceImpl implements OtpService {
   private String serviceEnv;
 
   private String generateOTP(final int userId) {
-    final String otp = activeProfile.equals("dev") || activeProfile.equals("staging") ? "1234"
+    final String otp = serviceEnv.equals("dev") || serviceEnv.equals("staging") ? "1234"
         : GeneratorUtils.generateOTP(4);
     otpGenRepo
         .findByUserId(userId)
@@ -83,7 +83,7 @@ public class OtpServiceImpl implements OtpService {
     if (userEmail == null) {
       throw new IllegalArgumentException("User does not have a registered email");
     }
-    if (sendOtp.getMode().equals("sms") && (activeProfile.equals("dev") || activeProfile.equals("staging"))) {
+    if (sendOtp.getMode().equals("sms") && (serviceEnv.equals("dev") || serviceEnv.equals("staging"))) {
       return;
     }
     final User user = userService.findByEmail(userEmail);
