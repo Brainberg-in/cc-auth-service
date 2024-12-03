@@ -5,6 +5,7 @@ import com.mpsp.cc_auth_service.dto.*;
 import com.mpsp.cc_auth_service.dto.validations.ResetPasswordByAdmin;
 import com.mpsp.cc_auth_service.dto.validations.ResetPasswordSelf;
 import com.mpsp.cc_auth_service.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -12,6 +13,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -28,8 +30,17 @@ public class AuthController {
   @Autowired private AuthService authService;
 
   @PostMapping("/login")
-  public ResponseEntity<LoginResponse> login(@RequestBody @Valid final LoginRequest loginRequest) {
-    return ResponseEntity.ok(authService.login(loginRequest));
+  public ResponseEntity<LoginResponse> login(
+      @RequestBody @Valid final LoginRequest loginRequest, HttpServletRequest request) {
+    final String ipAddress;
+    if (StringUtils.isNotBlank(request.getHeader("X-Forwarded-For"))) {
+      log.info("X-Forwarded-For header is present");
+      ipAddress = request.getHeader("X-Forwarded-For");
+    } else {
+      log.info("X-Forwarded-For header is not present. Fetching remote address from request");
+      ipAddress = request.getRemoteAddr();
+    }
+    return ResponseEntity.ok(authService.login(loginRequest, ipAddress));
   }
 
   @PostMapping("/logout")

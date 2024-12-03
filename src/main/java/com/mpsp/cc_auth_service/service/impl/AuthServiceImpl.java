@@ -85,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public LoginResponse login(final LoginRequest loginRequest) {
+  public LoginResponse login(final LoginRequest loginRequest, final String ipAddress) {
     try {
       final String email = loginRequest.getEmail();
       final String password = loginRequest.getPassword();
@@ -112,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
             "Invalid Credentials", PASSWORD_ATTEMPTS - pw.getFailedLoginAttempts() + 1);
       }
 
-      return handleSuccessfulLogin(user, pw);
+      return handleSuccessfulLogin(user, pw, ipAddress);
 
     } catch (Exception e) {
       log.error("Unexpected error during login", e);
@@ -146,13 +146,14 @@ public class AuthServiceImpl implements AuthService {
         PASSWORD_ATTEMPTS - newAttempts);
   }
 
-  private LoginResponse handleSuccessfulLogin(final User user, final PasswordHistory pw) {
+  private LoginResponse handleSuccessfulLogin(
+      final User user, final PasswordHistory pw, final String ipAddress) {
     // Generate tokens
     final String jwtToken = jwtTokenProvider.generateToken(user, false, pw.getUserRole());
     final String refreshToken = jwtTokenProvider.generateToken(user, true, pw.getUserRole());
     saveRefreshToken(user.getUserId(), refreshToken);
 
-    loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
+    loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now(), ipAddress));
 
     final boolean isFirstLogin = user.isFirstLogin();
     final String resetToken = generateResetToken(user);

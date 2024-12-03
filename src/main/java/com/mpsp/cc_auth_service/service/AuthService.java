@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface AuthService {
-  LoginResponse login(LoginRequest loginRequest);
+  LoginResponse login(LoginRequest loginRequest, String ipAddress);
 
   void logout(String token);
 
