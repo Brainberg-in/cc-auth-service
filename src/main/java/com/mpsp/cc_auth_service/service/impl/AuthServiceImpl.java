@@ -317,7 +317,6 @@ public class AuthServiceImpl implements AuthService {
       passwordHistory.setUserId(userId);
       passwordHistoryRepository.save(passwordHistory);
     }
-    
     final User user = userService.findById(userId);
     notificationService.sendNotification(
       "email",
