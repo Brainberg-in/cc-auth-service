@@ -287,7 +287,15 @@ public class AuthServiceImpl implements AuthService {
         "cc_reset_password",
         email,
         "",
-        Map.of("link", resetPasswordUrl + "?token=" + token, "username", user.getFullName() + "", "email", email, "portal", frontendUrl));
+        Map.of(
+            "link",
+            resetPasswordUrl + "?token=" + token,
+            "username",
+            user.getFullName() + "",
+            "email",
+            email,
+            "portal",
+            frontendUrl));
   }
 
   @Override
@@ -319,11 +327,17 @@ public class AuthServiceImpl implements AuthService {
     }
     final User user = userService.findById(userId);
     notificationService.sendNotification(
-      "email",
-      "password_update",
-      user.getEmail() + "",
-      "",
-      Map.of("email", user.getEmail() + "", "username", user.getFullName() + "", "portal", frontendUrl));
+        "email",
+        "password_update",
+        user.getEmail() + "",
+        "",
+        Map.of(
+            "email",
+            user.getEmail() + "",
+            "username",
+            user.getFullName() + "",
+            "portal",
+            frontendUrl));
   }
 
   @Override
