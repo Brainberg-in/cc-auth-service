@@ -454,8 +454,13 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.saveAll(tobeSavedPasswordHistoryList);
       return new ResetPasswordByAdminResponse(failureReasons, "Password reset successfully.");
     }
-    throw new GlobalExceptionHandler.ResetPasswordException(
-        "There is no history of password for the given users. Hence cannot reset the password");
+
+    if (resetPasswordRequest.getBehalfOf().size() == 1) {
+      throw new GlobalExceptionHandler.ResetPasswordException(failureReasons.get(0));
+    } else {
+      throw new GlobalExceptionHandler.ResetPasswordException(
+          "There is no history of password for the given users. Hence cannot reset the password");
+    }
   }
 
   @Transactional
