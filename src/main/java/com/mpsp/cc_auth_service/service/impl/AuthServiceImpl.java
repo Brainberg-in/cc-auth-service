@@ -442,12 +442,20 @@ public class AuthServiceImpl implements AuthService {
       } else {
         final PasswordHistory passwordHistory = passwordHistoryList.get(0);
 
+        final String generatedPassword = String.join(
+          "@", behalfUserDetails.getUser().getFullName().replaceAll(" ", "").toUpperCase().substring(0, 4), "123");
+
         passwordHistory.setCurrentPassword(
-            passwordEncoder.encode(
-                String.join(
-                    "@", behalfUserDetails.getUser().getFullName().replaceAll(" ", ""), "123")));
+            passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
         tobeSavedPasswordHistoryList.add(passwordHistory);
+        notificationService.sendNotification(
+          "email",
+          "reset_password_mail",
+          behalfUserDetails.getUser().getEmail() + "",
+          "",
+          Map.of( "email", behalfUserDetails.getUser().getEmail(), "password", generatedPassword,
+                "portal", frontendUrl));
       }
     }
     if (!tobeSavedPasswordHistoryList.isEmpty()) {
