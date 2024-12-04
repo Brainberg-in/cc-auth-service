@@ -46,8 +46,10 @@
                     "value": "http://notification.dev-environment-cluster:3000"
                 },
                 {
-                  "name": "FRONTEND_URL",
-                  "value": "https://mpsp-fe.dev.trait.fit"
+
+                    "name": "FRONTEND_URL",
+                    "value": "https://mpsp-fe.dev.trait.fit"
+
                 }
             ],
             "mountPoints": [],

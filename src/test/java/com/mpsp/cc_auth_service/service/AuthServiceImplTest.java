@@ -116,7 +116,7 @@ class AuthServiceImplTest {
     loginRequest.setEmail("test@example.com");
     loginRequest.setPassword("password");
 
-    final LoginResponse response = authService.login(loginRequest);
+    final LoginResponse response = authService.login(loginRequest, "127.0.0.1");
 
     assertNotNull(response);
     assertEquals("jwtToken", response.getAccessToken());
@@ -136,7 +136,7 @@ class AuthServiceImplTest {
 
     assertThrows(
         GlobalExceptionHandler.InvalidPasswordException.class,
-        () -> authService.login(loginRequest));
+        () -> authService.login(loginRequest, "127.0.0.1"));
   }
 
   // @Test
@@ -186,11 +186,14 @@ class AuthServiceImplTest {
     User user = new User();
     user.setUserId(1);
     when(userService.findByEmail(anyString())).thenReturn(user);
-    doNothing().when(notificationService).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+    doNothing()
+        .when(notificationService)
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
 
     authService.sendResetPasswordEmail("test@example.com");
 
-    verify(notificationService, times(1)).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+    verify(notificationService, times(1))
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
   }
 
   @Test
@@ -283,11 +286,14 @@ class AuthServiceImplTest {
     user.setEmail("test@example.com");
 
     when(userService.findByEmail(anyString())).thenReturn(user);
-    doNothing().when(notificationService).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+    doNothing()
+        .when(notificationService)
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
 
     authService.sendResetPasswordEmail("test@example.com");
 
-    verify(notificationService, times(1)).sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+    verify(notificationService, times(1))
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
   }
 
   @Test

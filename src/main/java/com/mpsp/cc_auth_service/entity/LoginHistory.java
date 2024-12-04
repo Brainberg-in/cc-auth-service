@@ -31,9 +31,9 @@ public class LoginHistory {
   @Column(name = "ip_address")
   private String ipAddress;
 
-  public LoginHistory(final Integer userId, final LocalDateTime now) {
+  public LoginHistory(final Integer userId, final LocalDateTime now, final String ipAddress) {
     this.userId = userId;
     this.lastLoginTime = now;
-    // this.ipAddress = o.toString();
+    this.ipAddress = ipAddress;
   }
 }

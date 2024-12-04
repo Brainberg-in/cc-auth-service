@@ -88,7 +88,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public LoginResponse login(final LoginRequest loginRequest) {
+  public LoginResponse login(final LoginRequest loginRequest, final String ipAddress) {
     try {
       final String email = loginRequest.getEmail();
       final String password = loginRequest.getPassword();
@@ -115,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
             "Invalid Credentials", PASSWORD_ATTEMPTS - pw.getFailedLoginAttempts() + 1);
       }
 
-      return handleSuccessfulLogin(user, pw);
+      return handleSuccessfulLogin(user, pw, ipAddress);
 
     } catch (Exception e) {
       log.error("Unexpected error during login", e);
@@ -149,13 +149,14 @@ public class AuthServiceImpl implements AuthService {
         PASSWORD_ATTEMPTS - newAttempts);
   }
 
-  private LoginResponse handleSuccessfulLogin(final User user, final PasswordHistory pw) {
+  private LoginResponse handleSuccessfulLogin(
+      final User user, final PasswordHistory pw, final String ipAddress) {
     // Generate tokens
     final String jwtToken = jwtTokenProvider.generateToken(user, false, pw.getUserRole());
     final String refreshToken = jwtTokenProvider.generateToken(user, true, pw.getUserRole());
     saveRefreshToken(user.getUserId(), refreshToken);
 
-    loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now()));
+    loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now(), ipAddress));
 
     final boolean isFirstLogin = user.isFirstLogin();
     final String resetToken = generateResetToken(user);
@@ -286,7 +287,15 @@ public class AuthServiceImpl implements AuthService {
         "cc_reset_password",
         email,
         "",
-        Map.of("link", resetPasswordUrl + "?token=" + token, "username", user.getFullName() + "", "email", email, "portal", frontendUrl));
+        Map.of(
+            "link",
+            resetPasswordUrl + "?token=" + token,
+            "username",
+            user.getFullName() + "",
+            "email",
+            email,
+            "portal",
+            frontendUrl));
   }
 
   @Override
@@ -316,14 +325,19 @@ public class AuthServiceImpl implements AuthService {
       passwordHistory.setUserId(userId);
       passwordHistoryRepository.save(passwordHistory);
     }
-
     final User user = userService.findById(userId);
     notificationService.sendNotification(
-      "email",
-      "password_update",
-      user.getEmail() + "",
-      "",
-      Map.of("email", user.getEmail() + "", "username", user.getFullName() + "", "portal", frontendUrl));
+        "email",
+        "password_update",
+        user.getEmail() + "",
+        "",
+        Map.of(
+            "email",
+            user.getEmail() + "",
+            "username",
+            user.getFullName() + "",
+            "portal",
+            frontendUrl));
   }
 
   @Override
@@ -448,8 +462,14 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.saveAll(tobeSavedPasswordHistoryList);
       return new ResetPasswordByAdminResponse(failureReasons, "Password reset successfully.");
     }
-    throw new GlobalExceptionHandler.ResetPasswordException(
-        "There is no history of password for the given users. Hence cannot reset the password");
+
+    if (resetPasswordRequest.getBehalfOf().size() == 1) {
+      throw new GlobalExceptionHandler.ResetPasswordException(
+          failureReasons.get(resetPasswordRequest.getBehalfOf().get(0).getUserId()));
+    } else {
+      throw new GlobalExceptionHandler.ResetPasswordException(
+          "There is no history of password for the given users. Hence cannot reset the password");
+    }
   }
 
   @Transactional
