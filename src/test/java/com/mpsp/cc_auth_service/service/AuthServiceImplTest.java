@@ -31,11 +31,11 @@ import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.repository.ResetPasswordRepo;
 import com.mpsp.cc_auth_service.service.impl.AuthServiceImpl;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
+import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.GenericException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -330,8 +330,7 @@ class AuthServiceImplTest {
 
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.empty());
 
-    assertThrows(
-        NoSuchElementException.class, () -> authService.resetPasswordSelf(resetPasswordRequest));
+    assertThrows(GenericException.class, () -> authService.resetPasswordSelf(resetPasswordRequest));
   }
 
   @Test
@@ -348,7 +347,7 @@ class AuthServiceImplTest {
     when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.of(resetPassword));
 
     assertThrows(
-        GlobalExceptionHandler.ResetPasswordException.class,
+        GlobalExceptionHandler.GenericException.class,
         () -> authService.resetPasswordSelf(resetPasswordRequest));
   }
 

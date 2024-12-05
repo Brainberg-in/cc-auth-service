@@ -173,22 +173,25 @@ public class AuthServiceImpl implements AuthService {
         jwtToken, refreshToken, user.isMfaEnabled(), isFirstLogin, pw.getUserRole(), resetToken);
   }
 
+  /**
+   * only used in first login conditions in the login API
+   *
+   * @param user
+   * @return reset token
+   */
   private String generateResetToken(final User user) {
     if (!user.isFirstLogin()) {
       return "";
     }
-    final String token = UUID.randomUUID().toString();
 
     final Optional<ResetPassword> existingTokenOpt =
         resetPasswordRepo.findByUserId(user.getUserId());
 
     final ResetPassword resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
     resetToken.setUserId(user.getUserId());
-    resetToken.setResetToken(token);
-    resetToken.setLinkSent(false);
-    resetToken.setModifiedAt(LocalDateTime.now());
+    resetToken.setResetToken(UUID.randomUUID().toString());
+    resetToken.setLinkSent(1);
     resetToken.setLinkExpired(false);
-
     resetPasswordRepo.save(resetToken);
 
     return resetToken.getResetToken();
@@ -264,20 +267,25 @@ public class AuthServiceImpl implements AuthService {
 
     final Optional<ResetPassword> existingTokenOpt =
         resetPasswordRepo.findByUserId(user.getUserId());
-    if (existingTokenOpt.isPresent()
-        && existingTokenOpt.get().isLinkSent()
-        && existingTokenOpt
-            .get()
-            .getModifiedAt()
-            .isAfter(LocalDateTime.now().minus(Duration.ofMinutes(60)))) {
-      throw new GlobalExceptionHandler.ResetPasswordException(
-          "A password reset link has already been sent. Please check your email.");
+    final ResetPassword resetToken;
+    if (existingTokenOpt.isPresent()) {
+      if (existingTokenOpt.get().getLinkSent() >= 3
+          && existingTokenOpt
+              .get()
+              .getModifiedAt()
+              .isAfter(LocalDateTime.now().minus(Duration.ofMinutes(60)))) {
+        throw new GlobalExceptionHandler.ResetPasswordException(
+            "A password reset attempts limit is reached. Please try again after an hour.");
+      } else {
+        resetToken = existingTokenOpt.get();
+        resetToken.setLinkSent(resetToken.getLinkSent() >= 3 ? 1 : resetToken.getLinkSent() + 1);
+      }
+
+    } else {
+      resetToken = new ResetPassword();
+      resetToken.setUserId(user.getUserId());
     }
-    final ResetPassword resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
-    resetToken.setUserId(user.getUserId());
     resetToken.setResetToken(token);
-    resetToken.setLinkSent(true);
-    resetToken.setModifiedAt(LocalDateTime.now());
     resetToken.setLinkExpired(false);
 
     resetPasswordRepo.save(resetToken);
@@ -362,11 +370,11 @@ public class AuthServiceImpl implements AuthService {
             .findByResetToken(resetPasswordRequest.getResetToken())
             .orElseThrow(
                 () ->
-                    new NoSuchElementException(
+                    new GlobalExceptionHandler.GenericException(
                         "Link is Invalid/Expired. Please request a new link"));
 
     if (resetToken.isLinkExpired()) {
-      throw new GlobalExceptionHandler.ResetPasswordException(
+      throw new GlobalExceptionHandler.GenericException(
           "Link is Invalid/Expired. Please request a new link");
     }
 
@@ -388,7 +396,7 @@ public class AuthServiceImpl implements AuthService {
     passwordHistoryRepository.saveAndFlush(passwordHistory);
 
     resetToken.setLinkExpired(true);
-    resetToken.setLinkSent(false);
+    resetToken.setLinkSent(0);
     resetPasswordRepo.saveAndFlush(resetToken);
   }
 
@@ -449,21 +457,34 @@ public class AuthServiceImpl implements AuthService {
       } else {
         final PasswordHistory passwordHistory = passwordHistoryList.get(0);
 
-        final String generatedPassword = String.join(
-          "@", behalfUserDetails.getUser().getFullName().replaceAll(" ", "").toUpperCase().substring(0, 4), "123");
+        final String generatedPassword =
+            String.join(
+                "@",
+                behalfUserDetails
+                    .getUser()
+                    .getFullName()
+                    .replaceAll(" ", "")
+                    .toUpperCase()
+                    .substring(0, 4),
+                "123");
 
-        passwordHistory.setCurrentPassword(
-            passwordEncoder.encode(generatedPassword));
+        passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
         tobeSavedPasswordHistoryList.add(passwordHistory);
-        if (behalfUserDetails.getUser().getEmail() != null && !behalfUserDetails.getUser().getEmail().isEmpty()) {
+        if (behalfUserDetails.getUser().getEmail() != null
+            && !behalfUserDetails.getUser().getEmail().isEmpty()) {
           notificationService.sendNotification(
-            "email",
-            "reset_password_mail",
-            behalfUserDetails.getUser().getEmail() + "",
-            "",
-            Map.of( "email", behalfUserDetails.getUser().getEmail(), "password", generatedPassword,
-                  "portal", frontendUrl));
+              "email",
+              "reset_password_mail",
+              behalfUserDetails.getUser().getEmail() + "",
+              "",
+              Map.of(
+                  "email",
+                  behalfUserDetails.getUser().getEmail(),
+                  "password",
+                  generatedPassword,
+                  "portal",
+                  frontendUrl));
         }
       }
     }

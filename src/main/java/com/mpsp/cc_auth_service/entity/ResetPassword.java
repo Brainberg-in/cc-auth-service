@@ -1,11 +1,10 @@
 package com.mpsp.cc_auth_service.entity;
 
-
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.time.LocalDateTime;
-
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Table(name = "reset_password")
 @Getter
@@ -15,25 +14,27 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ResetPassword {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+  @CreationTimestamp
+  @Column(name = "created_at", updatable = false)
+  private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(name = "modified_at")
-    private LocalDateTime modifiedAt;
+  @UpdateTimestamp
+  @Column(name = "modified_at")
+  private LocalDateTime modifiedAt;
 
-    @Column(name = "user_id")
-    private Integer userId;
+  @Column(name = "user_id")
+  private Integer userId;
 
-    @Column(name = "reset_token")
-    private String resetToken;
+  @Column(name = "reset_token")
+  private String resetToken;
 
-    @Column(name = "link_sent")
-    private boolean isLinkSent;
+  @Column(name = "link_sent")
+  private Integer linkSent;
 
-    @Column(name = "link_expired")
-    private boolean isLinkExpired;
+  @Column(name = "link_expired")
+  private boolean isLinkExpired;
 }
