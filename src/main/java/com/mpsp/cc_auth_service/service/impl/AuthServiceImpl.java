@@ -417,8 +417,13 @@ public class AuthServiceImpl implements AuthService {
                   String.join("", userIdAndRole.getUserRole().toLowerCase(), "s"))
               .orElseThrow();
 
-      if (!behalfUserDetails.getUser().getStatus().equals(UserStatus.ACTIVE)) {
-        failureReasons.put(userIdAndRole.getUserId(), "User status is not 'ACTIVE'");
+      if (!List.of(UserStatus.ACTIVE, UserStatus.INACTIVE)
+          .contains(behalfUserDetails.getUser().getStatus())) {
+        failureReasons.put(
+            userIdAndRole.getUserId(),
+            String.format(
+                "Failed to reset password because user status is not %s",
+                behalfUserDetails.getUser().getStatus()));
         continue;
       }
       if (UserRole.PRINCIPAL.equals(userRole)) {
