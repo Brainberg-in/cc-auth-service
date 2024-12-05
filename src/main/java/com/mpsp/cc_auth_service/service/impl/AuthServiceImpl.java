@@ -326,18 +326,20 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.save(passwordHistory);
     }
     final User user = userService.findById(userId);
-    notificationService.sendNotification(
-        "email",
-        "password_update",
-        user.getEmail() + "",
-        "",
-        Map.of(
-            "email",
-            user.getEmail() + "",
-            "username",
-            user.getFullName() + "",
-            "portal",
-            frontendUrl));
+    if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+      notificationService.sendNotification(
+          "email",
+          "password_update",
+          user.getEmail() + "",
+          "",
+          Map.of(
+              "email",
+              user.getEmail() + "",
+              "username",
+              user.getFullName() + "",
+              "portal",
+              frontendUrl));
+    }
   }
 
   @Override
@@ -449,13 +451,15 @@ public class AuthServiceImpl implements AuthService {
             passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
         tobeSavedPasswordHistoryList.add(passwordHistory);
-        notificationService.sendNotification(
-          "email",
-          "reset_password_mail",
-          behalfUserDetails.getUser().getEmail() + "",
-          "",
-          Map.of( "email", behalfUserDetails.getUser().getEmail(), "password", generatedPassword,
-                "portal", frontendUrl));
+        if (behalfUserDetails.getUser().getEmail() != null && !behalfUserDetails.getUser().getEmail().isEmpty()) {
+          notificationService.sendNotification(
+            "email",
+            "reset_password_mail",
+            behalfUserDetails.getUser().getEmail() + "",
+            "",
+            Map.of( "email", behalfUserDetails.getUser().getEmail(), "password", generatedPassword,
+                  "portal", frontendUrl));
+        }
       }
     }
     if (!tobeSavedPasswordHistoryList.isEmpty()) {
