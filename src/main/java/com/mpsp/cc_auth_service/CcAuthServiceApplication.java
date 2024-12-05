@@ -10,6 +10,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.http.HttpHeaders;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SecurityScheme(
     type = SecuritySchemeType.APIKEY,
@@ -21,6 +22,7 @@ import org.springframework.http.HttpHeaders;
         @Info(title = "cc-auth-service", description = "Swagger documentation for cc-auth-service"))
 @SpringBootApplication
 @EnableFeignClients
+@EnableAsync
 public class CcAuthServiceApplication {
 
   public static void main(String[] args) {
