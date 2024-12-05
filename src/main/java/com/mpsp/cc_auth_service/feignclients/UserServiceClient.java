@@ -41,15 +41,15 @@ public interface UserServiceClient {
       switch (status) {
         case LOCKED:
           logger.info("Access attempted for locked user {}", user.getUserId());
-          throw new InvalidUserStatus("User is locked");
+          throw new InvalidUserStatus("User is locked. Please contact helpdesk");
         case DELETED:
           logger.info("Access attempted for deleted user {}", user.getUserId());
-          throw new InvalidUserStatus("User is deleted");
+          throw new InvalidUserStatus("User is deleted. Please contact helpdesk");
         case ACTIVE, INACTIVE:
           return user;
         default:
           logger.warn("User {} has unexpected status: {}", user.getUserId(), status);
-          throw new InvalidUserStatus("User status is not active");
+          throw new InvalidUserStatus("User status is not active. Please contact helpdesk");
       }
     }
 
