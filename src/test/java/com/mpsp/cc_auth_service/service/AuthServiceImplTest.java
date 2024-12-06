@@ -45,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -77,6 +78,8 @@ class AuthServiceImplTest {
   @MockBean private transient ResetPasswordRepo resetPasswordRepo;
 
   @MockBean private transient SchoolServiceClient schoolService;
+
+  @MockBean private transient JdbcTemplate jdbcTemplate;
 
   @Mock private UserDetails userDetails;
   @Mock private SchoolDetails schoolDetails;
