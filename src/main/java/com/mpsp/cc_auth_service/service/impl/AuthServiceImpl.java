@@ -357,8 +357,6 @@ public class AuthServiceImpl implements AuthService {
     passwordHistory.setUserId(userCreateRequest.getUserId());
     passwordHistory.setCurrentPassword(passwordEncoder.encode(userCreateRequest.getPassword()));
     passwordHistory.setUserRole(userCreateRequest.getRole().toString());
-    passwordHistory.setCreatedAt(LocalDateTime.now());
-    passwordHistory.setModifiedAt(LocalDateTime.now());
 
     passwordHistoryRepository.save(passwordHistory);
   }

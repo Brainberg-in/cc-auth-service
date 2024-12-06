@@ -18,7 +18,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Table(name = "password_history")
 @Getter
 @Setter
-@ToString(exclude = {"currentPassword", "ipAddress"})
+@ToString(exclude = {"currentPassword"})
 @NoArgsConstructor
 public class PasswordHistory {
   @Id
@@ -33,9 +33,6 @@ public class PasswordHistory {
 
   @Column(name = "logout_time")
   private LocalDateTime logoutTime;
-
-  @Column(name = "ip_address")
-  private String ipAddress;
 
   @CreationTimestamp
   @Column(name = "created_at", updatable = false)
