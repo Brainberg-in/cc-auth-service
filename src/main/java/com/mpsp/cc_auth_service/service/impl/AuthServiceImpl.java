@@ -351,6 +351,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
+  @Transactional
   public void createNewUser(final UserCreateRequest userCreateRequest) {
     PasswordHistory passwordHistory = new PasswordHistory();
     passwordHistory.setUserId(userCreateRequest.getUserId());
