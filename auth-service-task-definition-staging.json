@@ -1,9 +1,9 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/mpsp-auth-staging:31",
+  "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/mpsp-auth-staging",
   "containerDefinitions": [
     {
       "name": "cc-auth-service",
-      "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service:62b6b02c2dee771231a6fcca1f65a102e32070d7",
+      "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
       "cpu": 0,
       "portMappings": [
         {
@@ -43,12 +43,12 @@
           "value": "http://user.staging-environment-cluster:3000"
         },
         {
-          "name": "SPRING_PROFILES_ACTIVE",
-          "value": "staging"
-        },
-        {
           "name": "FRONTEND_URL",
           "value": "https://mpsp-fe.sit.trait.fit"
+        },
+        {
+          "name": "SPRING_PROFILES_ACTIVE",
+          "value": "staging"
         }
       ],
       "mountPoints": [],
@@ -151,7 +151,7 @@
   "taskRoleArn": "arn:aws:iam::567347231314:role/cc-auth-service-role",
   "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
   "networkMode": "awsvpc",
-  "revision": 31,
+  "revision": 55,
   "volumes": [],
   "status": "ACTIVE",
   "requiresAttributes": [
@@ -203,13 +203,13 @@
   "requiresCompatibilities": [
     "FARGATE"
   ],
-  "cpu": "512",
-  "memory": "1024",
+  "cpu": "1024",
+  "memory": "2048",
   "runtimePlatform": {
     "cpuArchitecture": "ARM64",
     "operatingSystemFamily": "LINUX"
   },
-  "registeredAt": "2024-11-23T04:41:31.815Z",
+  "registeredAt": "2024-12-06T13:56:45.030Z",
   "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
   "tags": [
     {
