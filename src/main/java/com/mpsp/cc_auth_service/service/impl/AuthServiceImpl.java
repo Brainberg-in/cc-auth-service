@@ -360,7 +360,7 @@ public class AuthServiceImpl implements AuthService {
     passwordHistory.setCreatedAt(LocalDateTime.now());
     passwordHistory.setModifiedAt(LocalDateTime.now());
 
-    passwordHistoryRepository.saveAndFlush(passwordHistory);
+    passwordHistoryRepository.save(passwordHistory);
   }
 
   @Transactional
