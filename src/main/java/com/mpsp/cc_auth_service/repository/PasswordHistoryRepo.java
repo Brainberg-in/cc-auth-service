@@ -31,4 +31,12 @@ public interface PasswordHistoryRepo extends JpaRepository<PasswordHistory, Inte
           + " ph.modifiedAt=CURRENT_TIMESTAMP, ph.failedAttemptTime=CURRENT_TIMESTAMP WHERE"
           + " ph.userId = :userId")
   void updateFailedLoginAttempts(@Param("userId") int userId, @Param("attempts") int attempts);
+
+  @Modifying
+  @Transactional
+  @Query(nativeQuery = true)
+  void saveRecord(
+      @Param("userId") final Integer userId,
+      @Param("password") final String password,
+      final String role);
 }

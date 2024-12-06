@@ -46,6 +46,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +74,8 @@ public class AuthServiceImpl implements AuthService {
   @Autowired private transient SchoolServiceClient schoolService;
 
   @Autowired private transient NotificationService notificationService;
+
+  @Autowired private transient JdbcTemplate jdbcTemplate;
 
   @Value("${aws.ses.sender}")
   private String senderEmail;
@@ -353,12 +356,15 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   public void createNewUser(final UserCreateRequest userCreateRequest) {
-    PasswordHistory passwordHistory = new PasswordHistory();
-    passwordHistory.setUserId(userCreateRequest.getUserId());
-    passwordHistory.setCurrentPassword(passwordEncoder.encode(userCreateRequest.getPassword()));
-    passwordHistory.setUserRole(userCreateRequest.getRole().toString());
 
-    passwordHistoryRepository.save(passwordHistory);
+    final String sql =
+        "INSERT INTO password_history (user_id, current_password, user_role, created_at,"
+            + " modified_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+    jdbcTemplate.update(
+        sql,
+        userCreateRequest.getUserId(),
+        passwordEncoder.encode(userCreateRequest.getPassword()),
+        userCreateRequest.getRole().toString());
   }
 
   @Transactional
