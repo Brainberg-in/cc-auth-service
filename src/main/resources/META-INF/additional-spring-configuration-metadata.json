@@ -74,6 +74,11 @@
       "name": "skip.authorization.paths",
       "type": "java.util.List",
       "description": "List of paths to skip authorization"
+    },
+    {
+      "name": "rabbitmq.queue.name",
+      "type": "java.lang.String",
+      "description": "Queue name from which the user creation event will be received"
     }
   ]
 }

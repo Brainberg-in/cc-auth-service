@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -355,8 +356,9 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
+  @RabbitListener(queues = "${rabbitmq.queue.name}")
   public void createNewUser(final UserCreateRequest userCreateRequest) {
-
+    log.info("User created: {}", userCreateRequest);
     final String sql =
         "INSERT INTO password_history (user_id, current_password, user_role, created_at,"
             + " modified_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
