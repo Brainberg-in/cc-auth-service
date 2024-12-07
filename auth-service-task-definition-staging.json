@@ -77,6 +77,14 @@
         {
           "name": "NEW_RELIC_LICENSE_KEY",
           "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:NEW_RELIC_LICENSE_KEY-eemLJ8:LicenseKey::"
+        },
+        {
+          "name": "RABBITMQ_USERNAME",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/cc-notification-broker-2sWGZB:USERNAME::"
+        },
+        {
+          "name": "RABBITMQ_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/cc-notification-broker-2sWGZB:PASSWORD::"
         }
       ],
       "dockerLabels": {
