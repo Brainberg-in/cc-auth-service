@@ -30,7 +30,7 @@ ext {
 	set('springCloudVersion', "2024.0.0-RC1")
     openapiVersion = '2.7.0'
     nimubs = '9.47'
-	set('sdkVersion',"2.29.27")
+	set('sdkVersion',"2.29.29")
 }
 dependencies {
 	// Spring Boot Starters
@@ -41,6 +41,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	// Spring Cloud

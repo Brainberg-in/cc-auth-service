@@ -46,10 +46,8 @@
                     "value": "http://notification.dev-environment-cluster:3000"
                 },
                 {
-
                     "name": "FRONTEND_URL",
                     "value": "https://mpsp-fe.dev.trait.fit"
-
                 }
             ],
             "mountPoints": [],
@@ -74,6 +72,14 @@
                 {
                     "name": "JWT_SECRET",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
+                },
+                {
+                    "name": "RABBITMQ_USERNAME",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:cc-notification-service-GWHDtw:USERNAME::"
+                },
+                {
+                    "name": "RABBITMQ_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:cc-notification-service-GWHDtw:PASSWORD::"
                 }
             ],
             "logConfiguration": {
