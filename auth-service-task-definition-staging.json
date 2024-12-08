@@ -117,7 +117,7 @@
     },
     {
       "name": "newrelic-infra",
-      "image": "newrelic/nri-ecs:1.12.2",
+      "image": "newrelic/nri-ecs:1.12.3",
       "cpu": 0,
       "memoryReservation": 128,
       "portMappings": [],

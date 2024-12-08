@@ -30,7 +30,7 @@ ext {
 	set('springCloudVersion', "2024.0.0-RC1")
     openapiVersion = '2.7.0'
     nimubs = '9.47'
-	set('sdkVersion',"2.29.27")
+	set('sdkVersion',"2.29.29")
 }
 dependencies {
 	// Spring Boot Starters
