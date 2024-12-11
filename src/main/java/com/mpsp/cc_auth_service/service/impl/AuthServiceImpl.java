@@ -332,7 +332,8 @@ public class AuthServiceImpl implements AuthService {
             .getContent()
             .get(0);
 
-    if (StringUtils.isNotBlank(changePasswordRequest.getCurrentPassword())) {
+    if ("ACTIVE".equals(status)
+        && StringUtils.isNotBlank(changePasswordRequest.getCurrentPassword())) {
       if (passwordEncoder.matches(
           changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
         throw new GlobalExceptionHandler.SamePasswordException(
