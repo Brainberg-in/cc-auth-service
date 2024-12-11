@@ -33,7 +33,7 @@ public class ResetPassword {
   private String resetToken;
 
   @Column(name = "link_sent")
-  private Integer linkSent;
+  private int linkSent;
 
   @Column(name = "link_expired")
   private boolean isLinkExpired;
