@@ -10,7 +10,6 @@ import lombok.Setter;
 public class ChangePasswordRequest {
 
   @Schema(description = "User Current Password")
-  @NotBlank(message = " Current Password is required")
   private String currentPassword;
 
   @Schema(description = "User Password")
