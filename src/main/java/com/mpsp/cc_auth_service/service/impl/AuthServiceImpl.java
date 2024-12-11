@@ -30,6 +30,7 @@ import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+import com.newrelic.api.agent.Trace;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -379,6 +380,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
+  @Trace(dispatcher = true)
   @RabbitListener(queues = "${rabbitmq.queue.name}")
   public void createNewUser(final UserCreateRequest userCreateRequest) {
     log.info("User created: {}", userCreateRequest);
