@@ -30,6 +30,7 @@ import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
+import com.newrelic.api.agent.Trace;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -174,7 +175,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), isFirstLogin, pw.getUserRole(), resetToken);
+        jwtToken,
+        refreshToken,
+        user.isMfaEnabled(),
+        isFirstLogin,
+        pw.getUserRole(),
+        resetToken,
+        user.getStatus());
   }
 
   /**
@@ -259,7 +266,8 @@ public class AuthServiceImpl implements AuthService {
     // Refresh token only gets generated when the user logs in
     // The refresh token is only used for refreshing the access token.
     final String newJwtToken = jwtTokenProvider.generateToken(user, false, p.getUserRole());
-    return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole(), "");
+    return new LoginResponse(
+        newJwtToken, refreshToken, true, false, p.getUserRole(), "", user.getStatus());
   }
 
   @Override
@@ -372,6 +380,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
+  @Trace(dispatcher = true)
   @RabbitListener(queues = "${rabbitmq.queue.name}")
   public void createNewUser(final UserCreateRequest userCreateRequest) {
     log.info("User created: {}", userCreateRequest);
