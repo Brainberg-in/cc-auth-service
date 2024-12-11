@@ -174,7 +174,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     return new LoginResponse(
-        jwtToken, refreshToken, user.isMfaEnabled(), isFirstLogin, pw.getUserRole(), resetToken);
+        jwtToken,
+        refreshToken,
+        user.isMfaEnabled(),
+        isFirstLogin,
+        pw.getUserRole(),
+        resetToken,
+        user.getStatus());
   }
 
   /**
@@ -259,7 +265,8 @@ public class AuthServiceImpl implements AuthService {
     // Refresh token only gets generated when the user logs in
     // The refresh token is only used for refreshing the access token.
     final String newJwtToken = jwtTokenProvider.generateToken(user, false, p.getUserRole());
-    return new LoginResponse(newJwtToken, refreshToken, true, false, p.getUserRole(), "");
+    return new LoginResponse(
+        newJwtToken, refreshToken, true, false, p.getUserRole(), "", user.getStatus());
   }
 
   @Override

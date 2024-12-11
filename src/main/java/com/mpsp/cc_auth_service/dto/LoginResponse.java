@@ -1,6 +1,7 @@
 package com.mpsp.cc_auth_service.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mpsp.cc_auth_service.constants.UserStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,9 +28,9 @@ public class LoginResponse {
   @JsonProperty("isFirstLogin")
   private boolean isFirstLogin;
 
-  @JsonProperty("userRole")
   private String userRole;
 
-  @JsonProperty("resetToken")
   private String resetToken;
+
+  private UserStatus status;
 }
