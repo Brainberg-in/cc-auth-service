@@ -30,6 +30,7 @@ ext {
 	set('springCloudVersion', "2024.0.0-RC1")
     openapiVersion = '2.7.0'
     nimubs = '9.47'
+	newrelic='8.16.0'
 	set('sdkVersion',"2.29.30")
 }
 dependencies {
@@ -61,7 +62,7 @@ dependencies {
 	// MySQL Connector
 	runtimeOnly("com.mysql:mysql-connector-j")
 	// https://mvnrepository.com/artifact/com.newrelic.agent.java/newrelic-api
-	runtimeOnly("com.newrelic.agent.java:newrelic-api:8.16.0")
+	implementation "com.newrelic.agent.java:newrelic-api:${newrelic}"
 
 
 	// Testing dependencies
