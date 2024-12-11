@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -164,7 +165,6 @@ public class AuthServiceImpl implements AuthService {
 
     final boolean isFirstLogin = user.isFirstLogin();
     final String resetToken = generateResetToken(user);
-    handleFirstLoginIfNeeded(user);
     handleMfaIfEnabled(user);
 
     // Reset failed_login_attempts on successful login
@@ -314,14 +314,26 @@ public class AuthServiceImpl implements AuthService {
   public void changePassword(
       final ChangePasswordRequest changePasswordRequest, final String token) {
     final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
-    log.info("User ID: {}", userId);
+    log.info("{} is trying to reset the password", userId);
+    final String status = jwtTokenProvider.getClaim(token, AppConstants.USER_STATUS);
+    if (StringUtils.isBlank(status) || !List.of("ACTIVE", "INACTIVE").contains(status)) {
+      log.error("User {} is not active, Status is {}", userId, status);
+      throw new GlobalExceptionHandler.InvalidCredentialsException("UnAuthorized Access");
+    }
+
+    if ("ACTIVE".equals(status)
+        && StringUtils.isBlank(changePasswordRequest.getCurrentPassword())) {
+      throw new GlobalExceptionHandler.GenericException("Current password is required");
+    }
+
     final PasswordHistory passwordHistory =
         passwordHistoryRepository
             .findAllByUserId(userId, PageRequest.of(0, 1, Sort.by("logoutTime").descending()))
             .getContent()
             .get(0);
 
-    if (changePasswordRequest.getCurrentPassword() != null) {
+    if ("ACTIVE".equals(status)
+        && StringUtils.isNotBlank(changePasswordRequest.getCurrentPassword())) {
       if (passwordEncoder.matches(
           changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
         throw new GlobalExceptionHandler.SamePasswordException(
@@ -338,6 +350,10 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.save(passwordHistory);
     }
     final User user = userService.findById(userId);
+    if ("INACTIVE".equals(status)) {
+      log.info("User status is INACTIVE. Hence making first login false since password is reset");
+      handleFirstLoginIfNeeded(user);
+    }
     if (user.getEmail() != null && !user.getEmail().isEmpty()) {
       notificationService.sendNotification(
           "email",

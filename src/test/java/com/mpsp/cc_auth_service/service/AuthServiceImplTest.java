@@ -12,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.mpsp.cc_auth_service.constants.AppConstants;
 import com.mpsp.cc_auth_service.constants.UserStatus;
 import com.mpsp.cc_auth_service.dto.ChangePasswordRequest;
 import com.mpsp.cc_auth_service.dto.LoginRequest;
@@ -93,6 +94,7 @@ class AuthServiceImplTest {
     user.setUserId(1);
     user.setEmail("test@example.com");
     user.setStatus(UserStatus.ACTIVE);
+    user.setFullName("John Doe");
     /// user.setMfaEnabled(false);
 
     passwordHistory = new PasswordHistory();
@@ -209,6 +211,7 @@ class AuthServiceImplTest {
     passwordHistory.setUserId(1);
     passwordHistory.setCurrentPassword("encodedCurrentPassword");
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
+    when(jwtTokenProvider.getClaim("validToken", AppConstants.USER_STATUS)).thenReturn("ACTIVE");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(
@@ -218,6 +221,9 @@ class AuthServiceImplTest {
             changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword()))
         .thenReturn(false);
     when(userService.findById(anyInt())).thenReturn(user);
+    doNothing()
+        .when(notificationService)
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
     authService.changePassword(changePasswordRequest, "validToken");
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
   }
@@ -253,12 +259,37 @@ class AuthServiceImplTest {
     passwordHistory.setCurrentPassword("encodedPassword");
 
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
+    when(jwtTokenProvider.getClaim("validToken", AppConstants.USER_STATUS)).thenReturn("ACTIVE");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-
+    // when(passwordHistoryRepository.save(any())).thenReturn(user);
     assertThrows(
         GlobalExceptionHandler.SamePasswordException.class,
+        () -> authService.changePassword(changePasswordRequest, "validToken"));
+  }
+
+  @Test
+  void changePassword_ActiveUserAndNoCurrentPassword() throws ParseException {
+    ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
+    changePasswordRequest.setPassword("encodedPassword");
+    changePasswordRequest.setCurrentPassword("");
+
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setUserId(1);
+    passwordHistory.setCurrentPassword("encodedPassword");
+
+    when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
+    when(jwtTokenProvider.getClaim("validToken", AppConstants.USER_STATUS)).thenReturn("ACTIVE");
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+    // when(passwordHistoryRepository.save(any())).thenReturn(user);
+    doNothing()
+        .when(notificationService)
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+    assertThrows(
+        GlobalExceptionHandler.GenericException.class,
         () -> authService.changePassword(changePasswordRequest, "validToken"));
   }
 
@@ -270,7 +301,7 @@ class AuthServiceImplTest {
     PasswordHistory passwordHistory = new PasswordHistory();
     passwordHistory.setUserId(1);
     passwordHistory.setCurrentPassword("encodedPassword");
-
+    when(jwtTokenProvider.getClaim("validToken", AppConstants.USER_STATUS)).thenReturn("INACTIVE");
     when(jwtTokenProvider.getSubject(anyString())).thenReturn("1");
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
