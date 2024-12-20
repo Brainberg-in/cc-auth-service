@@ -148,18 +148,22 @@ public class OtpServiceImpl implements OtpService {
 
   private void VerifyUser(int userId, String mode) {
     User userDetails = userService.findById(userId);
+    Map<String, Boolean> userDataMap = new HashMap<>();
     log.info("userData: " + userDetails);
 
     if (mode.equals("email")) {
-      userDetails.setEmailVerified(true);
-      userService.updateUser(userId, userDetails);
+      userDataMap.put("isEmailVerified", true);
+      userService.updateUserVerification(userId, userDataMap);
     } else if (mode.equals("sms")) {
-      userDetails.setMobileVerified(true);
-      userService.updateUser(userId, userDetails);
+      userDataMap.put("isMobileVerified", true);
+      userService.updateUserVerification(userId, userDataMap);
     }
     if (userDetails.isEmailVerified() && userDetails.isMobileVerified()) {
       userDetails.setStatus(UserStatus.ACTIVE);
       userService.updateUser(userId, userDetails);
+      Map<String, String> userStatusDataMap = new HashMap<>();
+      userStatusDataMap.put("status", UserStatus.ACTIVE.toString());
+      userService.updateUserStatus(null, userStatusDataMap);
     }
     log.info("User verified successfully: " + userDetails);
   }
