@@ -159,8 +159,6 @@ public class OtpServiceImpl implements OtpService {
       userService.updateUserVerification(userId, userDataMap);
     }
     if (userDetails.isEmailVerified() && userDetails.isMobileVerified()) {
-      userDetails.setStatus(UserStatus.ACTIVE);
-      userService.updateUser(userId, userDetails);
       Map<String, String> userStatusDataMap = new HashMap<>();
       userStatusDataMap.put("status", UserStatus.ACTIVE.toString());
       userService.updateUserStatus(null, userStatusDataMap);
