@@ -164,7 +164,7 @@ public class OtpServiceImpl implements OtpService {
       userDetails.setStatus(UserStatus.ACTIVE);
       Map<String, String> userStatusDataMap = new HashMap<>();
       userStatusDataMap.put("status", UserStatus.ACTIVE.toString());
-      userService.updateUserStatus(null, userStatusDataMap);
+      userService.updateUserStatus(userId, userStatusDataMap);
     }
     log.info("User verified successfully: " + userDetails);
   }
