@@ -132,7 +132,7 @@ public class OtpServiceImpl implements OtpService {
         .findByUserId(userId)
         .map(
             otpGen -> {
-              if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(10))) {
+              if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
                 throw new OTPExpiredException("OTP expired");
               }
               if (!otpGen.getOtp().equals(verifyOtp.getOtp())) {
