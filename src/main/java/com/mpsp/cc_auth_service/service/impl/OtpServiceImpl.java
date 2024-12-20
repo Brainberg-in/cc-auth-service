@@ -148,6 +148,7 @@ public class OtpServiceImpl implements OtpService {
 
   private void VerifyUser(int userId, String mode) {
     User userDetails = userService.findById(userId);
+    log.info("userData: " + userDetails);
 
     if (mode.equals("email")) {
       userDetails.setEmailVerified(true);
@@ -160,6 +161,7 @@ public class OtpServiceImpl implements OtpService {
       userDetails.setStatus(UserStatus.ACTIVE);
       userService.updateUser(userId, userDetails);
     }
+    log.info("User verified successfully: " + userDetails);
   }
 
   @Override
