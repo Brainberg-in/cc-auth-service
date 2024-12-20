@@ -71,6 +71,10 @@ public interface UserServiceClient {
   @PutMapping(value = "/api/v1/users/{id}")
   void updateUserStatus(
       @PathVariable(name = "id") final Integer id, @RequestBody final Map<String, String> body);
+  
+  @PutMapping(value = "/api/v1/users/{id}")
+  void updateUserVerification(
+      @PathVariable(name = "id") final Integer id, @RequestBody final Map<String, Boolean> body);
 
   @GetMapping(value = "/api/v1/{role}/{id}")
   Optional<UserDetails> getUserDetails(
