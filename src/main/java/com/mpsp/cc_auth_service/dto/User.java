@@ -1,20 +1,31 @@
 package com.mpsp.cc_auth_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mpsp.cc_auth_service.constants.Gender;
+import com.mpsp.cc_auth_service.constants.UserRole;
 import com.mpsp.cc_auth_service.constants.UserStatus;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString
+@AllArgsConstructor
+@ToString(
+    exclude = {
+      "fullName",
+      "mobile",
+      "email",
+      "addressLine1",
+      "addressLine2",
+      "city",
+      "pincode",
+      "state",
+      "dateOfBirth"
+    })
 // User class
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User {
   private Integer userId;
   private String fullName;
@@ -23,7 +34,7 @@ public class User {
   private String addressLine1;
   private String addressLine2;
   private String city;
-  private String pinCode;
+  private String pincode;
   private String state;
   private Date dateOfBirth;
   private Gender gender;
@@ -32,16 +43,19 @@ public class User {
   private Date updatedAt;
   private Long createdBy;
   private Long updatedBy;
+  private UserRole role;
+
+  @JsonProperty("isEmailVerified")
+  private boolean isEmailVerified;
+
+  @JsonProperty("isMobileVerified")
+  private boolean isMobileVerified;  
+
+  @JsonProperty("isMfaEnabled")
   private boolean isMfaEnabled;
+
+  @JsonProperty("isFirstLogin")
   private boolean isFirstLogin;
-  private UserRole userRole;
-  public enum UserRole{
-      ADMIN,
-              PRINCIPAL,
-              TEACHER,
-              STUDENT,
-               POC
-  }
 
   public User(final int userId, final String email) {
     this.userId = userId;

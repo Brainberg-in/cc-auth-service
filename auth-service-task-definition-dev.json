@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition:19",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-task-definition",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
@@ -16,18 +16,38 @@
                 }
             ],
             "essential": true,
+            "entryPoint": [
+                "java",
+                "-XX:+UnlockExperimentalVMOptions",
+                "-XX:+UseContainerSupport",
+                "-Djava.security.egd=file:/dev/./urandom",
+                "-jar",
+                "/app/cc-auth-service-0.0.1-SNAPSHOT.jar"
+            ],
             "environment": [
                 {
-                    "name": "DB_PORT",
-                    "value": "3306"
+                    "name": "USER_SERVICE_URL",
+                    "value": "http://user.dev-environment-cluster:3000"
                 },
                 {
                     "name": "DB_NAME",
                     "value": "auth"
                 },
                 {
-                    "name": "DB_USER",
-                    "value": "admin"
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "dev"
+                },
+                {
+                    "name": "SCHOOL_SERVICE_URL",
+                    "value": "http://school.dev-environment-cluster:4000"
+                },
+                {
+                    "name": "NOTIFICATION_SERVICE_URL",
+                    "value": "http://notification.dev-environment-cluster:3000"
+                },
+                {
+                    "name": "FRONTEND_URL",
+                    "value": "https://mpsp-fe.dev.trait.fit"
                 }
             ],
             "mountPoints": [],
@@ -40,6 +60,26 @@
                 {
                     "name": "DB_PASSWORD",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:password::"
+                },
+                {
+                    "name": "DB_PORT",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:port::"
+                },
+                {
+                    "name": "DB_USER",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:mpsp_dev-6sF0ho:username::"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
+                },
+                {
+                    "name": "RABBITMQ_USERNAME",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:cc-notification-service-GWHDtw:USERNAME::"
+                },
+                {
+                    "name": "RABBITMQ_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:cc-notification-service-GWHDtw:PASSWORD::"
                 }
             ],
             "logConfiguration": {
@@ -52,13 +92,24 @@
                 },
                 "secretOptions": []
             },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "wget --spider --no-verbose http://localhost:8080/actuator/health || exit 1"
+                ],
+                "interval": 10,
+                "timeout": 10,
+                "retries": 3,
+                "startPeriod": 70
+            },
             "systemControls": []
         }
     ],
     "family": "auth-service-task-definition",
+    "taskRoleArn": "arn:aws:iam::567347231314:role/cc-auth-service-role",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 19,
+    "revision": 85,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -76,6 +127,12 @@
         },
         {
             "name": "ecs.capability.secrets.asm.environment-variables"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.container-health-check"
         },
         {
             "name": "ecs.capability.execution-role-ecr-pull"
@@ -101,10 +158,19 @@
     "cpu": "512",
     "memory": "1024",
     "runtimePlatform": {
-        "cpuArchitecture": "X86_64",
+        "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-08-27T08:40:31.992Z",
+    "registeredAt": "2024-10-19T04:55:29.484Z",
     "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
-    "tags": []
+    "tags": [
+        {
+            "key": "environment",
+            "value": "dev"
+        },
+        {
+            "key": "application",
+            "value": "mpsp"
+        }
+    ]
 }

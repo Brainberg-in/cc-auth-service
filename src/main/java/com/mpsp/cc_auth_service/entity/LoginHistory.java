@@ -3,6 +3,7 @@ package com.mpsp.cc_auth_service.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "login_history")
@@ -20,7 +21,8 @@ public class LoginHistory {
   @Column(name = "user_id", nullable = false)
   private Integer userId;
 
-  @Column(name = "last_login_time", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
+  @ColumnDefault(value = "CURRENT_TIMESTAMP")
+  @Column(name = "last_login_time", columnDefinition = "DATETIME")
   private LocalDateTime lastLoginTime;
 
   @Column(name = "logout_time")
@@ -29,9 +31,9 @@ public class LoginHistory {
   @Column(name = "ip_address")
   private String ipAddress;
 
-  public LoginHistory(final Integer userId, final LocalDateTime now) {
+  public LoginHistory(final Integer userId, final LocalDateTime now, final String ipAddress) {
     this.userId = userId;
     this.lastLoginTime = now;
-    // this.ipAddress = o.toString();
+    this.ipAddress = ipAddress;
   }
 }

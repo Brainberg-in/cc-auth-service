@@ -1,0 +1,232 @@
+{
+  "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/mpsp-auth-staging",
+  "containerDefinitions": [
+    {
+      "name": "cc-auth-service",
+      "image": "567347231314.dkr.ecr.ap-south-1.amazonaws.com/cc-auth-service",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "name": "cc-auth-service-8080-tcp",
+          "containerPort": 8080,
+          "hostPort": 8080,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "entryPoint": [
+        "java",
+        "-XX:+UnlockExperimentalVMOptions",
+        "-XX:+UseContainerSupport",
+        "-Dnewrelic.environment=staging",
+        "-Djava.security.egd=file:/dev/./urandom",
+        "-javaagent:/usr/local/newrelic/newrelic.jar",
+        "-jar",
+        "/app/cc-auth-service-0.0.1-SNAPSHOT.jar"
+      ],
+      "environment": [
+        {
+          "name": "DB_NAME",
+          "value": "auth"
+        },
+        {
+          "name": "NOTIFICATION_SERVICE_URL",
+          "value": "http://notification.staging-environment-cluster:3000"
+        },
+        {
+          "name": "SCHOOL_SERVICE_URL",
+          "value": "http://school.staging-environment-cluster:4000"
+        },
+        {
+          "name": "USER_SERVICE_URL",
+          "value": "http://user.staging-environment-cluster:3000"
+        },
+        {
+          "name": "FRONTEND_URL",
+          "value": "https://mpsp-fe.sit.trait.fit"
+        },
+        {
+          "name": "SPRING_PROFILES_ACTIVE",
+          "value": "staging"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [
+        {
+          "name": "DB_HOST",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:host::"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:password::"
+        },
+        {
+          "name": "DB_PORT",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:port::"
+        },
+        {
+          "name": "DB_USER",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:username::"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
+        },
+        {
+          "name": "NEW_RELIC_LICENSE_KEY",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:NEW_RELIC_LICENSE_KEY-eemLJ8:LicenseKey::"
+        },
+        {
+          "name": "RABBITMQ_USERNAME",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/cc-notification-broker-2sWGZB:USERNAME::"
+        },
+        {
+          "name": "RABBITMQ_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/cc-notification-broker-2sWGZB:PASSWORD::"
+        }
+      ],
+      "dockerLabels": {
+        "application": "mpsp",
+        "environment": "staging"
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/mpsp-auth-staging",
+          "mode": "non-blocking",
+          "awslogs-create-group": "true",
+          "max-buffer-size": "25m",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget --spider --no-verbose http://localhost:8080/actuator/health || exit 1"
+        ],
+        "interval": 10,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 100
+      },
+      "systemControls": []
+    },
+    {
+      "name": "newrelic-infra",
+      "image": "newrelic/nri-ecs:1.12.3",
+      "cpu": 0,
+      "memoryReservation": 128,
+      "portMappings": [],
+      "essential": true,
+      "environment": [
+        {
+          "name": "NRIA_CUSTOM_ATTRIBUTES",
+          "value": "{\"nrDeployMethod\":\"downloadPage\"}"
+        },
+        {
+          "name": "NRIA_IS_FORWARD_ONLY",
+          "value": "true"
+        },
+        {
+          "name": "NRIA_PASSTHROUGH_ENVIRONMENT",
+          "value": "ECS_CONTAINER_METADATA_URI,ECS_CONTAINER_METADATA_URI_V4,FARGATE"
+        },
+        {
+          "name": "FARGATE",
+          "value": "true"
+        },
+        {
+          "name": "NRIA_OVERRIDE_HOST_ROOT",
+          "value": ""
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [
+        {
+          "name": "NRIA_LICENSE_KEY",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:NEW_RELIC_LICENSE_KEY-eemLJ8:LicenseKey::"
+        }
+      ],
+      "systemControls": []
+    }
+  ],
+  "family": "mpsp-auth-staging",
+  "taskRoleArn": "arn:aws:iam::567347231314:role/cc-auth-service-role",
+  "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
+  "networkMode": "awsvpc",
+  "revision": 55,
+  "volumes": [],
+  "status": "ACTIVE",
+  "requiresAttributes": [
+    {
+      "name": "ecs.capability.execution-role-awslogs"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.ecr-auth"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.task-iam-role"
+    },
+    {
+      "name": "ecs.capability.container-health-check"
+    },
+    {
+      "name": "ecs.capability.execution-role-ecr-pull"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    },
+    {
+      "name": "ecs.capability.task-eni"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    },
+    {
+      "name": "ecs.capability.secrets.asm.environment-variables"
+    }
+  ],
+  "placementConstraints": [],
+  "compatibilities": [
+    "EC2",
+    "FARGATE"
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "1024",
+  "memory": "2048",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "registeredAt": "2024-12-06T13:56:45.030Z",
+  "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
+  "tags": [
+    {
+      "key": "application",
+      "value": "mpsp"
+    },
+    {
+      "key": "environment",
+      "value": "staging"
+    }
+  ]
+}

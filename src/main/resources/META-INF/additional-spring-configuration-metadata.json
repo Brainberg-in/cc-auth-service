@@ -1,0 +1,84 @@
+{
+  "properties": [
+    {
+      "name": "user.service.url",
+      "type": "java.lang.String",
+      "description": "User service url to be used for fetching user details"
+    },
+    {
+      "name": "school.service.url",
+      "type": "java.lang.String",
+      "description": "School service url to be used for fetching school details"
+    },
+    {
+      "name": "notification.service.url",
+      "type": "java.lang.String",
+      "description": "Notification service url to be used for send notifications"
+    },
+    {
+      "name": "frontend.url",
+      "type": "java.lang.String",
+      "description": "Frontend url to be used as params in email templates"
+    },
+    {
+      "name": "service.env",
+      "type": "java.lang.String",
+      "description": "Env in use"
+    },
+    {
+      "name": "fallback.url.reset.password",
+      "type": "java.lang.String",
+      "description": "Fallback url to be used for reset password"
+    },
+    {
+      "name": "jwt.iss",
+      "type": "java.lang.String",
+      "description": "Issuer to be used for generating JWT"
+    },
+    {
+      "name": "jwt.aud",
+      "type": "java.lang.String",
+      "description": "Audience to be used for generating JWT"
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "JWT secret"
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "Access Token Expiration in milliseconds"
+    },
+    {
+      "name": "jwt.refresh.expiration",
+      "type": "java.lang.Long",
+      "description": "Refresh Token Expiration in milliseconds"
+    },
+    {
+      "name": "aws.ses.sender",
+      "type": "java.lang.String",
+      "description": "Sender email address for AWS SES"
+    },
+    {
+      "name": "max.login.attempts",
+      "type": "java.lang.Integer",
+      "description": "Number of login attempts allowed before locking the account"
+    },
+    {
+      "name": "skip.authorization.urls",
+      "type": "java.util.List",
+      "description": "List of URLs to skip authorization"
+    },
+    {
+      "name": "skip.authorization.paths",
+      "type": "java.util.List",
+      "description": "List of paths to skip authorization"
+    },
+    {
+      "name": "rabbitmq.queue.name",
+      "type": "java.lang.String",
+      "description": "Queue name from which the user creation event will be received"
+    }
+  ]
+}

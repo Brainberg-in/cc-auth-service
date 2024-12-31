@@ -1,7 +1,7 @@
 plugins {
 	id ("jacoco")
 	id("java")
-	id("org.springframework.boot") version "3.3.3"
+	id("org.springframework.boot") version "3.4.0"
 	id("io.spring.dependency-management") version "1.1.6"
 }
 
@@ -10,7 +10,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -23,13 +23,15 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
 }
 
 ext {
-	set('springCloudVersion', "2023.0.3")
-    openapiVersion = '2.6.0'
-    nimubs = '9.37.2'
-	set('sdkVersion',"2.27.10")
+	set('springCloudVersion', "2024.0.0-RC1")
+    openapiVersion = '2.7.0'
+    nimubs = '9.47'
+	newrelic='8.16.0'
+	set('sdkVersion',"2.29.30")
 }
 dependencies {
 	// Spring Boot Starters
@@ -38,7 +40,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
 	// Spring Cloud
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
@@ -50,15 +55,15 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-common:${openapiVersion}"
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${openapiVersion}"
 
-	// AWS SDK for SESv2
-	implementation 'software.amazon.awssdk:sesv2'
-
 	// Lombok
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 
 	// MySQL Connector
 	runtimeOnly("com.mysql:mysql-connector-j")
+	// https://mvnrepository.com/artifact/com.newrelic.agent.java/newrelic-api
+	implementation "com.newrelic.agent.java:newrelic-api:${newrelic}"
+
 
 	// Testing dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

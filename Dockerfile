@@ -1,13 +1,7 @@
-FROM gradle:8.10-jdk17-alpine AS build
-COPY --chown=gradle:gradle . /home/gradle/src
-WORKDIR /home/gradle/src
-RUN gradle clean build --no-daemon
+FROM --platform=linux/arm64 arm64v8/eclipse-temurin:21-jre-alpine
+COPY build/libs/cc-auth-service-0.0.1-SNAPSHOT.jar /app/
+RUN mkdir -p /usr/local/newrelic
+ADD ./newrelic/newrelic.jar /usr/local/newrelic/newrelic.jar
+ADD ./newrelic/newrelic.yml /usr/local/newrelic/newrelic.yml
 
-
-FROM eclipse-temurin:17.0.12_7-jre-alpine
 EXPOSE 8080
-RUN mkdir /app
-COPY --from=build /home/gradle/src/build/libs/cc-auth-service-0.0.1-SNAPSHOT.jar /app/
-ARG SPRING_PROFILE=dev
-ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILE}
-ENTRYPOINT ["java","-XX:+UnlockExperimentalVMOptions", "-XX:+UseContainerSupport", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/cc-auth-service-0.0.1-SNAPSHOT.jar"]
