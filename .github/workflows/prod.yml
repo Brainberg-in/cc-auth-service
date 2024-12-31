@@ -32,9 +32,9 @@ on:
 
 env:
   AWS_REGION: ap-south-1 # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: cc-auth-service # set this to your Amazon ECR repository name
+  ECR_REPOSITORY: prod/auth-service # set this to your Amazon ECR repository name
   ECS_SERVICE: auth-service # set this to your Amazon ECS service name
-  ECS_CLUSTER: staging-environment-cluster # set this to your Amazon ECS cluster name
+  ECS_CLUSTER: prod-environment-cluster # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION:
     prod-task-def.json # set this to the path to your Amazon ECS task definition
     # file, e.g. .aws/task-definition.json
