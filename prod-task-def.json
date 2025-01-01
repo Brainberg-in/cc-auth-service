@@ -19,7 +19,7 @@
                 "java",
                 "-XX:+UnlockExperimentalVMOptions",
                 "-XX:+UseContainerSupport",
-                "-Dnewrelic.environment=staging",
+                "-Dnewrelic.environment=production",
                 "-Djava.security.egd=file:/dev/./urandom",
                 "-javaagent:/usr/local/newrelic/newrelic.jar",
                 "-jar",
