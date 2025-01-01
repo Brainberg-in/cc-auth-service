@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-prod:1",
+    "taskDefinitionArn": "arn:aws:ecs:ap-south-1:567347231314:task-definition/auth-service-prod",
     "containerDefinitions": [
         {
             "name": "cc-auth-service",
@@ -51,7 +51,6 @@
                     "value": "prod"
                 }
             ],
-            "environmentFiles": [],
             "mountPoints": [],
             "volumesFrom": [],
             "secrets": [
@@ -76,19 +75,18 @@
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
                 },
                 {
+                    "name": "NEW_RELIC_LICENSE_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:NEW_RELIC_LICENSE_KEY-eemLJ8:LicenseKey::"
+                },
+                {
                     "name": "RABBITMQ_PASSWORD",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/cc-notification-broker-GGZ8MX:PASSWORD::"
                 },
                 {
                     "name": "RABBITMQ_USERNAME",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/cc-notification-broker-GGZ8MX:USERNAME::"
-                },
-                {
-                    "name": "NEW_RELIC_LICENSE_KEY",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:NEW_RELIC_LICENSE_KEY-eemLJ8:LicenseKey::"
                 }
             ],
-            "ulimits": [],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -108,7 +106,8 @@
                 ],
                 "interval": 30,
                 "timeout": 5,
-                "retries": 3
+                "retries": 3,
+                "startPeriod": 45
             },
             "systemControls": []
         },
@@ -140,7 +139,6 @@
                     "value": ""
                 }
             ],
-            "environmentFiles": [],
             "mountPoints": [],
             "volumesFrom": [],
             "secrets": [
@@ -156,7 +154,7 @@
     "taskRoleArn": "arn:aws:iam::567347231314:role/cc-auth-service-role",
     "executionRoleArn": "arn:aws:iam::567347231314:role/ecsTaskExecutionRole-userService",
     "networkMode": "awsvpc",
-    "revision": 1,
+    "revision": 10,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -191,9 +189,6 @@
             "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
         },
         {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.24"
-        },
-        {
             "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
         },
         {
@@ -214,7 +209,7 @@
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-12-31T17:37:12.473Z",
+    "registeredAt": "2025-01-01T05:31:52.528Z",
     "registeredBy": "arn:aws:iam::567347231314:user/bhargav@traitfit.com",
     "enableFaultInjection": false,
     "tags": [
