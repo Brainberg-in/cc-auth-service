@@ -82,6 +82,10 @@
                 {
                     "name": "RABBITMQ_USERNAME",
                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/cc-notification-broker-GGZ8MX:USERNAME::"
+                },
+                {
+                    "name": "NEW_RELIC_LICENSE_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:NEW_RELIC_LICENSE_KEY-eemLJ8:LicenseKey::"
                 }
             ],
             "ulimits": [],
