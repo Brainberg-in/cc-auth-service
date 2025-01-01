@@ -1,8 +1,8 @@
 plugins {
 	id ("jacoco")
 	id("java")
-	id("org.springframework.boot") version "3.4.0"
-	id("io.spring.dependency-management") version "1.1.6"
+	id("org.springframework.boot") version "3.4.1"
+	id("io.spring.dependency-management") version "1.1.7"
 }
 
 group = "com.mpsp"
@@ -23,15 +23,14 @@ configurations {
 
 repositories {
 	mavenCentral()
-	maven { url 'https://repo.spring.io/milestone' }
 }
 
 ext {
-	set('springCloudVersion', "2024.0.0-RC1")
+	set('springCloudVersion', "2024.0.0")
     openapiVersion = '2.7.0'
-    nimubs = '9.47'
-	newrelic='8.16.0'
-	set('sdkVersion',"2.29.30")
+    nimubs = '9.48'
+	newrelic='8.17.0'
+	set('sdkVersion',"2.29.43")
 }
 dependencies {
 	// Spring Boot Starters
