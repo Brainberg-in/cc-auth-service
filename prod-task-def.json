@@ -72,7 +72,7 @@
                 },
                 {
                     "name": "JWT_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:dev/jwt_secret-hcksPY:token_signing_key::"
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/jwt_secret-GUchQL:token_signing_key::"
                 },
                 {
                     "name": "NEW_RELIC_LICENSE_KEY",
