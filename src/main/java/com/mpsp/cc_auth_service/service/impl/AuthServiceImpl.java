@@ -103,26 +103,28 @@ public class AuthServiceImpl implements AuthService {
 
       final User user;
 
-      if (StringUtils.isNotBlank(role) && role.equals("STUDENT"))
-      {
+      if (StringUtils.isNotBlank(role) && role.equals("STUDENT")) {
         if (uniqueStudentId == null || uniqueStudentId.isEmpty()) {
-          throw new GlobalExceptionHandler.InvalidCredentialsException("Unique Student Id is required");
+          throw new GlobalExceptionHandler.InvalidCredentialsException(
+              "Unique Student Id is required");
         } else {
-          user = userService.findByUniqueStudent(uniqueStudentId).getUser();  // Get the user object from the Student object
+          user =
+              userService
+                  .findByUniqueStudent(uniqueStudentId)
+                  .getUser(); // Get the user object from the Student object
           System.out.println("user: " + user);
           if (user == null) {
             throw new NoSuchElementException("User not found");
           }
         }
-        
-      } else {
-      // Validate user and password
-      user = userService.findByEmail(email);
-      if (user == null) {
-        throw new NoSuchElementException("User not found");
-      }
-      log.info("User found: {}", user);
 
+      } else {
+        // Validate user and password
+        user = userService.findByEmail(email);
+        if (user == null) {
+          throw new NoSuchElementException("User not found");
+        }
+        log.info("User found: {}", user);
       }
 
       final PasswordHistory pw =
@@ -594,19 +596,19 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional(readOnly = true)
   public List<LoginHistoryResponse> getLoginHistory(final Integer userId) {
-
+    log.info("Getting login history for userId: {}", userId);
     // only return the last 10 login details.
     final Page<LoginHistory> loginHistoryPage =
         loginHistoryRepository.findAllByUserId(
             userId, PageRequest.of(0, 10, Sort.by("lastLoginTime").descending()));
-    List<LoginHistory> loginHistoryList = loginHistoryPage.getContent();
+    final List<LoginHistory> loginHistoryList = loginHistoryPage.getContent();
     return loginHistoryList.stream()
         .map(this::convertToLoginHistoryResponse)
         .collect(Collectors.toList());
   }
 
-  private LoginHistoryResponse convertToLoginHistoryResponse(LoginHistory loginHistory) {
-    LoginHistoryResponse response = new LoginHistoryResponse();
+  private LoginHistoryResponse convertToLoginHistoryResponse(final LoginHistory loginHistory) {
+    final LoginHistoryResponse response = new LoginHistoryResponse();
     response.setId(loginHistory.getId());
     response.setUserId(loginHistory.getUserId());
     response.setLastLoginTime(loginHistory.getLastLoginTime());
