@@ -97,14 +97,33 @@ public class AuthServiceImpl implements AuthService {
   public LoginResponse login(final LoginRequest loginRequest, final String ipAddress) {
     try {
       final String email = loginRequest.getEmail();
+      final String uniqueStudentId = loginRequest.getUniqueStudentId();
+      final String role = loginRequest.getRole();
       final String password = loginRequest.getPassword();
 
+      final User user;
+
+      if (StringUtils.isNotBlank(role) && role.equals("STUDENT"))
+      {
+        if (uniqueStudentId == null || uniqueStudentId.isEmpty()) {
+          throw new GlobalExceptionHandler.InvalidCredentialsException("Unique Student Id is required");
+        } else {
+          user = userService.findByUniqueStudent(uniqueStudentId).getUser();  // Get the user object from the Student object
+          System.out.println("user: " + user);
+          if (user == null) {
+            throw new NoSuchElementException("User not found");
+          }
+        }
+        
+      } else {
       // Validate user and password
-      final User user = userService.findByEmail(email);
+      user = userService.findByEmail(email);
       if (user == null) {
         throw new NoSuchElementException("User not found");
       }
       log.info("User found: {}", user);
+
+      }
 
       final PasswordHistory pw =
           passwordHistoryRepository

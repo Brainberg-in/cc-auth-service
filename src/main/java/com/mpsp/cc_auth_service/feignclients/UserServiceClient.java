@@ -1,6 +1,8 @@
 package com.mpsp.cc_auth_service.feignclients;
 
 import com.mpsp.cc_auth_service.constants.UserStatus;
+import com.mpsp.cc_auth_service.dto.Student;
+import com.mpsp.cc_auth_service.dto.StudentsData;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.UserDetails;
 import com.mpsp.cc_auth_service.dto.UsersData;
@@ -59,6 +61,47 @@ public interface UserServiceClient {
         .orElseThrow(() -> new NoSuchElementException("Multiple users found"));
   }
 
+  @GetMapping(value = "/api/v1/students")
+  default Student findByUniqueStudent(@RequestParam(name = "uniqueStudentId") final String uniqueStudentId) {
+    final StudentsData users = findByUniqueStudentId(uniqueStudentId);
+    logger.info("Response received - UsersData: {}", users);
+    
+    if (users.getMetadata().getTotalStudents() == 0) {
+        throw new NoSuchElementException("Student not found");
+    }
+    if (users.getMetadata().getTotalStudents() == 1) {
+        Student user = users.getData().get(0);
+        UserStatus status = user.getUser().getStatus();
+
+        if (status == null) {
+            logger.error("User {} has null status", user.getUser().getUserId());
+            throw new InvalidUserStatus("Invalid user status");
+        }
+
+        switch (status) {
+            case LOCKED:
+                logger.info("Access attempted for locked user {}", user.getUser().getUserId());
+                throw new InvalidUserStatus("User is locked. Please contact helpdesk");
+            case DROPPEDOUT:
+                logger.info("Access attempted for dropped out user {}", user.getUser().getUserId());
+                throw new InvalidUserStatus("User is droppedout. Please contact helpdesk");
+            case DELETED:
+                logger.info("Access attempted for deleted user {}", user.getUser().getUserId());
+                throw new InvalidUserStatus("User is deleted. Please contact helpdesk");
+            case ACTIVE, INACTIVE:
+                return user;
+            default:
+                logger.warn("User {} has unexpected status: {}", user.getUser().getUserId(), status);
+                throw new InvalidUserStatus("User status is not active. Please contact helpdesk");
+        }
+    }
+
+    return users.getData().stream()
+        .filter(user -> user.getUser().getStatus().equals(UserStatus.ACTIVE))
+        .findFirst()
+        .orElseThrow(() -> new NoSuchElementException("Multiple students found"));
+}
+
   @GetMapping(value = "/api/v1/users")
   UsersData findByEmailId(@RequestParam(name = "emailId") final String emailId);
 
@@ -79,4 +122,7 @@ public interface UserServiceClient {
   @GetMapping(value = "/api/v1/{role}/{id}")
   Optional<UserDetails> getUserDetails(
       @PathVariable(name = "id") final Integer id, @PathVariable(name = "role") final String role);
+
+  @GetMapping(value = "/api/v1/students")
+  StudentsData findByUniqueStudentId(@RequestParam(name = "uniqueStudentId") final String uniqueStudentId);
 }

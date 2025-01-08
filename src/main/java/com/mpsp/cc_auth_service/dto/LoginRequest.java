@@ -16,9 +16,12 @@ import lombok.Setter;
 public class LoginRequest {
 
   @Schema(name = "email", example = "johndoe@gmail.com")
-  @NotBlank(message = "Email is required")
   @Email(message = "Invalid email")
   private String email;
+
+  private String uniqueStudentId;
+
+  private String role;
 
   @Schema(name = "password", example = "P@ssword123")
   @NotBlank(message = "Password is required")
