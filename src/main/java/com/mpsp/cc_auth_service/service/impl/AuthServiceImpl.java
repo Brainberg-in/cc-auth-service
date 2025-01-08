@@ -381,6 +381,10 @@ public class AuthServiceImpl implements AuthService {
       log.info("User status is INACTIVE. Hence making first login false since password is reset");
       handleFirstLoginIfNeeded(user);
     }
+
+    if ("INACTIVE".equals(status) && user.getRole() != null && user.getRole().equals(UserRole.STUDENT)) {
+      userService.updateUserStatus(userId, Map.of("status", UserStatus.ACTIVE.toString()));
+    }
     if (user.getEmail() != null && !user.getEmail().isEmpty()) {
       notificationService.sendNotification(
           "email",
