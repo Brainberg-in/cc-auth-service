@@ -44,7 +44,7 @@
                 },
                 {
                     "name": "FRONTEND_URL",
-                    "value": "https://mpsp-fe.dev.trait.fit"
+                    "value": "https://dronarjun.mpcareerportal.in"
                 },
                 {
                     "name": "SPRING_PROFILES_ACTIVE",
