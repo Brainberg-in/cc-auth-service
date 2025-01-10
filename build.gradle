@@ -27,10 +27,10 @@ repositories {
 
 ext {
 	set('springCloudVersion', "2024.0.0")
-    openapiVersion = '2.7.0'
-    nimubs = '9.48'
+    openapiVersion = '2.8.1'
+    nimubs = '10.0.1'
 	newrelic='8.17.0'
-	set('sdkVersion',"2.29.43")
+	set('sdkVersion',"2.29.47")
 }
 dependencies {
 	// Spring Boot Starters
@@ -90,3 +90,25 @@ test {
 		events "passed", "skipped", "failed"
 	}
 }
+
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+				    "com/mpsp/cc_auth_service/CcAuthServiceApplication*",
+					 "com/mpsp/cc_auth_service/utils/GlobalExceptionHandler*",
+                    "com/mpsp/cc_auth_service/entity/*",
+                    "com/mpsp/cc_auth_service/dto/*",
+					"com/mpsp/cc_auth_service/error/*",
+                    "com/mpsp/cc_auth_service/repository/*",
+					"com/mpsp/cc_auth_service/feignclients/*",
+                    "com/mpsp/cc_auth_service/constants/*",
+                    "com/mpsp/cc_auth_service/config/*"
+            ])
+        }))
+    }
+}
+
