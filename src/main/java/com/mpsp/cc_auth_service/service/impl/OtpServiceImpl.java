@@ -51,7 +51,7 @@ public class OtpServiceImpl implements OtpService {
             otpGen -> {
               otpGen.setModifiedAt(LocalDateTime.now());
               otpGen.setOtp(otp);
-              otpGenRepo.saveAndFlush(otpGen);
+              otpGenRepo.save(otpGen);
             },
             () -> {
               final OtpGen otpGen = new OtpGen();
@@ -59,7 +59,7 @@ public class OtpServiceImpl implements OtpService {
               otpGen.setOtp(otp);
               otpGen.setCreatedAt(LocalDateTime.now());
               otpGen.setModifiedAt(LocalDateTime.now());
-              otpGenRepo.saveAndFlush(otpGen);
+              otpGenRepo.save(otpGen);
             });
     return otp;
   }
@@ -137,17 +137,17 @@ public class OtpServiceImpl implements OtpService {
               if (!otpGen.getOtp().equals(verifyOtp.getOtp())) {
                 throw new OTPVerificationException("OTP verification failed");
               }
-              if (verifyOtp.getPurpose().equals("verification")) {
-                VerifyUser(userId, verifyOtp.getMode());
+              if ("verification".equals(verifyOtp.getPurpose())) {
+                verifyUser(userId, verifyOtp.getMode());
               }
               return true;
             })
         .orElseThrow(() -> new NoSuchElementException("OTP not found for user"));
   }
 
-  private void VerifyUser(int userId, String mode) {
-    User userDetails = userService.findById(userId);
-    Map<String, Boolean> userDataMap = new HashMap<>();
+  private void verifyUser(int userId, String mode) {
+    final User userDetails = userService.findById(userId);
+    final Map<String, Boolean> userDataMap = new HashMap<>();
     log.info("userData: {}", userDetails);
 
     if (mode.equals("email")) {

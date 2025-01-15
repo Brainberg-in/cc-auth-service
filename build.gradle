@@ -99,7 +99,6 @@ jacocoTestReport {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
 				    "com/mpsp/cc_auth_service/CcAuthServiceApplication*",
-					 "com/mpsp/cc_auth_service/utils/GlobalExceptionHandler*",
                     "com/mpsp/cc_auth_service/entity/*",
                     "com/mpsp/cc_auth_service/dto/*",
 					"com/mpsp/cc_auth_service/error/*",
