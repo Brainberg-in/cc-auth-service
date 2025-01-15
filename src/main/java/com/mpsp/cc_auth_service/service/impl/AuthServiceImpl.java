@@ -103,26 +103,26 @@ public class AuthServiceImpl implements AuthService {
 
       final User user;
 
-      if (StringUtils.isNotBlank(role) && role.equals("STUDENT"))
-      {
+      if (StringUtils.isNotBlank(role) && role.equals("STUDENT")) {
         if (uniqueStudentId == null || uniqueStudentId.isEmpty()) {
-          throw new GlobalExceptionHandler.InvalidCredentialsException("Unique Student Id is required");
+          throw new GlobalExceptionHandler.InvalidCredentialsException(
+              "Unique Student Id is required");
         } else {
-          user = userService.findByUniqueStudent(uniqueStudentId).getUser();  // Get the user object from the Student object
-          System.out.println("user: " + user);
+          user =
+              userService
+                  .findByUniqueStudent(uniqueStudentId)
+                  .getUser(); // Get the user object from the Student object
+          log.info("user: {}", user);
           if (user == null) {
             throw new NoSuchElementException("User not found");
           }
         }
-        
-      } else {
-      // Validate user and password
-      user = userService.findByEmail(email);
-      if (user == null) {
-        throw new NoSuchElementException("User not found");
-      }
-      log.info("User found: {}", user);
 
+      } else {
+        // Validate user and password
+        user = userService.findByEmail(email);
+
+        log.info("User found: {}", user);
       }
 
       final PasswordHistory pw =
@@ -156,8 +156,7 @@ public class AuthServiceImpl implements AuthService {
       log.info("User data user{}", user);
       // userService.updateUser(user.getUserId(), user);
 
-      Map<String, String> userDataMap = new HashMap<>();
-      userDataMap.put("status", user.getStatus().toString());
+      final Map<String, String> userDataMap = Map.of("status", user.getStatus().toString());
       userService.updateUserStatus(user.getUserId(), userDataMap);
       passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
 
@@ -184,9 +183,10 @@ public class AuthServiceImpl implements AuthService {
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now(), ipAddress));
 
     final boolean isFirstLogin = user.isFirstLogin();
-    final String resetToken = generateResetToken(user);
-    handleMfaIfEnabled(user);
-
+    // Need to remove this
+    if (user.isMfaEnabled()) {
+      otpService.sendOtp(user.getEmail());
+    }
     // Reset failed_login_attempts on successful login
     if (pw.getFailedLoginAttempts() != 0) {
       pw.setFailedLoginAttempts(0);
@@ -199,49 +199,7 @@ public class AuthServiceImpl implements AuthService {
         user.isMfaEnabled(),
         isFirstLogin,
         pw.getUserRole(),
-        resetToken,
         user.getStatus());
-  }
-
-  /**
-   * only used in first login conditions in the login API
-   *
-   * @param user
-   * @return reset token
-   */
-  private String generateResetToken(final User user) {
-    if (!user.isFirstLogin()) {
-      return "";
-    }
-
-    final Optional<ResetPassword> existingTokenOpt =
-        resetPasswordRepo.findByUserId(user.getUserId());
-
-    final ResetPassword resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
-    resetToken.setUserId(user.getUserId());
-    resetToken.setResetToken(UUID.randomUUID().toString());
-    resetToken.setLinkSent(1);
-    resetToken.setLinkExpired(false);
-    resetPasswordRepo.save(resetToken);
-
-    return resetToken.getResetToken();
-  }
-
-  private void handleFirstLoginIfNeeded(final User user) {
-    if (user.isFirstLogin()) {
-      try {
-        user.setFirstLogin(false);
-        userService.updateUser(user.getUserId(), user);
-      } catch (Exception e) {
-        log.error("Error updating first login status", e);
-      }
-    }
-  }
-
-  private void handleMfaIfEnabled(final User user) {
-    if (user.isMfaEnabled()) {
-      otpService.sendOtp(user.getEmail());
-    }
   }
 
   @Override
@@ -256,7 +214,7 @@ public class AuthServiceImpl implements AuthService {
     if (!loginHistoryPage.isEmpty()) {
       final LoginHistory loginHistory = loginHistoryPage.getContent().get(0);
       loginHistory.setLogoutTime(LocalDateTime.now());
-      loginHistoryRepository.saveAndFlush(loginHistory);
+      loginHistoryRepository.save(loginHistory);
     }
   }
 
@@ -286,10 +244,11 @@ public class AuthServiceImpl implements AuthService {
     // The refresh token is only used for refreshing the access token.
     final String newJwtToken = jwtTokenProvider.generateToken(user, false, p.getUserRole());
     return new LoginResponse(
-        newJwtToken, refreshToken, true, false, p.getUserRole(), "", user.getStatus());
+        newJwtToken, refreshToken, true, false, p.getUserRole(), user.getStatus());
   }
 
   @Override
+  @Transactional
   public void sendResetPasswordEmail(final String email) {
     final User user = userService.findByEmail(email);
 
@@ -377,12 +336,15 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.save(passwordHistory);
     }
     final User user = userService.findById(userId);
-    if ("INACTIVE".equals(status)) {
+    if ("INACTIVE".equals(status) && user.isFirstLogin()) {
       log.info("User status is INACTIVE. Hence making first login false since password is reset");
-      handleFirstLoginIfNeeded(user);
+      user.setFirstLogin(false);
+      userService.updateUser(user.getUserId(), user);
     }
 
-    if ("INACTIVE".equals(status) && user.getRole() != null && user.getRole().equals(UserRole.STUDENT)) {
+    if ("INACTIVE".equals(status)
+        && user.getRole() != null
+        && user.getRole().equals(UserRole.STUDENT)) {
       userService.updateUserStatus(userId, Map.of("status", UserStatus.ACTIVE.toString()));
     }
     if (user.getEmail() != null && !user.getEmail().isEmpty()) {
@@ -569,11 +531,6 @@ public class AuthServiceImpl implements AuthService {
     refreshTokenRepository.save(token);
   }
 
-  @Transactional
-  private void updateRefreshToken(final Integer userId, final String newRefreshToken) {
-    refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
-  }
-
   @Transactional(readOnly = true)
   @Override
   public Map<Integer, String> getUserRoles(final List<Integer> userIds) {
@@ -609,7 +566,7 @@ public class AuthServiceImpl implements AuthService {
         .collect(Collectors.toList());
   }
 
-  private LoginHistoryResponse convertToLoginHistoryResponse(LoginHistory loginHistory) {
+  private LoginHistoryResponse convertToLoginHistoryResponse(final LoginHistory loginHistory) {
     LoginHistoryResponse response = new LoginHistoryResponse();
     response.setId(loginHistory.getId());
     response.setUserId(loginHistory.getUserId());
