@@ -159,7 +159,8 @@ public class GlobalExceptionHandlerTest {
 
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     assertEquals("Invalid Credentials", response.getBody().getError());
-    // assertEquals(2, response.getBody().getAttempts());
+    assertEquals(2, response.getBody().getRemainingAttempts());
+    assertEquals(2, ex.getAttempts());
   }
 
   @Test

@@ -3,6 +3,7 @@ package com.mpsp.cc_auth_service.utils;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.mpsp.cc_auth_service.constants.AppConstants;
 import com.mpsp.cc_auth_service.dto.User;
 import java.text.ParseException;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,14 @@ public class JwtTokenProviderTest {
   }
 
   @Test
+  public void testGenerateRefreshToken() {
+    when(user.getUserId()).thenReturn(1);
+    final String token = jwtTokenProvider.generateToken(user, true, "");
+    // System.out.println(token);
+    assertNotNull(token);
+  }
+
+  @Test
   public void testExpiredToken() {
     final String token =
         "eyJhbGciOiJIUzI1NiJ9.eyJpc1JlZnJlc2hUb2tlbiI6ZmFsc2UsImlzcyI6InRyYWl0Zml0Iiwic3ViIjoiMSIsImV4cCI6MTcyNTMxMDg3NiwiaWF0IjoxNzI1MzMzNzc2fQ.KxHSEIyOWl015P3jN3ArdnK8r5LyohnrtdgH-iuRu7U";
@@ -53,11 +62,54 @@ public class JwtTokenProviderTest {
   }
 
   @Test
+  public void testParseException() {
+    final String token = "eyJ0eXAiOi";
+    assertFalse(jwtTokenProvider.verifyToken(token, "1", false));
+  }
+
+  @Test
   void testVerifyToken() {
     when(user.getUserId()).thenReturn(1);
-    String token = jwtTokenProvider.generateToken(user, false, "");
-    System.out.println(token);
+    final String token = jwtTokenProvider.generateToken(user, false, "");
     assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false));
+  }
+
+  @Test
+  void testVerifyBearerToken() {
+    when(user.getUserId()).thenReturn(1);
+    final String token = jwtTokenProvider.generateToken(user, false, "");
+    assertDoesNotThrow(
+        () ->
+            jwtTokenProvider.verifyToken(String.join("", AppConstants.BEARER, token), "1", false));
+  }
+
+  @Test
+  public void testGetClaim() {
+    final String token = jwtTokenProvider.generateToken(user, false, "");
+    assertEquals("false", jwtTokenProvider.getClaim(token, AppConstants.IS_REFRESHTOKEN));
+  }
+
+  @Test
+  public void testGetEmail() {
+    when(user.getEmail()).thenReturn("test@example.com");
+    final String token = jwtTokenProvider.generateToken(user, false, "");
+    assertEquals("test@example.com", jwtTokenProvider.getUserEmail(token));
+  }
+
+  @Test
+  public void testGetEmailException() {
+    assertThrows(
+        GlobalExceptionHandler.RefreshTokenException.class,
+        () -> jwtTokenProvider.getUserEmail("Bearer invalidToken"));
+  }
+
+  @Test
+  public void testGetClaimBearer() {
+    final String token = jwtTokenProvider.generateToken(user, false, "");
+    assertEquals(
+        "false",
+        jwtTokenProvider.getClaim(
+            String.join("", AppConstants.BEARER, token), AppConstants.IS_REFRESHTOKEN));
   }
 
   @Test
@@ -66,5 +118,20 @@ public class JwtTokenProviderTest {
     String token = jwtTokenProvider.generateToken(user, false, "");
     String subject = jwtTokenProvider.getSubject(token);
     assertEquals("1", subject);
+  }
+
+  @Test
+  public void testGetSubjectBearer() throws ParseException {
+    when(user.getUserId()).thenReturn(1);
+    String token = jwtTokenProvider.generateToken(user, false, "");
+    String subject = jwtTokenProvider.getSubject(String.join("", AppConstants.BEARER, token));
+    assertEquals("1", subject);
+  }
+
+  @Test
+  public void testGetSubjectBearerException() throws ParseException {
+    assertThrows(
+        GlobalExceptionHandler.RefreshTokenException.class,
+        () -> jwtTokenProvider.getSubject(String.join("", AppConstants.BEARER, "invalidToken")));
   }
 }
