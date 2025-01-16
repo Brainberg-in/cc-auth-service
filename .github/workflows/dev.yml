@@ -60,6 +60,25 @@ jobs:
           java-version: 21
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Coverage
+        run: ./gradlew jacocoTestReport
+
+      - name: Jacoco Report to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.1
+        with:
+          path: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 90
+          min-coverage-changed-files: 90
+          debug-mode: false
+
+      - name: Get the Coverage info
+        run: |
+          echo "Total coverage ${{ steps.jacoco.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco.outputs.coverage-changed-files }}"
+
       - name: Build with Gradle
         run: ./gradlew build
 
