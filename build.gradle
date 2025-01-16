@@ -94,15 +94,17 @@ test {
 
 jacocoTestReport {
     dependsOn test // tests are required to run before generating the report
-
+	
+	reports {
+        html.required.set(true)
+        xml.required.set(true)
+    }
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
 				    "com/mpsp/cc_auth_service/CcAuthServiceApplication*",
-					 "com/mpsp/cc_auth_service/utils/GlobalExceptionHandler*",
-                    "com/mpsp/cc_auth_service/entity/*",
+					"com/mpsp/cc_auth_service/controllers/*",
                     "com/mpsp/cc_auth_service/dto/*",
-					"com/mpsp/cc_auth_service/error/*",
                     "com/mpsp/cc_auth_service/repository/*",
 					"com/mpsp/cc_auth_service/feignclients/*",
                     "com/mpsp/cc_auth_service/constants/*",

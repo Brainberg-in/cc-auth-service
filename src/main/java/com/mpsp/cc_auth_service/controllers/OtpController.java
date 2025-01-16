@@ -55,10 +55,11 @@ public class OtpController {
 
   @PostMapping("/send")
   public ResponseEntity<ApiResponse> sendVerificationOtp(
-    @RequestHeader(name = HttpHeaders.AUTHORIZATION)
-        @NotBlank(message = "Authorization Token is required")
-        @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
-        String token, @RequestBody @Valid SendOtp sendOtp) {
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+          @NotBlank(message = "Authorization Token is required")
+          @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
+          String token,
+      @RequestBody @Valid SendOtp sendOtp) {
     otpService.sendVerificationOtp(token, sendOtp);
     return ResponseEntity.ok(new ApiResponse("OTP sent successfully"));
   }

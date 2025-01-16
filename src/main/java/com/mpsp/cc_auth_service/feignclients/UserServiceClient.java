@@ -22,10 +22,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "userServiceClient", url = "${user.service.url}")
 public interface UserServiceClient {
 
-  Logger logger = LoggerFactory.getLogger(UserServiceClient.class);
+  final Logger logger = LoggerFactory.getLogger(UserServiceClient.class);
 
   @GetMapping("/api/v1/users")
-  default User findByEmail(@RequestParam(name = "emailId") final String emailId) {
+  default User findByEmail(@RequestParam final String emailId) {
     final UsersData users = findByEmailId(emailId);
     if (users.getMetadata().getTotalUsers() == 0) {
       throw new NoSuchElementException("User not found");
@@ -62,45 +62,46 @@ public interface UserServiceClient {
   }
 
   @GetMapping(value = "/api/v1/students")
-  default Student findByUniqueStudent(@RequestParam(name = "uniqueStudentId") final String uniqueStudentId) {
+  default Student findByUniqueStudent(
+      @RequestParam(name = "uniqueStudentId") final String uniqueStudentId) {
     final StudentsData users = findByUniqueStudentId(uniqueStudentId);
     logger.info("Response received - UsersData: {}", users);
-    
+
     if (users.getMetadata().getTotalStudents() == 0) {
-        throw new NoSuchElementException("Student not found");
+      throw new NoSuchElementException("Student not found");
     }
     if (users.getMetadata().getTotalStudents() == 1) {
-        Student user = users.getData().get(0);
-        UserStatus status = user.getUser().getStatus();
+      Student user = users.getData().get(0);
+      UserStatus status = user.getUser().getStatus();
 
-        if (status == null) {
-            logger.error("User {} has null status", user.getUser().getUserId());
-            throw new InvalidUserStatus("Invalid user status");
-        }
+      if (status == null) {
+        logger.error("User {} has null status", user.getUser().getUserId());
+        throw new InvalidUserStatus("Invalid user status");
+      }
 
-        switch (status) {
-            case LOCKED:
-                logger.info("Access attempted for locked user {}", user.getUser().getUserId());
-                throw new InvalidUserStatus("User is locked. Please contact helpdesk");
-            case DROPPEDOUT:
-                logger.info("Access attempted for dropped out user {}", user.getUser().getUserId());
-                throw new InvalidUserStatus("User is droppedout. Please contact helpdesk");
-            case DELETED:
-                logger.info("Access attempted for deleted user {}", user.getUser().getUserId());
-                throw new InvalidUserStatus("User is deleted. Please contact helpdesk");
-            case ACTIVE, INACTIVE:
-                return user;
-            default:
-                logger.warn("User {} has unexpected status: {}", user.getUser().getUserId(), status);
-                throw new InvalidUserStatus("User status is not active. Please contact helpdesk");
-        }
+      switch (status) {
+        case LOCKED:
+          logger.info("Access attempted for locked user {}", user.getUser().getUserId());
+          throw new InvalidUserStatus("User is locked. Please contact helpdesk");
+        case DROPPEDOUT:
+          logger.info("Access attempted for dropped out user {}", user.getUser().getUserId());
+          throw new InvalidUserStatus("User is droppedout. Please contact helpdesk");
+        case DELETED:
+          logger.info("Access attempted for deleted user {}", user.getUser().getUserId());
+          throw new InvalidUserStatus("User is deleted. Please contact helpdesk");
+        case ACTIVE, INACTIVE:
+          return user;
+        default:
+          logger.warn("User {} has unexpected status: {}", user.getUser().getUserId(), status);
+          throw new InvalidUserStatus("User status is not active. Please contact helpdesk");
+      }
     }
 
     return users.getData().stream()
-        .filter(user -> user.getUser().getStatus().equals(UserStatus.ACTIVE))
+        .filter(user -> UserStatus.ACTIVE.equals(user.getUser().getStatus()))
         .findFirst()
-        .orElseThrow(() -> new NoSuchElementException("Multiple students found"));
-}
+        .orElseThrow(() -> new NoSuchElementException("No Active User found"));
+  }
 
   @GetMapping(value = "/api/v1/users")
   UsersData findByEmailId(@RequestParam(name = "emailId") final String emailId);
@@ -114,7 +115,7 @@ public interface UserServiceClient {
   @PutMapping(value = "/api/v1/users/{id}")
   void updateUserStatus(
       @PathVariable(name = "id") final Integer id, @RequestBody final Map<String, String> body);
-  
+
   @PutMapping(value = "/api/v1/users/{id}")
   void updateUserVerification(
       @PathVariable(name = "id") final Integer id, @RequestBody final Map<String, Boolean> body);
@@ -124,5 +125,6 @@ public interface UserServiceClient {
       @PathVariable(name = "id") final Integer id, @PathVariable(name = "role") final String role);
 
   @GetMapping(value = "/api/v1/students")
-  StudentsData findByUniqueStudentId(@RequestParam(name = "uniqueStudentId") final String uniqueStudentId);
+  StudentsData findByUniqueStudentId(
+      @RequestParam(name = "uniqueStudentId") final String uniqueStudentId);
 }
