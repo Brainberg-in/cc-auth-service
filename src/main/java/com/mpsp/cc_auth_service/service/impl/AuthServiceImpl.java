@@ -131,7 +131,7 @@ public class AuthServiceImpl implements AuthService {
               .findFirst()
               .orElseThrow(() -> new NoSuchElementException("User not found"));
 
-      if (passwordEncoder.matches(password, pw.getCurrentPassword())) {
+      if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
         handleFailedLoginAttempt(user, pw);
       }
 
