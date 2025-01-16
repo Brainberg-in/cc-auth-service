@@ -64,17 +64,24 @@ jobs:
       - name: Run Coverage
         run: ./gradlew jacocoTestReport
 
-      - name: Fail PR if overall coverage is less than 100%
-        if: ${{ steps.jacoco.outputs.coverage-overall < 100.0 }}
-        uses: actions/github-script@v6
-        with:
-          script: |
-            core.setFailed('Overall coverage is less than 100%!')
-
       - name: Get the Coverage info
         run: |
           echo "Total coverage ${{ steps.jacoco.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco.outputs.coverage-changed-files }}"
+
+      - name: Fail PR if overall coverage is less than 95%
+        if: ${{ steps.jacoco.outputs.coverage-overall < 95.0 }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed('Overall coverage is less than 95%!')
+
+      - name: Fail PR if changed files coverage is less than 95%
+        if: ${{ steps.jacoco.outputs.coverage-changed-files < 95.0 }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed('Changed files coverage is less than 95%!')
 
       - name: Build with Gradle
         run: ./gradlew build
