@@ -64,15 +64,12 @@ jobs:
       - name: Run Coverage
         run: ./gradlew jacocoTestReport
 
-      - name: Jacoco Report to PR
-        id: jacoco
-        uses: madrapps/jacoco-report@v1.1
+      - name: Fail PR if overall coverage is less than 100%
+        if: ${{ steps.jacoco.outputs.coverage-overall < 100.0 }}
+        uses: actions/github-script@v6
         with:
-          path: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 100
-          min-coverage-changed-files: 100
-          debug-mode: false
+          script: |
+            core.setFailed('Overall coverage is less than 100%!')
 
       - name: Get the Coverage info
         run: |
