@@ -101,7 +101,6 @@ jacocoTestReport {
 				    "com/mpsp/cc_auth_service/CcAuthServiceApplication*",
 					"com/mpsp/cc_auth_service/controllers/*",
                     "com/mpsp/cc_auth_service/dto/*",
-					"com/mpsp/cc_auth_service/error/*",
                     "com/mpsp/cc_auth_service/repository/*",
 					"com/mpsp/cc_auth_service/feignclients/*",
                     "com/mpsp/cc_auth_service/constants/*",
