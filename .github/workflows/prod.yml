@@ -53,15 +53,51 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: 21
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Coverage
+        run: ./gradlew jacocoTestReport
+
+      - name: Jacoco Report to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.1
+        with:
+          path: ${{ github.workspace }}/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 95
+          min-coverage-changed-files: 95
+          debug-mode: false
+          title: Code Coverage
+
+      - name: Get the Coverage info
+        run: |
+          echo "Total coverage ${{ steps.jacoco.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco.outputs.coverage-changed-files }}"
+
+      - name: Fail PR if overall coverage is less than 95%
+        if: ${{ steps.jacoco.outputs.coverage-overall < 95.0 }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed('Overall coverage is less than 95%!')
+
+      - name: Fail PR if changed files coverage is less than 95%
+        if: ${{ steps.jacoco.outputs.coverage-changed-files < 95.0 }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed('Changed files coverage is less than 95%!')
+
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew build -x test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
