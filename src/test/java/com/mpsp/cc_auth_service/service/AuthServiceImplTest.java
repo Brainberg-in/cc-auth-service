@@ -29,6 +29,7 @@ import com.mpsp.cc_auth_service.dto.Student;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.UserCreateRequest;
 import com.mpsp.cc_auth_service.dto.UserDetails;
+import com.mpsp.cc_auth_service.dto.UserIdAndRole;
 import com.mpsp.cc_auth_service.entity.LoginHistory;
 import com.mpsp.cc_auth_service.entity.PasswordHistory;
 import com.mpsp.cc_auth_service.entity.RefreshToken;
@@ -152,6 +153,25 @@ class AuthServiceImplTest {
   }
 
   @Test
+  void testLogin_NoPasswordFound() {
+    when(userService.findByEmail(anyString())).thenReturn(user);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+        .thenReturn(new PageImpl<>(Collections.emptyList()));
+    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+
+    when(jwtTokenProvider.generateToken(user, false, "")).thenReturn("jwtToken");
+    when(jwtTokenProvider.generateToken(user, true, "")).thenReturn("refreshToken");
+    when(refreshTokenRepository.findByToken(anyString())).thenReturn(Optional.empty());
+    when(refreshTokenRepository.save(any(RefreshToken.class))).thenReturn(refreshToken);
+    doNothing().when(passwordHistoryRepository).updateFailedLoginAttempts(1, 0);
+    final LoginRequest loginRequest = new LoginRequest();
+    loginRequest.setEmail("test@example.com");
+    loginRequest.setPassword("password");
+
+    assertThrows(NoSuchElementException.class, () -> authService.login(loginRequest, "127.0.0.1"));
+  }
+
+  @Test
   void testLoginSuccessHandleMFA() {
     user.setMfaEnabled(true);
     when(userService.findByEmail(anyString())).thenReturn(user);
@@ -200,25 +220,6 @@ class AuthServiceImplTest {
   }
 
   @Test
-  void testLoginStudentNotFound() {
-    when(userService.findByUniqueStudent(anyString())).thenReturn(new Student());
-    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
-        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
-    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-
-    when(jwtTokenProvider.generateToken(user, false, "")).thenReturn("jwtToken");
-    when(jwtTokenProvider.generateToken(user, true, "")).thenReturn("refreshToken");
-
-    final LoginRequest loginRequest = new LoginRequest();
-    loginRequest.setEmail("test@example.com");
-    loginRequest.setPassword("password");
-    loginRequest.setRole("STUDENT");
-    loginRequest.setUniqueStudentId("1234");
-
-    assertThrows(NoSuchElementException.class, () -> authService.login(loginRequest, "127.0.0.1"));
-  }
-
-  @Test
   void testLoginInvalidPassword() {
     when(userService.findByEmail(anyString())).thenReturn(user);
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
@@ -229,6 +230,28 @@ class AuthServiceImplTest {
     loginRequest.setEmail("test@example.com");
     loginRequest.setPassword("password");
 
+    assertThrows(
+        GlobalExceptionHandler.InvalidPasswordException.class,
+        () -> authService.login(loginRequest, "127.0.0.1"));
+    verify(passwordHistoryRepository, times(1)).updateFailedLoginAttempts(1, 2);
+  }
+
+  @Test
+  void testLoginInvalidPassword_student() {
+    when(userService.findByEmail(anyString())).thenReturn(user);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+    doNothing().when(passwordHistoryRepository).updateFailedLoginAttempts(1, 2);
+    LoginRequest loginRequest = new LoginRequest();
+    loginRequest.setEmail("test@example.com");
+    loginRequest.setPassword("password");
+    loginRequest.setRole(UserRole.STUDENT.name());
+    loginRequest.setUniqueStudentId("1234");
+    final Student student = new Student();
+    user.setRole(UserRole.STUDENT);
+    student.setUser(user);
+    when(userService.findByUniqueStudent(anyString())).thenReturn(student);
     assertThrows(
         GlobalExceptionHandler.InvalidPasswordException.class,
         () -> authService.login(loginRequest, "127.0.0.1"));
@@ -670,6 +693,30 @@ class AuthServiceImplTest {
   }
 
   @Test
+  void resetPassword_SamePasswordException() {
+    ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+    resetPasswordRequest.setPassword("newPassword");
+    resetPasswordRequest.setResetToken("validToken");
+
+    ResetPassword resetPassword = new ResetPassword();
+    resetPassword.setUserId(1);
+    resetPassword.setResetToken("validToken");
+    resetPassword.setLinkExpired(false);
+
+    PasswordHistory passwordHistory = new PasswordHistory();
+    passwordHistory.setUserId(1);
+    passwordHistory.setCurrentPassword("encodedPassword");
+
+    when(resetPasswordRepo.findByResetToken(anyString())).thenReturn(Optional.of(resetPassword));
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+    assertThrows(
+        GlobalExceptionHandler.SamePasswordException.class,
+        () -> authService.resetPasswordSelf(resetPasswordRequest));
+  }
+
+  @Test
   void resetPassword_InvalidToken() {
     ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
     resetPasswordRequest.setPassword("newPassword");
@@ -870,69 +917,197 @@ class AuthServiceImplTest {
             userCreateRequest.getRole().toString());
   }
 
-  // @Test
-  // void test_resetPasswordByAdmin_whenScoolDoesNotMatch() {
-  //   when(jwtTokenProvider.getSubject(Mockito.anyString())).thenReturn("1");
-  //   when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
-  //       .thenReturn(UserRole.PRINCIPAL.name());
-  //   when(userService.getUserDetails(1, "students")).thenReturn(userDetails);
-  //   when(userDetails.getSchoolId()).thenReturn(2);
-  //   when(userDetails.getUser()).thenReturn(user);
-  //   when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
-  //   when(schoolDetails.getPrincipalUserId()).thenReturn(2);
+  @Test
+  void test_resetPasswordByAdmin_invalidRole() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.TEACHER.name());
+    assertThrows(
+        GlobalExceptionHandler.InvalidUserStatus.class,
+        () -> authService.resetPasswordByAdmin(new ResetPasswordRequest(), token));
+  }
 
-  //   final ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
+  @Test
+  void test_resetPasswordByAdmin_userRoleIsRequired() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.HELPDESKADMIN.name());
+    final ResetPasswordRequest request = new ResetPasswordRequest();
+    request.setBehalfOf(List.of(new UserIdAndRole(1, null)));
+    assertThrows(
+        GlobalExceptionHandler.ResetPasswordException.class,
+        () -> authService.resetPasswordByAdmin(request, token));
+  }
 
-  //   resetPasswordRequest.setBehalfOf(List.of(new UserIdAndRole(1, "STUDENT")));
+  @Test
+  void test_resetPasswordByAdmin_userNotFound() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.HELPDESKADMIN.name());
+    final ResetPasswordRequest request = new ResetPasswordRequest();
+    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
 
-  //   assertThrows(
-  //       GlobalExceptionHandler.ResetPasswordException.class,
-  //       () -> authService.resetPasswordByAdmin(resetPasswordRequest, "token"));
-  // }
+    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+        .thenReturn(Optional.empty());
+    assertThrows(
+        NoSuchElementException.class, () -> authService.resetPasswordByAdmin(request, token));
+  }
 
-  // @Test
-  // void test_resetPasswordByAdmin_whenScoolDoesMatch_andPasswordMatches() {
-  //   when(jwtTokenProvider.getSubject(Mockito.anyString())).thenReturn("1");
-  //   when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
-  //       .thenReturn(UserRole.PRINCIPAL.name());
-  //   when(userService.getUserDetails(1, "students")).thenReturn(userDetails);
-  //   when(userDetails.getSchoolId()).thenReturn(2);
-  //   when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
-  //   when(schoolDetails.getPrincipalUserId()).thenReturn(1);
-  //   when(passwordHistoryRepository.findAllByUserId(
-  //           1, PageRequest.of(0, 1, Sort.by("logoutTime").descending())))
-  //       .thenReturn(new PageImpl<>(List.of(passwordHistory)));
-  //   when(userDetails.getUser()).thenReturn(user);
-  //   when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-  //   final ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
-  //   resetPasswordRequest.setPassword("newPassword");
-  //   resetPasswordRequest.setBehalfOf(List.of(new UserIdAndRole(1, "STUDENT")));
+  @Test
+  void test_resetPasswordByAdmin_userIsLocked() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.HELPDESKADMIN.name());
+    final ResetPasswordRequest request = new ResetPasswordRequest();
+    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
+    final UserDetails userDetails = new UserDetails();
+    user.setStatus(UserStatus.LOCKED);
+    userDetails.setUser(user);
+    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+        .thenReturn(Optional.of(userDetails));
+    assertThrows(
+        GlobalExceptionHandler.ResetPasswordException.class,
+        () -> authService.resetPasswordByAdmin(request, token));
+  }
 
-  //   assertThrows(
-  //       GlobalExceptionHandler.SamePasswordException.class,
-  //       () -> authService.resetPasswordByAdmin(resetPasswordRequest, "token"));
-  // }
+  @Test
+  void test_resetPasswordByAdmin_userIsPrincipal_schoolIdDoesNotMatch() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.PRINCIPAL.name());
+    final ResetPasswordRequest request = new ResetPasswordRequest();
+    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
+    final UserDetails userDetails = new UserDetails();
+    user.setStatus(UserStatus.ACTIVE);
+    user.setRole(UserRole.PRINCIPAL);
+    userDetails.setUser(user);
+    userDetails.setSchoolId(2);
+    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+        .thenReturn(Optional.of(userDetails));
+    final SchoolDetails schoolDetails = new SchoolDetails();
+    schoolDetails.setPrincipalUserId(30);
+    when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
+    assertThrows(
+        GlobalExceptionHandler.ResetPasswordException.class,
+        () -> authService.resetPasswordByAdmin(request, token));
+  }
 
-  // @Test
-  // void test_resetPasswordByAdmin_whenScoolDoesMatch() {
-  //   when(userDetails.getUser()).thenReturn(user);
-  //   when(jwtTokenProvider.getSubject(Mockito.anyString())).thenReturn("1");
-  //   when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
-  //       .thenReturn(UserRole.PRINCIPAL.name());
-  //   when(userService.getUserDetails(1, "students")).thenReturn(userDetails);
-  //   when(userDetails.getSchoolId()).thenReturn(2);
-  //   when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
-  //   when(schoolDetails.getPrincipalUserId()).thenReturn(1);
-  //   when(passwordHistoryRepository.findAllByUserId(
-  //           1, PageRequest.of(0, 1, Sort.by("logoutTime").descending())))
-  //       .thenReturn(new PageImpl<>(List.of(passwordHistory)));
-  //   when(passwordHistoryRepository.saveAndFlush(any(PasswordHistory.class)))
-  //       .thenReturn(passwordHistory);
-  //   when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
-  //   final ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
-  //   resetPasswordRequest.setPassword("newPassword");
-  //   resetPasswordRequest.setBehalfOf(List.of(new UserIdAndRole(1, "STUDENT")));
-  //   authService.resetPasswordByAdmin(resetPasswordRequest, "token");
-  //   Mockito.verify(passwordHistoryRepository, times(1)).saveAndFlush(any(PasswordHistory.class));
-  // }
+  @Test
+  void test_resetPasswordByAdmin_userIsPrincipal_schoolIdDoesNotMatchForMultipleUsers() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.PRINCIPAL.name());
+    final ResetPasswordRequest request = new ResetPasswordRequest();
+    request.setBehalfOf(
+        List.of(
+            new UserIdAndRole(2, UserRole.STUDENT.name()),
+            new UserIdAndRole(2, UserRole.STUDENT.name())));
+    final UserDetails userDetails = new UserDetails();
+    user.setStatus(UserStatus.ACTIVE);
+    user.setRole(UserRole.PRINCIPAL);
+    userDetails.setUser(user);
+    userDetails.setSchoolId(2);
+    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+        .thenReturn(Optional.of(userDetails));
+    final SchoolDetails schoolDetails = new SchoolDetails();
+    schoolDetails.setPrincipalUserId(30);
+    when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
+    assertThrows(
+        GlobalExceptionHandler.ResetPasswordException.class,
+        () -> authService.resetPasswordByAdmin(request, token));
+  }
+
+  @Test
+  void test_resetPasswordByAdmin_userIsPrincipalAndPasswordHistoryIsEmpty() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.PRINCIPAL.name());
+    final ResetPasswordRequest request = new ResetPasswordRequest();
+    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
+    final UserDetails userDetails = new UserDetails();
+    user.setStatus(UserStatus.ACTIVE);
+    user.setRole(UserRole.PRINCIPAL);
+    userDetails.setUser(user);
+    userDetails.setSchoolId(2);
+    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+        .thenReturn(Optional.of(userDetails));
+    final SchoolDetails schoolDetails = new SchoolDetails();
+    schoolDetails.setPrincipalUserId(1);
+    when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+        .thenReturn(new PageImpl<>(List.of()));
+
+    assertThrows(
+        GlobalExceptionHandler.ResetPasswordException.class,
+        () -> authService.resetPasswordByAdmin(request, token));
+  }
+
+  @Test
+  void test_resetPasswordByAdmin_userIsPrincipalAndPasswordHistoryIsNotEmpty() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.PRINCIPAL.name());
+    final ResetPasswordRequest request = new ResetPasswordRequest();
+    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
+    final UserDetails userDetails = new UserDetails();
+    user.setStatus(UserStatus.ACTIVE);
+    user.setRole(UserRole.PRINCIPAL);
+    userDetails.setUser(user);
+    userDetails.setSchoolId(2);
+    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+        .thenReturn(Optional.of(userDetails));
+    final SchoolDetails schoolDetails = new SchoolDetails();
+    schoolDetails.setPrincipalUserId(1);
+    when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+
+    doNothing()
+        .when(notificationService)
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+    when(passwordHistoryRepository.saveAll(anyList())).thenReturn(List.of(passwordHistory));
+    authService.resetPasswordByAdmin(request, token);
+    verify(notificationService, times(1))
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+    verify(passwordHistoryRepository, times(1)).saveAll(anyList());
+  }
+
+  @Test
+  void test_resetPasswordByAdmin_userIsPrincipalAndPasswordHistoryIsNotEmptyAndEmailIsEmpty() {
+    final String token = "token";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+        .thenReturn(UserRole.HELPDESKADMIN.name());
+    final ResetPasswordRequest request = new ResetPasswordRequest();
+    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
+    final UserDetails userDetails = new UserDetails();
+    user.setStatus(UserStatus.ACTIVE);
+    user.setRole(UserRole.PRINCIPAL);
+    user.setEmail("");
+    userDetails.setUser(user);
+    userDetails.setSchoolId(2);
+    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+        .thenReturn(Optional.of(userDetails));
+    final SchoolDetails schoolDetails = new SchoolDetails();
+    schoolDetails.setPrincipalUserId(1);
+    when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
+    when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
+        .thenReturn(new PageImpl<>(List.of(passwordHistory)));
+
+    doNothing()
+        .when(notificationService)
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+    when(passwordHistoryRepository.saveAll(anyList())).thenReturn(List.of(passwordHistory));
+    authService.resetPasswordByAdmin(request, token);
+    verify(notificationService, times(0))
+        .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
+  }
 }

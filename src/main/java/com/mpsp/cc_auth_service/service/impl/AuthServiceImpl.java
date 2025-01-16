@@ -28,7 +28,6 @@ import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.NotificationService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
-import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import com.newrelic.api.agent.Trace;
 import java.time.Duration;
@@ -103,8 +102,9 @@ public class AuthServiceImpl implements AuthService {
 
       final User user;
 
-      if (StringUtils.isNotBlank(role) && role.equals("STUDENT")) {
-        if (uniqueStudentId == null || uniqueStudentId.isEmpty()) {
+      if (UserRole.STUDENT.name().equals(role)) {
+        if (StringUtils.isBlank(uniqueStudentId)) {
+          log.error("Unique Student Id is required");
           throw new GlobalExceptionHandler.InvalidCredentialsException(
               "Unique Student Id is required");
         } else {
@@ -113,9 +113,6 @@ public class AuthServiceImpl implements AuthService {
                   .findByUniqueStudent(uniqueStudentId)
                   .getUser(); // Get the user object from the Student object
           log.info("user: {}", user);
-          if (user == null) {
-            throw new NoSuchElementException("User not found");
-          }
         }
 
       } else {
@@ -134,10 +131,8 @@ public class AuthServiceImpl implements AuthService {
               .findFirst()
               .orElseThrow(() -> new NoSuchElementException("User not found"));
 
-      if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
+      if (passwordEncoder.matches(password, pw.getCurrentPassword())) {
         handleFailedLoginAttempt(user, pw);
-        throw new InvalidPasswordException(
-            "Invalid Credentials", PASSWORD_ATTEMPTS - pw.getFailedLoginAttempts() + 1);
       }
 
       return handleSuccessfulLogin(user, pw, ipAddress);
@@ -148,7 +143,7 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  private void handleFailedLoginAttempt(User user, PasswordHistory pw) {
+  private void handleFailedLoginAttempt(final User user, final PasswordHistory pw) {
     int newAttempts = pw.getFailedLoginAttempts() + 1;
 
     if (newAttempts == PASSWORD_ATTEMPTS) {
@@ -425,13 +420,13 @@ public class AuthServiceImpl implements AuthService {
     final UserRole userRole =
         UserRole.valueOf(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE));
 
-    if (!(userRole.equals(UserRole.PRINCIPAL)
-        || userRole.equals(UserRole.HELPDESKADMIN)
-        || userRole.equals(UserRole.HELPDESKUSER))) {
+    if (!List.of(UserRole.PRINCIPAL, UserRole.HELPDESKADMIN, UserRole.HELPDESKUSER)
+        .contains(userRole)) {
+      log.error("{} is not allowed to reset password", userRole);
       throw new GlobalExceptionHandler.InvalidUserStatus("Forbidden");
     }
     final Map<Integer, String> failureReasons = new HashMap<>();
-    final List<PasswordHistory> tobeSavedPasswordHistoryList = new ArrayList<>();
+    final List<PasswordHistory> toBeSavedPasswordHistoryList = new ArrayList<>();
     for (UserIdAndRole userIdAndRole : resetPasswordRequest.getBehalfOf()) {
       if (userIdAndRole.getUserRole() == null) {
         failureReasons.put(userIdAndRole.getUserId(), "User role is required");
@@ -456,7 +451,7 @@ public class AuthServiceImpl implements AuthService {
       if (UserRole.PRINCIPAL.equals(userRole)) {
         final SchoolDetails schoolDetails =
             schoolService.getSchoolDetails(behalfUserDetails.getSchoolId(), true);
-        if (schoolDetails.getPrincipalUserId() != userId) {
+        if (userId != schoolDetails.getPrincipalUserId()) {
           failureReasons.put(
               userIdAndRole.getUserId(), "User does not belong to the principal school");
           continue;
@@ -487,9 +482,8 @@ public class AuthServiceImpl implements AuthService {
 
         passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
-        tobeSavedPasswordHistoryList.add(passwordHistory);
-        if (behalfUserDetails.getUser().getEmail() != null
-            && !behalfUserDetails.getUser().getEmail().isEmpty()) {
+        toBeSavedPasswordHistoryList.add(passwordHistory);
+        if (StringUtils.isNotBlank(behalfUserDetails.getUser().getEmail())) {
           notificationService.sendNotification(
               "email",
               "reset_password_mail",
@@ -505,8 +499,8 @@ public class AuthServiceImpl implements AuthService {
         }
       }
     }
-    if (!tobeSavedPasswordHistoryList.isEmpty()) {
-      passwordHistoryRepository.saveAll(tobeSavedPasswordHistoryList);
+    if (!toBeSavedPasswordHistoryList.isEmpty()) {
+      passwordHistoryRepository.saveAll(toBeSavedPasswordHistoryList);
       return new ResetPasswordByAdminResponse(failureReasons, "Password reset successfully.");
     }
 

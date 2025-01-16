@@ -98,9 +98,9 @@ public interface UserServiceClient {
     }
 
     return users.getData().stream()
-        .filter(user -> user.getUser().getStatus().equals(UserStatus.ACTIVE))
+        .filter(user -> UserStatus.ACTIVE.equals(user.getUser().getStatus()))
         .findFirst()
-        .orElseThrow(() -> new NoSuchElementException("Multiple students found"));
+        .orElseThrow(() -> new NoSuchElementException("No Active User found"));
   }
 
   @GetMapping(value = "/api/v1/users")
