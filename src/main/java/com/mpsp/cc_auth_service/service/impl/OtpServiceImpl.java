@@ -42,6 +42,9 @@ public class OtpServiceImpl implements OtpService {
   @Value("${aws.ses.sender}")
   private String senderEmail;
 
+  @Value("${frontend.url}")
+  private String frontendUrl;
+
   private String generateOTP(final int userId) {
     final String otp =
         List.of("dev", "staging").contains(activeProfile) ? "1234" : GeneratorUtils.generateOTP(4);
@@ -91,6 +94,9 @@ public class OtpServiceImpl implements OtpService {
 
     final String otp = generateOTP(user.getUserId());
     dataMap.put("otp", otp);
+    dataMap.put("email", userEmail);
+    dataMap.put("username", user.getFullName());
+    dataMap.put("portal", frontendUrl);
 
     notificationService.sendNotification(
         sendOtp.getMode(), "verification_otp", userEmail, mobile, dataMap);
