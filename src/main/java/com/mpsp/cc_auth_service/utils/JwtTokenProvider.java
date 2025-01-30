@@ -66,6 +66,12 @@ public class JwtTokenProvider {
     return jwsObject.serialize();
   }
 
+  /**
+   * @param token
+   * @param userId
+   * @param isRefreshToken
+   * @return
+   */
   public boolean verifyToken(
       final String token, final String userId, final boolean isRefreshToken) {
     try {

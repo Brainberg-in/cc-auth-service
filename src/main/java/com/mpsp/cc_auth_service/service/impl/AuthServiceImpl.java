@@ -28,7 +28,6 @@ import com.mpsp.cc_auth_service.service.AuthService;
 import com.mpsp.cc_auth_service.service.NotificationService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
-import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidPasswordException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import com.newrelic.api.agent.Trace;
 import java.time.Duration;
@@ -103,8 +102,9 @@ public class AuthServiceImpl implements AuthService {
 
       final User user;
 
-      if (StringUtils.isNotBlank(role) && role.equals("STUDENT")) {
-        if (uniqueStudentId == null || uniqueStudentId.isEmpty()) {
+      if (UserRole.STUDENT.name().equals(role)) {
+        if (StringUtils.isBlank(uniqueStudentId)) {
+          log.error("Unique Student Id is required");
           throw new GlobalExceptionHandler.InvalidCredentialsException(
               "Unique Student Id is required");
         } else {
@@ -112,18 +112,13 @@ public class AuthServiceImpl implements AuthService {
               userService
                   .findByUniqueStudent(uniqueStudentId)
                   .getUser(); // Get the user object from the Student object
-          System.out.println("user: " + user);
-          if (user == null) {
-            throw new NoSuchElementException("User not found");
-          }
+          log.info("user: {}", user);
         }
 
       } else {
         // Validate user and password
         user = userService.findByEmail(email);
-        if (user == null) {
-          throw new NoSuchElementException("User not found");
-        }
+
         log.info("User found: {}", user);
       }
 
@@ -138,8 +133,6 @@ public class AuthServiceImpl implements AuthService {
 
       if (!passwordEncoder.matches(password, pw.getCurrentPassword())) {
         handleFailedLoginAttempt(user, pw);
-        throw new InvalidPasswordException(
-            "Invalid Credentials", PASSWORD_ATTEMPTS - pw.getFailedLoginAttempts() + 1);
       }
 
       return handleSuccessfulLogin(user, pw, ipAddress);
@@ -150,7 +143,7 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  private void handleFailedLoginAttempt(User user, PasswordHistory pw) {
+  private void handleFailedLoginAttempt(final User user, final PasswordHistory pw) {
     int newAttempts = pw.getFailedLoginAttempts() + 1;
 
     if (newAttempts == PASSWORD_ATTEMPTS) {
@@ -158,8 +151,7 @@ public class AuthServiceImpl implements AuthService {
       log.info("User data user{}", user);
       // userService.updateUser(user.getUserId(), user);
 
-      Map<String, String> userDataMap = new HashMap<>();
-      userDataMap.put("status", user.getStatus().toString());
+      final Map<String, String> userDataMap = Map.of("status", user.getStatus().toString());
       userService.updateUserStatus(user.getUserId(), userDataMap);
       passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
 
@@ -186,9 +178,10 @@ public class AuthServiceImpl implements AuthService {
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now(), ipAddress));
 
     final boolean isFirstLogin = user.isFirstLogin();
-    final String resetToken = generateResetToken(user);
-    handleMfaIfEnabled(user);
-
+    // Need to remove this
+    if (user.isMfaEnabled()) {
+      otpService.sendOtp(user.getEmail());
+    }
     // Reset failed_login_attempts on successful login
     if (pw.getFailedLoginAttempts() != 0) {
       pw.setFailedLoginAttempts(0);
@@ -201,49 +194,7 @@ public class AuthServiceImpl implements AuthService {
         user.isMfaEnabled(),
         isFirstLogin,
         pw.getUserRole(),
-        resetToken,
         user.getStatus());
-  }
-
-  /**
-   * only used in first login conditions in the login API
-   *
-   * @param user
-   * @return reset token
-   */
-  private String generateResetToken(final User user) {
-    if (!user.isFirstLogin()) {
-      return "";
-    }
-
-    final Optional<ResetPassword> existingTokenOpt =
-        resetPasswordRepo.findByUserId(user.getUserId());
-
-    final ResetPassword resetToken = existingTokenOpt.orElseGet(ResetPassword::new);
-    resetToken.setUserId(user.getUserId());
-    resetToken.setResetToken(UUID.randomUUID().toString());
-    resetToken.setLinkSent(1);
-    resetToken.setLinkExpired(false);
-    resetPasswordRepo.save(resetToken);
-
-    return resetToken.getResetToken();
-  }
-
-  private void handleFirstLoginIfNeeded(final User user) {
-    if (user.isFirstLogin()) {
-      try {
-        user.setFirstLogin(false);
-        userService.updateUser(user.getUserId(), user);
-      } catch (Exception e) {
-        log.error("Error updating first login status", e);
-      }
-    }
-  }
-
-  private void handleMfaIfEnabled(final User user) {
-    if (user.isMfaEnabled()) {
-      otpService.sendOtp(user.getEmail());
-    }
   }
 
   @Override
@@ -258,7 +209,7 @@ public class AuthServiceImpl implements AuthService {
     if (!loginHistoryPage.isEmpty()) {
       final LoginHistory loginHistory = loginHistoryPage.getContent().get(0);
       loginHistory.setLogoutTime(LocalDateTime.now());
-      loginHistoryRepository.saveAndFlush(loginHistory);
+      loginHistoryRepository.save(loginHistory);
     }
   }
 
@@ -288,10 +239,11 @@ public class AuthServiceImpl implements AuthService {
     // The refresh token is only used for refreshing the access token.
     final String newJwtToken = jwtTokenProvider.generateToken(user, false, p.getUserRole());
     return new LoginResponse(
-        newJwtToken, refreshToken, true, false, p.getUserRole(), "", user.getStatus());
+        newJwtToken, refreshToken, true, false, p.getUserRole(), user.getStatus());
   }
 
   @Override
+  @Transactional
   public void sendResetPasswordEmail(final String email) {
     final User user = userService.findByEmail(email);
 
@@ -379,9 +331,16 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.save(passwordHistory);
     }
     final User user = userService.findById(userId);
-    if ("INACTIVE".equals(status)) {
+    if ("INACTIVE".equals(status) && user.isFirstLogin()) {
       log.info("User status is INACTIVE. Hence making first login false since password is reset");
-      handleFirstLoginIfNeeded(user);
+      user.setFirstLogin(false);
+      userService.updateUser(user.getUserId(), user);
+    }
+
+    if ("INACTIVE".equals(status)
+        && user.getRole() != null
+        && user.getRole().equals(UserRole.STUDENT)) {
+      userService.updateUserStatus(userId, Map.of("status", UserStatus.ACTIVE.toString()));
     }
     if (user.getEmail() != null && !user.getEmail().isEmpty()) {
       notificationService.sendNotification(
@@ -461,13 +420,13 @@ public class AuthServiceImpl implements AuthService {
     final UserRole userRole =
         UserRole.valueOf(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE));
 
-    if (!(userRole.equals(UserRole.PRINCIPAL)
-        || userRole.equals(UserRole.HELPDESKADMIN)
-        || userRole.equals(UserRole.HELPDESKUSER))) {
+    if (!List.of(UserRole.PRINCIPAL, UserRole.HELPDESKADMIN, UserRole.HELPDESKUSER)
+        .contains(userRole)) {
+      log.error("{} is not allowed to reset password", userRole);
       throw new GlobalExceptionHandler.InvalidUserStatus("Forbidden");
     }
     final Map<Integer, String> failureReasons = new HashMap<>();
-    final List<PasswordHistory> tobeSavedPasswordHistoryList = new ArrayList<>();
+    final List<PasswordHistory> toBeSavedPasswordHistoryList = new ArrayList<>();
     for (UserIdAndRole userIdAndRole : resetPasswordRequest.getBehalfOf()) {
       if (userIdAndRole.getUserRole() == null) {
         failureReasons.put(userIdAndRole.getUserId(), "User role is required");
@@ -492,7 +451,7 @@ public class AuthServiceImpl implements AuthService {
       if (UserRole.PRINCIPAL.equals(userRole)) {
         final SchoolDetails schoolDetails =
             schoolService.getSchoolDetails(behalfUserDetails.getSchoolId(), true);
-        if (schoolDetails.getPrincipalUserId() != userId) {
+        if (userId != schoolDetails.getPrincipalUserId()) {
           failureReasons.put(
               userIdAndRole.getUserId(), "User does not belong to the principal school");
           continue;
@@ -523,9 +482,8 @@ public class AuthServiceImpl implements AuthService {
 
         passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
-        tobeSavedPasswordHistoryList.add(passwordHistory);
-        if (behalfUserDetails.getUser().getEmail() != null
-            && !behalfUserDetails.getUser().getEmail().isEmpty()) {
+        toBeSavedPasswordHistoryList.add(passwordHistory);
+        if (StringUtils.isNotBlank(behalfUserDetails.getUser().getEmail())) {
           notificationService.sendNotification(
               "email",
               "reset_password_mail",
@@ -541,8 +499,8 @@ public class AuthServiceImpl implements AuthService {
         }
       }
     }
-    if (!tobeSavedPasswordHistoryList.isEmpty()) {
-      passwordHistoryRepository.saveAll(tobeSavedPasswordHistoryList);
+    if (!toBeSavedPasswordHistoryList.isEmpty()) {
+      passwordHistoryRepository.saveAll(toBeSavedPasswordHistoryList);
       return new ResetPasswordByAdminResponse(failureReasons, "Password reset successfully.");
     }
 
@@ -565,11 +523,6 @@ public class AuthServiceImpl implements AuthService {
     token.setExpiresAt(LocalDateTime.now().plusDays(1));
 
     refreshTokenRepository.save(token);
-  }
-
-  @Transactional
-  private void updateRefreshToken(final Integer userId, final String newRefreshToken) {
-    refreshTokenRepository.updateRefreshToken(userId, newRefreshToken);
   }
 
   @Transactional(readOnly = true)
@@ -608,7 +561,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   private LoginHistoryResponse convertToLoginHistoryResponse(final LoginHistory loginHistory) {
-    final LoginHistoryResponse response = new LoginHistoryResponse();
+    LoginHistoryResponse response = new LoginHistoryResponse();
     response.setId(loginHistory.getId());
     response.setUserId(loginHistory.getUserId());
     response.setLastLoginTime(loginHistory.getLastLoginTime());

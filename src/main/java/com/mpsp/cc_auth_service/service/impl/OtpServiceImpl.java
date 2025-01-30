@@ -15,6 +15,7 @@ import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.OTPVerificationExce
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
@@ -41,19 +42,19 @@ public class OtpServiceImpl implements OtpService {
   @Value("${aws.ses.sender}")
   private String senderEmail;
 
-  @Value("${service.env}")
-  private String serviceEnv;
+  @Value("${frontend.url}")
+  private String frontendUrl;
 
   private String generateOTP(final int userId) {
-    final String otp = serviceEnv.equals("dev") || serviceEnv.equals("staging") ? "1234"
-        : GeneratorUtils.generateOTP(4);
+    final String otp =
+        List.of("dev", "staging").contains(activeProfile) ? "1234" : GeneratorUtils.generateOTP(4);
     otpGenRepo
         .findByUserId(userId)
         .ifPresentOrElse(
             otpGen -> {
               otpGen.setModifiedAt(LocalDateTime.now());
               otpGen.setOtp(otp);
-              otpGenRepo.saveAndFlush(otpGen);
+              otpGenRepo.save(otpGen);
             },
             () -> {
               final OtpGen otpGen = new OtpGen();
@@ -61,7 +62,7 @@ public class OtpServiceImpl implements OtpService {
               otpGen.setOtp(otp);
               otpGen.setCreatedAt(LocalDateTime.now());
               otpGen.setModifiedAt(LocalDateTime.now());
-              otpGenRepo.saveAndFlush(otpGen);
+              otpGenRepo.save(otpGen);
             });
     return otp;
   }
@@ -83,7 +84,7 @@ public class OtpServiceImpl implements OtpService {
     if (userEmail == null) {
       throw new IllegalArgumentException("User does not have a registered email");
     }
-    if (sendOtp.getMode().equals("sms") && (serviceEnv.equals("dev") || serviceEnv.equals("staging"))) {
+    if (sendOtp.getMode().equals("sms") && List.of("dev", "staging").contains(activeProfile)) {
       return;
     }
     final User user = userService.findByEmail(userEmail);
@@ -93,8 +94,12 @@ public class OtpServiceImpl implements OtpService {
 
     final String otp = generateOTP(user.getUserId());
     dataMap.put("otp", otp);
-    
-    notificationService.sendNotification(sendOtp.getMode(), "verification_otp", userEmail, mobile, dataMap);
+    dataMap.put("email", userEmail);
+    dataMap.put("username", user.getFullName());
+    dataMap.put("portal", frontendUrl);
+
+    notificationService.sendNotification(
+        sendOtp.getMode(), "verification_otp", userEmail, mobile, dataMap);
   }
 
   @Override
@@ -138,35 +143,34 @@ public class OtpServiceImpl implements OtpService {
               if (!otpGen.getOtp().equals(verifyOtp.getOtp())) {
                 throw new OTPVerificationException("OTP verification failed");
               }
-              if(verifyOtp.getPurpose().equals("verification")) {
-                VerifyUser(userId, verifyOtp.getMode());
+              if ("verification".equals(verifyOtp.getPurpose())) {
+                verifyUser(userId, verifyOtp.getMode());
               }
               return true;
             })
         .orElseThrow(() -> new NoSuchElementException("OTP not found for user"));
   }
 
-  private void VerifyUser(int userId, String mode) {
-    User userDetails = userService.findById(userId);
-    Map<String, Boolean> userDataMap = new HashMap<>();
-    log.info("userData: " + userDetails);
+  private void verifyUser(int userId, String mode) {
+    final User userDetails = userService.findById(userId);
+    final Map<String, Boolean> userDataMap = new HashMap<>();
+    log.info("userData: {}", userDetails);
 
     if (mode.equals("email")) {
       userDetails.setEmailVerified(true);
       userDataMap.put("isEmailVerified", true);
-      userService.updateUserVerification(userId, userDataMap);
     } else if (mode.equals("sms")) {
       userDetails.setMobileVerified(true);
       userDataMap.put("isMobileVerified", true);
-      userService.updateUserVerification(userId, userDataMap);
     }
+    userService.updateUserVerification(userId, userDataMap);
     if (userDetails.isEmailVerified() && userDetails.isMobileVerified()) {
-      userDetails.setStatus(UserStatus.ACTIVE);
-      Map<String, String> userStatusDataMap = new HashMap<>();
-      userStatusDataMap.put("status", UserStatus.ACTIVE.toString());
+      log.info("Updating User status to ACTIVE");
+      final Map<String, String> userStatusDataMap = Map.of("status", UserStatus.ACTIVE.toString());
       userService.updateUserStatus(userId, userStatusDataMap);
+      log.info("User status updated to ACTIVE");
     }
-    log.info("User verified successfully: " + userDetails);
+    log.info("User verified successfully");
   }
 
   @Override
@@ -174,11 +178,13 @@ public class OtpServiceImpl implements OtpService {
   public void resendOtp(String token) {
     final String userEmail = jwtTokenProvider.getUserEmail(token);
     if (userEmail == null) {
+      log.error("User does not have a registered email");
       throw new IllegalArgumentException("User does not have a registered email");
     }
 
     final User user = userService.findByEmail(userEmail);
 
-    notificationService.sendNotification("email", "login_cc_otp", userEmail, "", Map.of("otp", generateOTP(user.getUserId())));
+    notificationService.sendNotification(
+        "email", "login_cc_otp", userEmail, "", Map.of("otp", generateOTP(user.getUserId())));
   }
 }

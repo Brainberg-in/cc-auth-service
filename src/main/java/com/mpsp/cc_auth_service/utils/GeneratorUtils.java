@@ -20,9 +20,9 @@ public class GeneratorUtils {
     return otp.toString();
   }
 
-  public static String maskEmail(String input) {
+  public static String maskEmail(final String input) {
     if (StringUtils.isBlank(input)) {
-      return null;
+      return input;
     }
     return input.replaceAll(EMAIL_REGEX, "$1****$2");
   }

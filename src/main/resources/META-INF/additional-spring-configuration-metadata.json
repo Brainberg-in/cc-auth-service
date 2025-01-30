@@ -21,11 +21,6 @@
       "description": "Frontend url to be used as params in email templates"
     },
     {
-      "name": "service.env",
-      "type": "java.lang.String",
-      "description": "Env in use"
-    },
-    {
       "name": "fallback.url.reset.password",
       "type": "java.lang.String",
       "description": "Fallback url to be used for reset password"
