@@ -118,7 +118,6 @@ public class AuthController {
   @GetMapping("/login-history/{userId}")
   public ResponseEntity<List<LoginHistoryResponse>> getLoginHistory(
       @PathVariable("userId") Integer userId) {
-    List<LoginHistoryResponse> loginHistory = authService.getLoginHistory(userId);
-    return ResponseEntity.ok(loginHistory);
+    return ResponseEntity.ok(authService.getLoginHistory(userId));
   }
 }
