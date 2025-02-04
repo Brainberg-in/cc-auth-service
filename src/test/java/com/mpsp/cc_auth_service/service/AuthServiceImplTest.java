@@ -1060,12 +1060,16 @@ class AuthServiceImplTest {
     final UserDetails userDetails = new UserDetails();
     user.setStatus(UserStatus.ACTIVE);
     user.setRole(UserRole.PRINCIPAL);
+    user.setFullName("Test User");
+    user.setDateOfBirth(null);
+    user.setMobile("1234567890");
     userDetails.setUser(user);
     userDetails.setSchoolId(2);
     when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
         .thenReturn(Optional.of(userDetails));
     final SchoolDetails schoolDetails = new SchoolDetails();
     schoolDetails.setPrincipalUserId(1);
+    schoolDetails.setSchoolUdiseCode("12345");
     when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
@@ -1092,12 +1096,16 @@ class AuthServiceImplTest {
     user.setStatus(UserStatus.ACTIVE);
     user.setRole(UserRole.PRINCIPAL);
     user.setEmail("");
+    user.setFullName("Test User");
+    user.setDateOfBirth(null);
+    user.setMobile("1234567890");
     userDetails.setUser(user);
     userDetails.setSchoolId(2);
     when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
         .thenReturn(Optional.of(userDetails));
     final SchoolDetails schoolDetails = new SchoolDetails();
     schoolDetails.setPrincipalUserId(1);
+    schoolDetails.setSchoolUdiseCode("12345");
     when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
