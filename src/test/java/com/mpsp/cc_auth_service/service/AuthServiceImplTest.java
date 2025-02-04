@@ -46,6 +46,7 @@ import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.GenericException;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import java.text.ParseException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1061,15 +1062,15 @@ class AuthServiceImplTest {
     user.setStatus(UserStatus.ACTIVE);
     user.setRole(UserRole.PRINCIPAL);
     user.setFullName("Test User");
-    user.setDateOfBirth(null);
-    user.setMobile("1234567890");
+    user.setDateOfBirth(java.sql.Date.valueOf(LocalDate.now()));
+    user.setMobile(null);
     userDetails.setUser(user);
     userDetails.setSchoolId(2);
     when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
         .thenReturn(Optional.of(userDetails));
     final SchoolDetails schoolDetails = new SchoolDetails();
     schoolDetails.setPrincipalUserId(1);
-    schoolDetails.setSchoolUdiseCode("12345");
+    schoolDetails.setSchoolUdiseCode("123");
     when(schoolService.getSchoolDetails(2, true)).thenReturn(schoolDetails);
     when(passwordHistoryRepository.findAllByUserId(anyInt(), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
@@ -1091,7 +1092,7 @@ class AuthServiceImplTest {
     when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
         .thenReturn(UserRole.HELPDESKADMIN.name());
     final ResetPasswordRequest request = new ResetPasswordRequest();
-    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
+    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.TEACHER.name())));
     final UserDetails userDetails = new UserDetails();
     user.setStatus(UserStatus.ACTIVE);
     user.setRole(UserRole.PRINCIPAL);
@@ -1101,7 +1102,7 @@ class AuthServiceImplTest {
     user.setMobile("1234567890");
     userDetails.setUser(user);
     userDetails.setSchoolId(2);
-    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+    when(userService.getUserDetails(2, String.join("", UserRole.TEACHER.name().toLowerCase(), "s")))
         .thenReturn(Optional.of(userDetails));
     final SchoolDetails schoolDetails = new SchoolDetails();
     schoolDetails.setPrincipalUserId(1);
