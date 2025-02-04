@@ -476,7 +476,7 @@ public class AuthServiceImpl implements AuthService {
             behalfUserDetails.getUser().getFullName(),
             behalfUserDetails.getUser().getMobile(),
             behalfUserDetails.getUser().getDateOfBirth(),
-            behalfUserDetails.getUser().getRole().toString(),
+            userIdAndRole.getUserRole(),
             schoolService.getSchoolDetails(behalfUserDetails.getSchoolId(), true).getSchoolUdiseCode());
 
         passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
