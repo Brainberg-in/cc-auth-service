@@ -572,8 +572,8 @@ public class AuthServiceImpl implements AuthService {
   private String createDefaultPassword(final String fullName, final String mobile, final Date dateOfBirth, final String role, final String schoolUdiseCode) {
     String name = (String) fullName.replaceAll(" ", "").toUpperCase().substring(0, 4);
     String mobileUpdated = (String) mobile;
-    mobileUpdated = (mobileUpdated != null) ? mobileUpdated.substring(mobileUpdated.length() - 4) : "";
-    String udise = schoolUdiseCode.substring(schoolUdiseCode.length() - 4);
+    mobileUpdated = (mobileUpdated != null && mobileUpdated.length() >= 4) ? mobileUpdated.substring(mobileUpdated.length() - 4) : "";
+    String udise = (schoolUdiseCode != null && schoolUdiseCode.length() >= 4) ? schoolUdiseCode.substring(schoolUdiseCode.length() - 4) : schoolUdiseCode != null ? schoolUdiseCode : "";
 
     String modifiedDob = "";
     if (dateOfBirth != null) {
