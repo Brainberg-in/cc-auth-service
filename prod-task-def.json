@@ -56,19 +56,19 @@
             "secrets": [
                 {
                     "name": "DB_HOST",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/dronarjun/rds-IOAuLF:host::"
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/dronarjun/rds/auth-g12s3P:host::"
                 },
                 {
                     "name": "DB_PASSWORD",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/dronarjun/rds-IOAuLF:password::"
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/dronarjun/rds/auth-g12s3P:password::"
                 },
                 {
                     "name": "DB_PORT",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/dronarjun/rds-IOAuLF:port::"
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/dronarjun/rds/auth-g12s3P:port::"
                 },
                 {
                     "name": "DB_USER",
-                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/dronarjun/rds-IOAuLF:username::"
+                    "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:prod/dronarjun/rds/auth-g12s3P:username::"
                 },
                 {
                     "name": "JWT_SECRET",
