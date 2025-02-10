@@ -30,7 +30,6 @@ import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler;
 import com.mpsp.cc_auth_service.utils.JwtTokenProvider;
 import com.newrelic.api.agent.Trace;
-
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -152,10 +151,9 @@ public class AuthServiceImpl implements AuthService {
     if (newAttempts == PASSWORD_ATTEMPTS) {
       user.setStatus(UserStatus.LOCKED);
       log.info("User data user{}", user);
-      // userService.updateUser(user.getUserId(), user);
 
-      final Map<String, String> userDataMap = Map.of("status", user.getStatus().toString());
-      userService.updateUserStatus(user.getUserId(), userDataMap);
+      final Map<String, Object> userDataMap = Map.of("status", user.getStatus().toString());
+      userService.updateUser(user.getUserId(), user.getUserId(), userDataMap);
       passwordHistoryRepository.updateFailedLoginAttempts(pw.getUserId(), newAttempts);
 
     } else if (newAttempts > PASSWORD_ATTEMPTS) {
@@ -316,7 +314,7 @@ public class AuthServiceImpl implements AuthService {
             .getContent()
             .get(0);
 
-    if ("ACTIVE".equals(status)
+    if (UserStatus.ACTIVE.name().equals(status)
         && StringUtils.isNotBlank(changePasswordRequest.getCurrentPassword())) {
       if (passwordEncoder.matches(
           changePasswordRequest.getPassword(), passwordHistory.getCurrentPassword())) {
@@ -334,16 +332,16 @@ public class AuthServiceImpl implements AuthService {
       passwordHistoryRepository.save(passwordHistory);
     }
     final User user = userService.findById(userId);
-    if ("INACTIVE".equals(status) && user.isFirstLogin()) {
+    if (UserStatus.INACTIVE.name().equals(status) && user.isFirstLogin()) {
       log.info("User status is INACTIVE. Hence making first login false since password is reset");
       user.setFirstLogin(false);
-      userService.updateUser(user.getUserId(), user);
+      userService.updateUser(user.getUserId(), user.getUserId(), user);
     }
 
-    if ("INACTIVE".equals(status)
+    if (UserStatus.INACTIVE.name().equals(status)
         && user.getRole() != null
         && user.getRole().equals(UserRole.STUDENT)) {
-      userService.updateUserStatus(userId, Map.of("status", UserStatus.ACTIVE.toString()));
+      userService.updateUser(userId, userId, Map.of("status", UserStatus.ACTIVE.toString()));
     }
     if (user.getEmail() != null && !user.getEmail().isEmpty()) {
       notificationService.sendNotification(
@@ -472,12 +470,15 @@ public class AuthServiceImpl implements AuthService {
       } else {
         final PasswordHistory passwordHistory = passwordHistoryList.get(0);
 
-        final String generatedPassword = createDefaultPassword(
-            behalfUserDetails.getUser().getFullName(),
-            behalfUserDetails.getUser().getMobile(),
-            behalfUserDetails.getUser().getDateOfBirth(),
-            userIdAndRole.getUserRole(),
-            schoolService.getSchoolDetails(behalfUserDetails.getSchoolId(), true).getSchoolUdiseCode());
+        final String generatedPassword =
+            createDefaultPassword(
+                behalfUserDetails.getUser().getFullName(),
+                behalfUserDetails.getUser().getMobile(),
+                behalfUserDetails.getUser().getDateOfBirth(),
+                userIdAndRole.getUserRole(),
+                schoolService
+                    .getSchoolDetails(behalfUserDetails.getSchoolId(), true)
+                    .getSchoolUdiseCode());
 
         passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
@@ -569,11 +570,22 @@ public class AuthServiceImpl implements AuthService {
     return response;
   }
 
-  private String createDefaultPassword(final String fullName, final String mobile, final Date dateOfBirth, final String role, final String schoolUdiseCode) {
+  private String createDefaultPassword(
+      final String fullName,
+      final String mobile,
+      final Date dateOfBirth,
+      final String role,
+      final String schoolUdiseCode) {
     String name = (String) fullName.replaceAll(" ", "").toUpperCase().substring(0, 4);
     String mobileUpdated = (String) mobile;
-    mobileUpdated = (mobileUpdated != null && mobileUpdated.length() >= 4) ? mobileUpdated.substring(mobileUpdated.length() - 4) : "";
-    String udise = (schoolUdiseCode != null && schoolUdiseCode.length() >= 4) ? schoolUdiseCode.substring(schoolUdiseCode.length() - 4) : schoolUdiseCode != null ? schoolUdiseCode : "";
+    mobileUpdated =
+        (mobileUpdated != null && mobileUpdated.length() >= 4)
+            ? mobileUpdated.substring(mobileUpdated.length() - 4)
+            : "";
+    String udise =
+        (schoolUdiseCode != null && schoolUdiseCode.length() >= 4)
+            ? schoolUdiseCode.substring(schoolUdiseCode.length() - 4)
+            : schoolUdiseCode != null ? schoolUdiseCode : "";
 
     String modifiedDob = "";
     if (dateOfBirth != null) {
@@ -586,9 +598,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     if (role != null && role.equals("STUDENT")) {
-        return name + modifiedDob + udise;
-    } else if (role != null && (role.equals("PRINCIPAL") || role.equals("TEACHER") || role.equals("POC"))) {
-        return name + "@" + mobileUpdated + "@" + udise;
+      return name + modifiedDob + udise;
+    } else if (role != null
+        && (role.equals("PRINCIPAL") || role.equals("TEACHER") || role.equals("POC"))) {
+      return name + "@" + mobileUpdated + "@" + udise;
     }
 
     return name + "@123";

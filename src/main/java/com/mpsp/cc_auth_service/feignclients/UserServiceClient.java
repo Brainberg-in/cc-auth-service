@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "userServiceClient", url = "${user.service.url}")
@@ -110,15 +111,16 @@ public interface UserServiceClient {
   User findById(@PathVariable(name = "id") final Integer id);
 
   @PutMapping(value = "/api/v1/users/{id}")
-  void updateUser(@PathVariable(name = "id") final Integer id, @RequestBody final User user);
+  void updateUser(
+      @PathVariable(name = "id") final Integer id,
+      @RequestHeader(name = "X-PLATFORM-ID") final Integer loggedInUserId,
+      @RequestBody final User user);
 
   @PutMapping(value = "/api/v1/users/{id}")
-  void updateUserStatus(
-      @PathVariable(name = "id") final Integer id, @RequestBody final Map<String, String> body);
-
-  @PutMapping(value = "/api/v1/users/{id}")
-  void updateUserVerification(
-      @PathVariable(name = "id") final Integer id, @RequestBody final Map<String, Boolean> body);
+  void updateUser(
+      @PathVariable(name = "id") final Integer id,
+      @RequestHeader(name = "X-PLATFORM-ID") final Integer loggedInUserId,
+      @RequestBody final Map<String, Object> body);
 
   @GetMapping(value = "/api/v1/{role}/{id}")
   Optional<UserDetails> getUserDetails(
