@@ -286,7 +286,7 @@ class AuthServiceImplTest {
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
     doNothing().when(passwordHistoryRepository).updateFailedLoginAttempts(1, 6);
     final Map<String, Object> userDataMap = Map.of("status", UserStatus.LOCKED.toString());
-    doNothing().when(userService).updateUser(1, userDataMap);
+    doNothing().when(userService).updateUser(1, 1, userDataMap);
     LoginRequest loginRequest = new LoginRequest();
     loginRequest.setEmail("test@example.com");
     loginRequest.setPassword("password");

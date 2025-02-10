@@ -251,9 +251,9 @@ public class OtpServiceImplTest {
     user.setEmail("test@example.com");
     when(userService.findById(1)).thenReturn(user);
     final Map<String, Object> userDataMap = Map.of("isEmailVerified", true);
-    doNothing().when(userService).updateUser(null, null);
+    // doNothing().when(userService).updateUser(null, null, null);
     assertTrue(otpService.validate(token, verifyOtp));
-    verify(userService, times(1)).updateUser(1, userDataMap);
+    verify(userService, times(1)).updateUser(1, 1, userDataMap);
   }
 
   @Test
@@ -277,12 +277,12 @@ public class OtpServiceImplTest {
     user.setEmailVerified(true);
     when(userService.findById(1)).thenReturn(user);
     final Map<String, Object> userDataMap = Map.of("isMobileVerified", true);
-    doNothing().when(userService).updateUser(1, userDataMap);
+    doNothing().when(userService).updateUser(1, 1, userDataMap);
     final Map<String, Object> userStatusDataMap = Map.of("status", UserStatus.ACTIVE.toString());
-    doNothing().when(userService).updateUser(anyInt(), anyMap());
+    doNothing().when(userService).updateUser(anyInt(), anyInt(), anyMap());
     assertTrue(otpService.validate(token, verifyOtp));
-    verify(userService, times(1)).updateUser(1, userDataMap);
-    verify(userService, times(1)).updateUser(1, userStatusDataMap);
+    verify(userService, times(1)).updateUser(1, 1, userDataMap);
+    verify(userService, times(1)).updateUser(1, 1, userStatusDataMap);
   }
 
   @Test
