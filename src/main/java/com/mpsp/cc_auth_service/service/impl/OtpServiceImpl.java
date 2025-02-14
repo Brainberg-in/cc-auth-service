@@ -153,7 +153,7 @@ public class OtpServiceImpl implements OtpService {
 
   private void verifyUser(int userId, String mode) {
     final User userDetails = userService.findById(userId);
-    final Map<String, Boolean> userDataMap = new HashMap<>();
+    final Map<String, Object> userDataMap = new HashMap<>();
     log.info("userData: {}", userDetails);
 
     if (mode.equals("email")) {
@@ -163,11 +163,11 @@ public class OtpServiceImpl implements OtpService {
       userDetails.setMobileVerified(true);
       userDataMap.put("isMobileVerified", true);
     }
-    userService.updateUserVerification(userId, userDataMap);
+    userService.updateUser(userId, userId, userDataMap);
     if (userDetails.isEmailVerified() && userDetails.isMobileVerified()) {
       log.info("Updating User status to ACTIVE");
-      final Map<String, String> userStatusDataMap = Map.of("status", UserStatus.ACTIVE.toString());
-      userService.updateUserStatus(userId, userStatusDataMap);
+      final Map<String, Object> userStatusDataMap = Map.of("status", UserStatus.ACTIVE.toString());
+      userService.updateUser(userId, userId, userStatusDataMap);
       log.info("User status updated to ACTIVE");
     }
     log.info("User verified successfully");

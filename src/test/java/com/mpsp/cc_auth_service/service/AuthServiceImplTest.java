@@ -285,8 +285,8 @@ class AuthServiceImplTest {
         .thenReturn(new PageImpl<>(List.of(passwordHistory)));
     when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
     doNothing().when(passwordHistoryRepository).updateFailedLoginAttempts(1, 6);
-    final Map<String, String> userDataMap = Map.of("status", UserStatus.LOCKED.toString());
-    doNothing().when(userService).updateUserStatus(1, userDataMap);
+    final Map<String, Object> userDataMap = Map.of("status", UserStatus.LOCKED.toString());
+    doNothing().when(userService).updateUser(1, 1, userDataMap);
     LoginRequest loginRequest = new LoginRequest();
     loginRequest.setEmail("test@example.com");
     loginRequest.setPassword("password");
@@ -295,7 +295,7 @@ class AuthServiceImplTest {
         GlobalExceptionHandler.InvalidPasswordException.class,
         () -> authService.login(loginRequest, "127.0.0.1"));
     verify(passwordHistoryRepository, times(1)).updateFailedLoginAttempts(1, 5);
-    verify(userService, times(1)).updateUserStatus(1, userDataMap);
+    verify(userService, times(1)).updateUser(1, 1, userDataMap);
   }
 
   @Test
@@ -519,13 +519,10 @@ class AuthServiceImplTest {
     doNothing()
         .when(notificationService)
         .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
-    doNothing()
-        .when(userService)
-        .updateUserStatus(1, Map.of("status", UserStatus.ACTIVE.toString()));
+    doNothing().when(userService).updateUser(1, 1, Map.of("status", UserStatus.ACTIVE.toString()));
     authService.changePassword(changePasswordRequest, "validToken");
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
-    verify(userService, times(1))
-        .updateUserStatus(1, Map.of("status", UserStatus.ACTIVE.toString()));
+    verify(userService, times(1)).updateUser(1, 1, Map.of("status", UserStatus.ACTIVE.toString()));
   }
 
   @Test
@@ -550,18 +547,15 @@ class AuthServiceImplTest {
     user.setRole(UserRole.STUDENT);
     user.setFirstLogin(true);
     when(userService.findById(anyInt())).thenReturn(user);
-    doNothing().when(userService).updateUser(anyInt(), any(User.class));
+    doNothing().when(userService).updateUser(anyInt(), anyInt(), any(User.class));
     doNothing()
         .when(notificationService)
         .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
-    doNothing()
-        .when(userService)
-        .updateUserStatus(1, Map.of("status", UserStatus.ACTIVE.toString()));
+    doNothing().when(userService).updateUser(1, 1, Map.of("status", UserStatus.ACTIVE.toString()));
     authService.changePassword(changePasswordRequest, "validToken");
     verify(passwordHistoryRepository, times(1)).save(any(PasswordHistory.class));
-    verify(userService, times(1))
-        .updateUserStatus(1, Map.of("status", UserStatus.ACTIVE.toString()));
-    verify(userService, times(1)).updateUser(1, user);
+    verify(userService, times(1)).updateUser(1, 1, Map.of("status", UserStatus.ACTIVE.toString()));
+    verify(userService, times(1)).updateUser(1, 1, user);
   }
 
   @Test
