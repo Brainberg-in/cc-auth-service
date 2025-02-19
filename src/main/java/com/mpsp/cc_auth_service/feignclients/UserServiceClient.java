@@ -7,6 +7,7 @@ import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.UserDetails;
 import com.mpsp.cc_auth_service.dto.UsersData;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.InvalidUserStatus;
+import feign.Headers;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "userServiceClient", url = "${user.service.url}")
+@Headers("X-DRONARJUN-SOURCE: cc-auth-service")
 public interface UserServiceClient {
 
   final Logger logger = LoggerFactory.getLogger(UserServiceClient.class);
