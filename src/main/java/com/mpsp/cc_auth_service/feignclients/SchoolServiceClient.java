@@ -1,12 +1,14 @@
 package com.mpsp.cc_auth_service.feignclients;
 
 import com.mpsp.cc_auth_service.dto.SchoolDetails;
+import feign.Headers;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "schoolServiceClient", url = "${school.service.url}")
+@Headers("X-DRONARJUN-SOURCE: cc-auth-service")
 public interface SchoolServiceClient {
 
   @GetMapping("/api/v1/schools/{schoolId}")
