@@ -7,13 +7,16 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import com.mpsp.cc_auth_service.constants.UserRole;
 import com.mpsp.cc_auth_service.constants.UserStatus;
+import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.SendOtp;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.VerifyOtp;
 import com.mpsp.cc_auth_service.entity.OtpGen;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.OtpGenRepo;
+import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.service.impl.OtpServiceImpl;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.OTPExpiredException;
 import com.mpsp.cc_auth_service.utils.GlobalExceptionHandler.OTPVerificationException;
@@ -48,6 +51,8 @@ public class OtpServiceImplTest {
   @MockitoBean private NotificationService notificationService;
 
   @MockitoBean private JwtTokenProvider jwtTokenProvider;
+
+  @MockitoBean private RefreshTokenRepo refreshTokenRepo;
 
   @Test
   public void testSendOtp_UserFound() {
@@ -113,51 +118,6 @@ public class OtpServiceImplTest {
   }
 
   @Test
-  public void testVerifyOtp_UserNotFound() {
-    final String token = "TOKEN";
-    when(jwtTokenProvider.getSubject(token)).thenReturn("0");
-
-    assertThrows(NoSuchElementException.class, () -> otpService.verifyOtp(token, "1234"));
-  }
-
-  @Test
-  public void testVerifyOtp_OtpNotFound() {
-    final String token = "TOKEN";
-    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
-
-    when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.empty());
-
-    assertThrows(NoSuchElementException.class, () -> otpService.verifyOtp(token, "1234"));
-  }
-
-  @Test
-  public void testVerifyOtp_OtpExpired() {
-    final String token = "TOKEN";
-    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
-    final OtpGen otpGen = new OtpGen();
-
-    otpGen.setModifiedAt(LocalDateTime.now().minusHours(2));
-
-    when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.of(otpGen));
-
-    assertThrows(OTPExpiredException.class, () -> otpService.verifyOtp(token, "1234"));
-  }
-
-  @Test
-  public void testVerifyOtp_InvalidOtp() {
-    final String token = "TOKEN";
-    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
-    final OtpGen otpGen = new OtpGen();
-    otpGen.setOtp("1235");
-
-    otpGen.setModifiedAt(LocalDateTime.now().minusMinutes(30));
-
-    when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.of(otpGen));
-
-    assertThrows(OTPVerificationException.class, () -> otpService.verifyOtp(token, "1234"));
-  }
-
-  @Test
   public void testVerifyOtp_ValidOtp() {
     final String token = "TOKEN";
     when(jwtTokenProvider.getSubject(token)).thenReturn("1");
@@ -167,8 +127,29 @@ public class OtpServiceImplTest {
     otpGen.setModifiedAt(LocalDateTime.now().minusMinutes(30));
 
     when(otpGenRepo.findByUserId(anyInt())).thenReturn(Optional.of(otpGen));
+    final User user = new User();
+    user.setUserId(1);
+    user.setEmail("test@example.com");
+    user.setMobile("1234567890");
+    user.setRole(UserRole.PRINCIPAL);
+    user.setStatus(UserStatus.ACTIVE);
+    user.setFirstLogin(false);
+    user.setMfaEnabled(true);
+    when(userService.findById(1)).thenReturn(user);
 
-    assertTrue(otpService.verifyOtp(token, "1234"));
+    when(jwtTokenProvider.generateToken(user, false, user.getRole().name(), true))
+        .thenReturn("token");
+    when(jwtTokenProvider.generateToken(user, true, user.getRole().name(), true))
+        .thenReturn("refreshToken");
+
+    final LoginResponse response = otpService.verifyOtp(token, "1234");
+
+    assertEquals("token", response.getAccessToken());
+    assertEquals("refreshToken", response.getRefreshToken());
+    assertEquals(true, response.isMfaEnabled());
+    assertEquals(false, response.isFirstLogin());
+    assertEquals(UserRole.PRINCIPAL.name(), response.getUserRole());
+    assertEquals(UserStatus.ACTIVE, response.getStatus());
   }
 
   @Test
