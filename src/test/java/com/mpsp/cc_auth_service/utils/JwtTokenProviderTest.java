@@ -34,7 +34,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGenerateToken() {
     when(user.getUserId()).thenReturn(1);
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", false);
     // System.out.println(token);
     assertNotNull(token);
   }
@@ -42,7 +42,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGenerateRefreshToken() {
     when(user.getUserId()).thenReturn(1);
-    final String token = jwtTokenProvider.generateToken(user, true, "");
+    final String token = jwtTokenProvider.generateToken(user, true, "", false);
     // System.out.println(token);
     assertNotNull(token);
   }
@@ -70,14 +70,14 @@ public class JwtTokenProviderTest {
   @Test
   void testVerifyToken() {
     when(user.getUserId()).thenReturn(1);
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", true);
     assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false));
   }
 
   @Test
   void testVerifyBearerToken() {
     when(user.getUserId()).thenReturn(1);
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", true);
     assertDoesNotThrow(
         () ->
             jwtTokenProvider.verifyToken(String.join("", AppConstants.BEARER, token), "1", false));
@@ -85,14 +85,14 @@ public class JwtTokenProviderTest {
 
   @Test
   public void testGetClaim() {
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", true);
     assertEquals("false", jwtTokenProvider.getClaim(token, AppConstants.IS_REFRESHTOKEN));
   }
 
   @Test
   public void testGetEmail() {
     when(user.getEmail()).thenReturn("test@example.com");
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", false);
     assertEquals("test@example.com", jwtTokenProvider.getUserEmail(token));
   }
 
@@ -105,7 +105,7 @@ public class JwtTokenProviderTest {
 
   @Test
   public void testGetClaimBearer() {
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", false);
     assertEquals(
         "false",
         jwtTokenProvider.getClaim(
@@ -115,7 +115,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGetSubject() throws ParseException {
     when(user.getUserId()).thenReturn(1);
-    String token = jwtTokenProvider.generateToken(user, false, "");
+    String token = jwtTokenProvider.generateToken(user, false, "", false);
     String subject = jwtTokenProvider.getSubject(token);
     assertEquals("1", subject);
   }
@@ -123,7 +123,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGetSubjectBearer() throws ParseException {
     when(user.getUserId()).thenReturn(1);
-    String token = jwtTokenProvider.generateToken(user, false, "");
+    String token = jwtTokenProvider.generateToken(user, false, "", false);
     String subject = jwtTokenProvider.getSubject(String.join("", AppConstants.BEARER, token));
     assertEquals("1", subject);
   }

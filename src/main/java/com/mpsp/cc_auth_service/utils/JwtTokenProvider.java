@@ -37,7 +37,10 @@ public class JwtTokenProvider {
   private String aud;
 
   public String generateToken(
-      final User user, final boolean isRefreshToken, final String userRole) {
+      final User user,
+      final boolean isRefreshToken,
+      final String userRole,
+      final boolean mfaComplete) {
 
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder()
@@ -47,6 +50,7 @@ public class JwtTokenProvider {
             .claim(AppConstants.USER_ROLE, userRole)
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
             .claim(AppConstants.USER_STATUS, user.getStatus())
+            .claim(AppConstants.MPA_COMPLETE, mfaComplete)
             .issueTime(new Date())
             .expirationTime(
                 new Date(
