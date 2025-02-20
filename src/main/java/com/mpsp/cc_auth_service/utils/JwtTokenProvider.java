@@ -50,7 +50,7 @@ public class JwtTokenProvider {
             .claim(AppConstants.USER_ROLE, userRole)
             .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
             .claim(AppConstants.USER_STATUS, user.getStatus())
-            .claim(AppConstants.MPA_COMPLETE, mfaComplete)
+            .claim(AppConstants.MFA_COMPLETE, mfaComplete)
             .issueTime(new Date())
             .expirationTime(
                 new Date(
@@ -77,7 +77,10 @@ public class JwtTokenProvider {
    * @return
    */
   public boolean verifyToken(
-      final String token, final String userId, final boolean isRefreshToken) {
+      final String token,
+      final String userId,
+      final boolean isRefreshToken,
+      final boolean mfaComplete) {
     try {
       // Parse the token, stripping the "Bearer " prefix if present
       final JWSObject jwsObject =
@@ -94,6 +97,7 @@ public class JwtTokenProvider {
                   .issuer(issuer)
                   .subject(userId)
                   .claim(AppConstants.IS_REFRESHTOKEN, isRefreshToken)
+                  .claim(AppConstants.MFA_COMPLETE, mfaComplete)
                   .build(),
               new HashSet<>(List.of("exp")));
 
