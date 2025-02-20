@@ -227,7 +227,7 @@ public class AuthServiceImpl implements AuthService {
             .orElseThrow(
                 () -> new GlobalExceptionHandler.RefreshTokenException("Invalid refresh token"));
 
-    jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
+    jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true, true);
 
     // Generate new JWT token
     log.info("User ID: {}", storedToken.getUserId());

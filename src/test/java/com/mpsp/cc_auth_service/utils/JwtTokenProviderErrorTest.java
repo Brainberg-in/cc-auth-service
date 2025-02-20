@@ -40,6 +40,6 @@ public class JwtTokenProviderErrorTest {
 
   @Test
   public void testVerifyToken() {
-    assertFalse(jwtTokenProvider.verifyToken("token", "1", false));
+    assertFalse(jwtTokenProvider.verifyToken("token", "1", false, false));
   }
 }
