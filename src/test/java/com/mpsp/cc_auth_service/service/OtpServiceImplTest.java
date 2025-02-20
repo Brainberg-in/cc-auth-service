@@ -161,6 +161,14 @@ public class OtpServiceImplTest {
   }
 
   @Test
+  public void testValidate_UserIdIsInvalid() {
+    final String token = "TOKEN";
+    when(jwtTokenProvider.getSubject(token)).thenReturn("0");
+
+    assertThrows(NoSuchElementException.class, () -> otpService.validate(token, null));
+  }
+
+  @Test
   public void testValidate_OtpNotFound() {
     final String token = "TOKEN";
     when(jwtTokenProvider.getSubject(token)).thenReturn("1");
