@@ -1,6 +1,7 @@
 package com.mpsp.cc_auth_service.controllers;
 
 import com.mpsp.cc_auth_service.dto.ApiResponse;
+import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.SendOtp;
 import com.mpsp.cc_auth_service.dto.VerifyOtp;
 import com.mpsp.cc_auth_service.dto.VerifyOtpRequest;
@@ -22,14 +23,13 @@ public class OtpController {
   @Autowired private OtpService otpService;
 
   @PostMapping("/validateOtp")
-  public ResponseEntity<ApiResponse> verifyOtp(
+  public ResponseEntity<LoginResponse> verifyOtp(
       @RequestBody @Valid VerifyOtpRequest verifyOtpRequest,
       @RequestHeader(name = HttpHeaders.AUTHORIZATION)
           @NotBlank(message = "Authorization Token is required")
           @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
           String token) {
-    otpService.verifyOtp(token, verifyOtpRequest.getOtp());
-    return ResponseEntity.ok(new ApiResponse("OTP verified successfully"));
+    return ResponseEntity.ok(otpService.verifyOtp(token, verifyOtpRequest.getOtp()));
   }
 
   @PostMapping("/validate")
