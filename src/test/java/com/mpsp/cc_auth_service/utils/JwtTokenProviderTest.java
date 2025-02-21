@@ -34,7 +34,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGenerateToken() {
     when(user.getUserId()).thenReturn(1);
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", false);
     // System.out.println(token);
     assertNotNull(token);
   }
@@ -42,7 +42,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGenerateRefreshToken() {
     when(user.getUserId()).thenReturn(1);
-    final String token = jwtTokenProvider.generateToken(user, true, "");
+    final String token = jwtTokenProvider.generateToken(user, true, "", false);
     // System.out.println(token);
     assertNotNull(token);
   }
@@ -51,48 +51,49 @@ public class JwtTokenProviderTest {
   public void testExpiredToken() {
     final String token =
         "eyJhbGciOiJIUzI1NiJ9.eyJpc1JlZnJlc2hUb2tlbiI6ZmFsc2UsImlzcyI6InRyYWl0Zml0Iiwic3ViIjoiMSIsImV4cCI6MTcyNTMxMDg3NiwiaWF0IjoxNzI1MzMzNzc2fQ.KxHSEIyOWl015P3jN3ArdnK8r5LyohnrtdgH-iuRu7U";
-    assertFalse(jwtTokenProvider.verifyToken(token, "1", false));
+    assertFalse(jwtTokenProvider.verifyToken(token, "1", false, false));
   }
 
   @Test
   public void testInvalidSignature() {
     final String token =
         "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE3MjUzMzM5OTIsImV4cCI6MTc1Njg2OTk5MiwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIkdpdmVuTmFtZSI6IkpvaG5ueSIsIlN1cm5hbWUiOiJSb2NrZXQiLCJFbWFpbCI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJSb2xlIjpbIk1hbmFnZXIiLCJQcm9qZWN0IEFkbWluaXN0cmF0b3IiXX0.s5n63psR24KQdTm43RK0ttjOpg6tCGBWAgVnaOEzvM4";
-    assertFalse(jwtTokenProvider.verifyToken(token, "1", false));
+    assertFalse(jwtTokenProvider.verifyToken(token, "1", false, false));
   }
 
   @Test
   public void testParseException() {
     final String token = "eyJ0eXAiOi";
-    assertFalse(jwtTokenProvider.verifyToken(token, "1", false));
+    assertFalse(jwtTokenProvider.verifyToken(token, "1", false, false));
   }
 
   @Test
   void testVerifyToken() {
     when(user.getUserId()).thenReturn(1);
-    final String token = jwtTokenProvider.generateToken(user, false, "");
-    assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false));
+    final String token = jwtTokenProvider.generateToken(user, false, "", true);
+    assertDoesNotThrow(() -> jwtTokenProvider.verifyToken(token, "1", false, false));
   }
 
   @Test
   void testVerifyBearerToken() {
     when(user.getUserId()).thenReturn(1);
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", true);
     assertDoesNotThrow(
         () ->
-            jwtTokenProvider.verifyToken(String.join("", AppConstants.BEARER, token), "1", false));
+            jwtTokenProvider.verifyToken(
+                String.join("", AppConstants.BEARER, token), "1", false, true));
   }
 
   @Test
   public void testGetClaim() {
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", true);
     assertEquals("false", jwtTokenProvider.getClaim(token, AppConstants.IS_REFRESHTOKEN));
   }
 
   @Test
   public void testGetEmail() {
     when(user.getEmail()).thenReturn("test@example.com");
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", false);
     assertEquals("test@example.com", jwtTokenProvider.getUserEmail(token));
   }
 
@@ -105,7 +106,7 @@ public class JwtTokenProviderTest {
 
   @Test
   public void testGetClaimBearer() {
-    final String token = jwtTokenProvider.generateToken(user, false, "");
+    final String token = jwtTokenProvider.generateToken(user, false, "", false);
     assertEquals(
         "false",
         jwtTokenProvider.getClaim(
@@ -115,7 +116,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGetSubject() throws ParseException {
     when(user.getUserId()).thenReturn(1);
-    String token = jwtTokenProvider.generateToken(user, false, "");
+    String token = jwtTokenProvider.generateToken(user, false, "", false);
     String subject = jwtTokenProvider.getSubject(token);
     assertEquals("1", subject);
   }
@@ -123,7 +124,7 @@ public class JwtTokenProviderTest {
   @Test
   public void testGetSubjectBearer() throws ParseException {
     when(user.getUserId()).thenReturn(1);
-    String token = jwtTokenProvider.generateToken(user, false, "");
+    String token = jwtTokenProvider.generateToken(user, false, "", false);
     String subject = jwtTokenProvider.getSubject(String.join("", AppConstants.BEARER, token));
     assertEquals("1", subject);
   }

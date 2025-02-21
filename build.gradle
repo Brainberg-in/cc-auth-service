@@ -30,7 +30,6 @@ ext {
     openapiVersion = '2.8.4'
     nimubs = '10.0.1'
 	newrelic='8.18.0'
-	set('sdkVersion',"2.30.16")
 }
 dependencies {
 	// Spring Boot Starters
@@ -74,7 +73,6 @@ dependencies {
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-		mavenBom "software.amazon.awssdk:bom:${sdkVersion}"
 	}
 }
 
