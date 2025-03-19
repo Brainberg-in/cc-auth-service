@@ -56,19 +56,19 @@
       "secrets": [
         {
           "name": "DB_HOST",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:host::"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/dronarjun/rds/auth-PcccUC:host::"
         },
         {
           "name": "DB_PASSWORD",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:password::"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/dronarjun/rds/auth-PcccUC:password::"
         },
         {
           "name": "DB_PORT",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:port::"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/dronarjun/rds/auth-PcccUC:port::"
         },
         {
           "name": "DB_USER",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/mpsp-rds-4odZGK:username::"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:567347231314:secret:staging/dronarjun/rds/auth-PcccUC:username::"
         },
         {
           "name": "JWT_SECRET",
