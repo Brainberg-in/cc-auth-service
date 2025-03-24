@@ -486,6 +486,8 @@ public class AuthServiceImpl implements AuthService {
 
         passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
+        userService.updateUser(
+            behalfUserDetails.getUser().getUserId(), userId, Map.of("status", UserStatus.INACTIVE.toString()));
         toBeSavedPasswordHistoryList.add(passwordHistory);
         if (StringUtils.isNotBlank(behalfUserDetails.getUser().getEmail())) {
           notificationService.sendNotification(
