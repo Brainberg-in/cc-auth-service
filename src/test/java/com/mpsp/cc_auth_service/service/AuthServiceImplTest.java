@@ -951,23 +951,23 @@ class AuthServiceImplTest {
         NoSuchElementException.class, () -> authService.resetPasswordByAdmin(request, token));
   }
 
-  @Test
-  void test_resetPasswordByAdmin_userIsLocked() {
-    final String token = "token";
-    when(jwtTokenProvider.getSubject(token)).thenReturn("1");
-    when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
-        .thenReturn(UserRole.HELPDESKADMIN.name());
-    final ResetPasswordRequest request = new ResetPasswordRequest();
-    request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
-    final UserDetails userDetails = new UserDetails();
-    user.setStatus(UserStatus.LOCKED);
-    userDetails.setUser(user);
-    when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
-        .thenReturn(Optional.of(userDetails));
-    assertThrows(
-        GlobalExceptionHandler.ResetPasswordException.class,
-        () -> authService.resetPasswordByAdmin(request, token));
-  }
+//   @Test
+//   void test_resetPasswordByAdmin_userIsLocked() {
+//     final String token = "token";
+//     when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+//     when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+//         .thenReturn(UserRole.HELPDESKADMIN.name());
+//     final ResetPasswordRequest request = new ResetPasswordRequest();
+//     request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
+//     final UserDetails userDetails = new UserDetails();
+//     user.setStatus(UserStatus.LOCKED);
+//     userDetails.setUser(user);
+//     when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
+//         .thenReturn(Optional.of(userDetails));
+//     assertThrows(
+//         GlobalExceptionHandler.ResetPasswordException.class,
+//         () -> authService.resetPasswordByAdmin(request, token));
+//   }
 
   @Test
   void test_resetPasswordByAdmin_userIsPrincipal_schoolIdDoesNotMatch() {

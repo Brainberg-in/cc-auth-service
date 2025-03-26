@@ -444,7 +444,7 @@ public class AuthServiceImpl implements AuthService {
                   String.join("", userIdAndRole.getUserRole().toLowerCase(), "s"))
               .orElseThrow();
 
-      if (!List.of(UserStatus.ACTIVE, UserStatus.INACTIVE)
+      if (!List.of(UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.LOCKED)
           .contains(behalfUserDetails.getUser().getStatus())) {
         failureReasons.put(
             userIdAndRole.getUserId(),
@@ -486,6 +486,8 @@ public class AuthServiceImpl implements AuthService {
 
         passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
+        userService.updateUser(
+            behalfUserDetails.getUser().getUserId(), userId, Map.of("status", UserStatus.INACTIVE.toString()));
         toBeSavedPasswordHistoryList.add(passwordHistory);
         if (StringUtils.isNotBlank(behalfUserDetails.getUser().getEmail())) {
           notificationService.sendNotification(
