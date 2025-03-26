@@ -444,7 +444,7 @@ public class AuthServiceImpl implements AuthService {
                   String.join("", userIdAndRole.getUserRole().toLowerCase(), "s"))
               .orElseThrow();
 
-      if (!List.of(UserStatus.ACTIVE, UserStatus.INACTIVE)
+      if (!List.of(UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.LOCKED)
           .contains(behalfUserDetails.getUser().getStatus())) {
         failureReasons.put(
             userIdAndRole.getUserId(),
