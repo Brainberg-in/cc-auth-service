@@ -60,12 +60,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -100,8 +100,6 @@ class AuthServiceImplTest {
   @MockitoBean private transient ResetPasswordRepo resetPasswordRepo;
 
   @MockitoBean private transient SchoolServiceClient schoolService;
-
-  @MockitoBean private transient JdbcTemplate jdbcTemplate;
 
   @Mock private UserDetails userDetails;
   @Mock private SchoolDetails schoolDetails;
@@ -893,23 +891,12 @@ class AuthServiceImplTest {
     userCreateRequest.setUserId(1);
     userCreateRequest.setPassword("password");
     userCreateRequest.setRole(UserRole.STUDENT);
-    final String sql =
-        "INSERT INTO password_history (user_id, current_password, user_role, created_at,"
-            + " modified_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
-    when(jdbcTemplate.update(
-            sql,
-            userCreateRequest.getUserId(),
-            passwordEncoder.encode(userCreateRequest.getPassword()),
-            userCreateRequest.getRole().toString()))
-        .thenReturn(1);
+    when(passwordHistoryRepository.save(Mockito.any(PasswordHistory.class)))
+        .thenReturn(passwordHistory);
+
     authService.createNewUser(userCreateRequest);
-    verify(jdbcTemplate, times(1))
-        .update(
-            sql,
-            userCreateRequest.getUserId(),
-            passwordEncoder.encode(userCreateRequest.getPassword()),
-            userCreateRequest.getRole().toString());
+    verify(passwordHistoryRepository, times(1)).save(Mockito.any(PasswordHistory.class));
   }
 
   @Test
@@ -951,23 +938,24 @@ class AuthServiceImplTest {
         NoSuchElementException.class, () -> authService.resetPasswordByAdmin(request, token));
   }
 
-//   @Test
-//   void test_resetPasswordByAdmin_userIsLocked() {
-//     final String token = "token";
-//     when(jwtTokenProvider.getSubject(token)).thenReturn("1");
-//     when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
-//         .thenReturn(UserRole.HELPDESKADMIN.name());
-//     final ResetPasswordRequest request = new ResetPasswordRequest();
-//     request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
-//     final UserDetails userDetails = new UserDetails();
-//     user.setStatus(UserStatus.LOCKED);
-//     userDetails.setUser(user);
-//     when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(), "s")))
-//         .thenReturn(Optional.of(userDetails));
-//     assertThrows(
-//         GlobalExceptionHandler.ResetPasswordException.class,
-//         () -> authService.resetPasswordByAdmin(request, token));
-//   }
+  //   @Test
+  //   void test_resetPasswordByAdmin_userIsLocked() {
+  //     final String token = "token";
+  //     when(jwtTokenProvider.getSubject(token)).thenReturn("1");
+  //     when(jwtTokenProvider.getClaim("token", AppConstants.USER_ROLE))
+  //         .thenReturn(UserRole.HELPDESKADMIN.name());
+  //     final ResetPasswordRequest request = new ResetPasswordRequest();
+  //     request.setBehalfOf(List.of(new UserIdAndRole(2, UserRole.STUDENT.name())));
+  //     final UserDetails userDetails = new UserDetails();
+  //     user.setStatus(UserStatus.LOCKED);
+  //     userDetails.setUser(user);
+  //     when(userService.getUserDetails(2, String.join("", UserRole.STUDENT.name().toLowerCase(),
+  // "s")))
+  //         .thenReturn(Optional.of(userDetails));
+  //     assertThrows(
+  //         GlobalExceptionHandler.ResetPasswordException.class,
+  //         () -> authService.resetPasswordByAdmin(request, token));
+  //   }
 
   @Test
   void test_resetPasswordByAdmin_userIsPrincipal_schoolIdDoesNotMatch() {
