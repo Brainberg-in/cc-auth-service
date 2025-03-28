@@ -1,12 +1,15 @@
 package com.mpsp.cc_auth_service.service.impl;
 
 import com.mpsp.cc_auth_service.constants.UserStatus;
+import com.mpsp.cc_auth_service.dto.LoginResponse;
 import com.mpsp.cc_auth_service.dto.SendOtp;
 import com.mpsp.cc_auth_service.dto.User;
 import com.mpsp.cc_auth_service.dto.VerifyOtp;
 import com.mpsp.cc_auth_service.entity.OtpGen;
+import com.mpsp.cc_auth_service.entity.RefreshToken;
 import com.mpsp.cc_auth_service.feignclients.UserServiceClient;
 import com.mpsp.cc_auth_service.repository.OtpGenRepo;
+import com.mpsp.cc_auth_service.repository.RefreshTokenRepo;
 import com.mpsp.cc_auth_service.service.NotificationService;
 import com.mpsp.cc_auth_service.service.OtpService;
 import com.mpsp.cc_auth_service.utils.GeneratorUtils;
@@ -35,6 +38,8 @@ public class OtpServiceImpl implements OtpService {
   @Autowired private transient JwtTokenProvider jwtTokenProvider;
 
   @Autowired private transient NotificationService notificationService;
+
+  @Autowired private transient RefreshTokenRepo refreshTokenRepository;
 
   @Value("${spring.profiles.active}")
   private String activeProfile;
@@ -103,26 +108,28 @@ public class OtpServiceImpl implements OtpService {
   }
 
   @Override
-  public boolean verifyOtp(final String token, final String otp) {
-    final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+  @Transactional
+  public LoginResponse verifyOtp(final String token, final String otp) {
+    validate(token, new VerifyOtp(otp, "signin", "email"));
+    final User user = userService.findById(Integer.parseInt(jwtTokenProvider.getSubject(token)));
+    final String jwtToken =
+        jwtTokenProvider.generateToken(user, false, user.getRole().name(), true);
+    final String refreshToken =
+        jwtTokenProvider.generateToken(user, true, user.getRole().name(), true);
 
-    if (userId == 0) {
-      throw new NoSuchElementException("User not found");
-    }
+    final RefreshToken refreshTokenEntity = new RefreshToken();
+    refreshTokenEntity.setUserId(user.getUserId());
+    refreshTokenEntity.setToken(refreshToken);
+    refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusDays(1));
 
-    return otpGenRepo
-        .findByUserId(userId)
-        .map(
-            otpGen -> {
-              if (otpGen.getModifiedAt().isBefore(LocalDateTime.now().minusHours(1))) {
-                throw new OTPExpiredException("OTP expired");
-              }
-              if (!otpGen.getOtp().equals(otp)) {
-                throw new OTPVerificationException("OTP verification failed");
-              }
-              return true;
-            })
-        .orElseThrow(() -> new NoSuchElementException("OTP not found for user"));
+    refreshTokenRepository.save(refreshTokenEntity);
+    return new LoginResponse(
+        jwtToken,
+        refreshToken,
+        user.isMfaEnabled(),
+        user.isFirstLogin(),
+        user.getRole().name(),
+        user.getStatus());
   }
 
   @Override

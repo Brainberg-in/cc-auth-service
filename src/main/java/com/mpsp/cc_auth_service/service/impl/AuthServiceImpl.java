@@ -172,9 +172,13 @@ public class AuthServiceImpl implements AuthService {
   private LoginResponse handleSuccessfulLogin(
       final User user, final PasswordHistory pw, final String ipAddress) {
     // Generate tokens
-    final String jwtToken = jwtTokenProvider.generateToken(user, false, pw.getUserRole());
-    final String refreshToken = jwtTokenProvider.generateToken(user, true, pw.getUserRole());
-    saveRefreshToken(user.getUserId(), refreshToken);
+    final String jwtToken =
+        jwtTokenProvider.generateToken(user, false, pw.getUserRole(), !user.isMfaEnabled());
+    String refreshToken = null;
+    if (!user.isMfaEnabled()) {
+      refreshToken = jwtTokenProvider.generateToken(user, true, pw.getUserRole(), true);
+      saveRefreshToken(user.getUserId(), refreshToken);
+    }
 
     loginHistoryRepository.save(new LoginHistory(user.getUserId(), LocalDateTime.now(), ipAddress));
 
@@ -223,7 +227,7 @@ public class AuthServiceImpl implements AuthService {
             .orElseThrow(
                 () -> new GlobalExceptionHandler.RefreshTokenException("Invalid refresh token"));
 
-    jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true);
+    jwtTokenProvider.verifyToken(refreshToken, storedToken.getUserId().toString(), true, true);
 
     // Generate new JWT token
     log.info("User ID: {}", storedToken.getUserId());
@@ -238,7 +242,7 @@ public class AuthServiceImpl implements AuthService {
 
     // Refresh token only gets generated when the user logs in
     // The refresh token is only used for refreshing the access token.
-    final String newJwtToken = jwtTokenProvider.generateToken(user, false, p.getUserRole());
+    final String newJwtToken = jwtTokenProvider.generateToken(user, false, p.getUserRole(), true);
     return new LoginResponse(
         newJwtToken, refreshToken, true, false, p.getUserRole(), user.getStatus());
   }
@@ -440,7 +444,7 @@ public class AuthServiceImpl implements AuthService {
                   String.join("", userIdAndRole.getUserRole().toLowerCase(), "s"))
               .orElseThrow();
 
-      if (!List.of(UserStatus.ACTIVE, UserStatus.INACTIVE)
+      if (!List.of(UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.LOCKED)
           .contains(behalfUserDetails.getUser().getStatus())) {
         failureReasons.put(
             userIdAndRole.getUserId(),
@@ -482,6 +486,8 @@ public class AuthServiceImpl implements AuthService {
 
         passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
+        userService.updateUser(
+            behalfUserDetails.getUser().getUserId(), userId, Map.of("status", UserStatus.INACTIVE.toString()));
         toBeSavedPasswordHistoryList.add(passwordHistory);
         if (StringUtils.isNotBlank(behalfUserDetails.getUser().getEmail())) {
           notificationService.sendNotification(
@@ -514,7 +520,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Transactional
-  private void saveRefreshToken(final Integer userId, final String refreshToken) {
+  public void saveRefreshToken(final Integer userId, final String refreshToken) {
     final RefreshToken token =
         refreshTokenRepository.findByToken(refreshToken).orElse(new RefreshToken());
 

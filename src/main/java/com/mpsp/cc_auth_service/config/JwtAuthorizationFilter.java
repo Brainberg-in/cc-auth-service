@@ -62,7 +62,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     }
 
     final String userId = tokenProvider.getSubject(token.substring(AppConstants.BEARER.length()));
-    if (tokenProvider.verifyToken(token, userId, false)) {
+    if (tokenProvider.verifyToken(
+        token, userId, false, !request.getRequestURI().endsWith("validateOtp"))) {
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(tokenProvider.getSubject(token), null, null);
       SecurityContextHolder.getContext().setAuthentication(authentication);

@@ -34,11 +34,12 @@ public class JwtTokenProviderErrorTest {
     when(user.getUserId()).thenReturn(1);
 
     assertThrows(
-        RuntimeException.class, () -> jwtTokenProvider.generateToken(user, false, "PRINCIPAL"));
+        RuntimeException.class,
+        () -> jwtTokenProvider.generateToken(user, false, "PRINCIPAL", true));
   }
 
   @Test
   public void testVerifyToken() {
-    assertFalse(jwtTokenProvider.verifyToken("token", "1", false));
+    assertFalse(jwtTokenProvider.verifyToken("token", "1", false, false));
   }
 }
