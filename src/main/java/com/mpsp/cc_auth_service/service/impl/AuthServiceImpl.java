@@ -47,7 +47,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -369,7 +368,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   @Transactional
   @Trace(dispatcher = true)
-  @RabbitListener(queues = "${rabbitmq.queue.name}")
+  // @RabbitListener(queues = "${rabbitmq.queue.name}")
   public void createNewUser(final String userCreateRequest) {
     log.info("User creation Request String: {}", userCreateRequest);
 
