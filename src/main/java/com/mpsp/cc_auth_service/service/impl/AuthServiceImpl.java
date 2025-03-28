@@ -369,14 +369,18 @@ public class AuthServiceImpl implements AuthService {
   @RabbitListener(queues = "${rabbitmq.queue.name}")
   public void createNewUser(final UserCreateRequest userCreateRequest) {
     log.info("User created: {}", userCreateRequest);
-    final String sql =
-        "INSERT INTO password_history (user_id, current_password, user_role, created_at,"
-            + " modified_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-    jdbcTemplate.update(
-        sql,
-        userCreateRequest.getUserId(),
-        passwordEncoder.encode(userCreateRequest.getPassword()),
-        userCreateRequest.getRole().toString());
+    if (StringUtils.isBlank(userCreateRequest.getPassword())) {
+      log.warn("Password is blank. Skipping creating user");
+    } else {
+      final String sql =
+          "INSERT INTO password_history (user_id, current_password, user_role, created_at,"
+              + " modified_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+      jdbcTemplate.update(
+          sql,
+          userCreateRequest.getUserId(),
+          passwordEncoder.encode(userCreateRequest.getPassword()),
+          userCreateRequest.getRole().toString());
+    }
   }
 
   @Transactional
@@ -487,7 +491,9 @@ public class AuthServiceImpl implements AuthService {
         passwordHistory.setCurrentPassword(passwordEncoder.encode(generatedPassword));
         passwordHistory.setModifiedAt(LocalDateTime.now());
         userService.updateUser(
-            behalfUserDetails.getUser().getUserId(), userId, Map.of("status", UserStatus.INACTIVE.toString()));
+            behalfUserDetails.getUser().getUserId(),
+            userId,
+            Map.of("status", UserStatus.INACTIVE.toString()));
         toBeSavedPasswordHistoryList.add(passwordHistory);
         if (StringUtils.isNotBlank(behalfUserDetails.getUser().getEmail())) {
           notificationService.sendNotification(
