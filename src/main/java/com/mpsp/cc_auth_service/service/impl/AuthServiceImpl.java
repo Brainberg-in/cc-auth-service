@@ -53,7 +53,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,8 +80,6 @@ public class AuthServiceImpl implements AuthService {
   @Autowired private transient SchoolServiceClient schoolService;
 
   @Autowired private transient NotificationService notificationService;
-
-  @Autowired private transient JdbcTemplate jdbcTemplate;
 
   @Value("${aws.ses.sender}")
   private String senderEmail;
@@ -366,19 +363,15 @@ public class AuthServiceImpl implements AuthService {
     }
   }
 
-  @Override
   @Transactional
   @Trace(dispatcher = true)
   @RabbitListener(queues = "${rabbitmq.queue.name}")
   public void createNewUser(final String userCreateRequest) {
-    log.info("User creation Request String: {}", userCreateRequest);
-
     try {
       final UserCreateRequest userCreateRequestObj =
           new ObjectMapper().readValue(userCreateRequest, UserCreateRequest.class);
       createNewUser(userCreateRequestObj);
     } catch (JsonMappingException e) {
-      // TODO Auto-generated catch block
       log.error("Error while parsing the request", e);
       e.printStackTrace();
     } catch (JsonProcessingException e) {
@@ -391,14 +384,13 @@ public class AuthServiceImpl implements AuthService {
     if (StringUtils.isBlank(userCreateRequest.getPassword())) {
       log.warn("Password is blank. Skipping creating user");
     } else {
-      final String sql =
-          "INSERT INTO password_history (user_id, current_password, user_role, created_at,"
-              + " modified_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-      jdbcTemplate.update(
-          sql,
-          userCreateRequest.getUserId(),
-          passwordEncoder.encode(userCreateRequest.getPassword()),
-          userCreateRequest.getRole().toString());
+      final PasswordHistory passwordHistory =
+          new PasswordHistory(
+              userCreateRequest.getUserId(),
+              passwordEncoder.encode(userCreateRequest.getPassword()),
+              userCreateRequest.getRole().toString());
+
+      passwordHistoryRepository.save(passwordHistory);
     }
   }
 

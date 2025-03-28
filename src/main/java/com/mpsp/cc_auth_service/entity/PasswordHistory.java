@@ -56,4 +56,11 @@ public class PasswordHistory {
     this.userId = userId;
     this.currentPassword = currentPassword;
   }
+
+  public PasswordHistory(
+      final Integer userId, final String currentPassword, final String userRole) {
+    this.userId = userId;
+    this.currentPassword = currentPassword;
+    this.userRole = userRole;
+  }
 }
