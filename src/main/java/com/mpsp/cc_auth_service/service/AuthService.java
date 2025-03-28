@@ -16,6 +16,7 @@ public interface AuthService {
   void changePassword(ChangePasswordRequest changePasswordRequest, String token);
 
   void createNewUser(UserCreateRequest userCreateRequest);
+  void createNewUser(String userCreateRequest);
 
   void resetPasswordSelf(ResetPasswordRequest resetPasswordRequest);
 

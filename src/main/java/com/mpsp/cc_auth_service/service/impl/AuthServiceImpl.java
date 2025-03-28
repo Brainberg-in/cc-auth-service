@@ -1,5 +1,8 @@
 package com.mpsp.cc_auth_service.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mpsp.cc_auth_service.constants.AppConstants;
 import com.mpsp.cc_auth_service.constants.UserRole;
 import com.mpsp.cc_auth_service.constants.UserStatus;
@@ -367,8 +370,24 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   @Trace(dispatcher = true)
   @RabbitListener(queues = "${rabbitmq.queue.name}")
+  public void createNewUser(final String userCreateRequest) {
+    log.info("User creation Request String: {}", userCreateRequest);
+
+    try {
+      final UserCreateRequest userCreateRequestObj =
+          new ObjectMapper().readValue(userCreateRequest, UserCreateRequest.class);
+      createNewUser(userCreateRequestObj);
+    } catch (JsonMappingException e) {
+      // TODO Auto-generated catch block
+      log.error("Error while parsing the request", e);
+      e.printStackTrace();
+    } catch (JsonProcessingException e) {
+      log.error("Error while processing the request", e);
+    }
+  }
+
   public void createNewUser(final UserCreateRequest userCreateRequest) {
-    log.info("User created: {}", userCreateRequest);
+    log.info("User creation Request: {}", userCreateRequest);
     if (StringUtils.isBlank(userCreateRequest.getPassword())) {
       log.warn("Password is blank. Skipping creating user");
     } else {
