@@ -1,7 +1,7 @@
 plugins {
 	id ("jacoco")
 	id("java")
-	id("org.springframework.boot") version "3.4.3"
+	id("org.springframework.boot") version "3.4.4"
 	id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -26,8 +26,8 @@ repositories {
 }
 
 ext {
-	set('springCloudVersion', "2024.0.0")
-    openapiVersion = '2.8.5'
+	set('springCloudVersion', "2024.0.1")
+    openapiVersion = '2.8.6'
     nimubs = '10.0.2'
 	newrelic='8.19.0'
 }
