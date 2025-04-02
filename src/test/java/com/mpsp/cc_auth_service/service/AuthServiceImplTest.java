@@ -1101,4 +1101,33 @@ class AuthServiceImplTest {
     verify(notificationService, times(0))
         .sendNotification(anyString(), anyString(), anyString(), anyString(), anyMap());
   }
+
+  @Test
+  void test_confirmDetailsSelf() {
+    String token = "valid-token";
+        int userId = 123;
+        UserRole userRole = UserRole.STUDENT;
+    
+        when(jwtTokenProvider.getSubject(token)).thenReturn(String.valueOf(userId));
+        when(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE)).thenReturn(userRole.toString());
+        when(userService.findById(userId)).thenReturn(user);
+    
+        authService.confirmDetailsSelf(token);
+  }
+
+  @Test
+  void test_confirmDetailsSelf_userIsPrincipal() {
+    String token = "valid-token";
+        int userId = 123;
+        UserRole userRole = UserRole.PRINCIPAL;
+    
+        when(jwtTokenProvider.getSubject(token)).thenReturn(String.valueOf(userId));
+        when(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE)).thenReturn(userRole.toString());
+        GlobalExceptionHandler.InvalidUserStatus exception = assertThrows(
+            GlobalExceptionHandler.InvalidUserStatus.class,
+            () -> authService.confirmDetailsSelf(token)
+        );
+    
+        assertEquals("Forbidden", exception.getMessage());
+  }
 }

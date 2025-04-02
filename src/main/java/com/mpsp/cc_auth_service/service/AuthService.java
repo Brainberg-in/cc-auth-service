@@ -25,4 +25,6 @@ public interface AuthService {
   Map<Integer, String> getUserRoles(List<Integer> userIds);
 
   List<LoginHistoryResponse> getLoginHistory(Integer userId);
+
+  void confirmDetailsSelf(String token);
 }
