@@ -615,8 +615,9 @@ public class AuthServiceImpl implements AuthService {
       final Date dateOfBirth,
       final String role,
       final String schoolUdiseCode) {
-    String name = (String) fullName.replaceAll(" ", "").toUpperCase().substring(0, 4);
-    String mobileUpdated = (String) mobile;
+      String name = (fullName != null) ? fullName.replaceAll(" ", "").toUpperCase() : "";
+      name = name.length() >= 4 ? name.substring(0, 4) : name;  
+      String mobileUpdated = (String) mobile;
     mobileUpdated =
         (mobileUpdated != null && mobileUpdated.length() >= 4)
             ? mobileUpdated.substring(mobileUpdated.length() - 4)
