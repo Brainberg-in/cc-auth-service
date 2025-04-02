@@ -583,6 +583,22 @@ public class AuthServiceImpl implements AuthService {
         .collect(Collectors.toList());
   }
 
+  @Override
+  @Transactional
+  public void confirmDetailsSelf(final String token) {
+    final int userId = Integer.parseInt(jwtTokenProvider.getSubject(token));
+    final UserRole userRole =
+        UserRole.valueOf(jwtTokenProvider.getClaim(token, AppConstants.USER_ROLE));
+
+    if (!List.of(UserRole.STUDENT)
+        .contains(userRole)) {
+      log.error("{} is not allowed to confirm details", userRole);
+      throw new GlobalExceptionHandler.InvalidUserStatus("Forbidden");
+    }
+    final User user = userService.findById(userId);
+    userService.updateUser(userId, userId, Map.of("status", UserStatus.ACTIVE.toString()));
+  }
+
   private LoginHistoryResponse convertToLoginHistoryResponse(final LoginHistory loginHistory) {
     LoginHistoryResponse response = new LoginHistoryResponse();
     response.setId(loginHistory.getId());

@@ -91,6 +91,16 @@ public class AuthController {
     return ResponseEntity.ok(new ApiResponse("Password reset successfully."));
   }
 
+  @PostMapping("/confirm-details/self")
+  public ResponseEntity<ApiResponse> confirmDetailsSelf(
+      @RequestHeader(name = HttpHeaders.AUTHORIZATION)
+      @NotBlank(message = "Authorization Token is required")
+      @Pattern(regexp = "^Bearer .+$", message = "Invalid Authorization")
+      String token) {
+    authService.confirmDetailsSelf(token);
+    return ResponseEntity.ok(new ApiResponse("Details confirmed successfully."));
+  }
+
   @PostMapping("/change-password")
   public ResponseEntity<ApiResponse> changePassword(
       @RequestBody @Valid final ChangePasswordRequest changePasswordRequest,
