@@ -116,7 +116,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}-sit
+          IMAGE_TAG: sit-${{ github.sha }}
         run: |
           # Build a docker container and
           # push it to ECR so that it can
